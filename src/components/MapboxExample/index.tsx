@@ -26,7 +26,7 @@ const MapboxExample = () => {
       center: [-98, 38.88],
       maxZoom: 20,
       minZoom: 1,
-      zoom: 20,
+      zoom: 3,
     }));
 
     map.on("style.load", () => {
