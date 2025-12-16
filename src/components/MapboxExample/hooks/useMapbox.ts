@@ -4,8 +4,6 @@ import {
   MAPBOX_ACCESS_TOKEN,
   MAP_CONFIG,
   STYLE_CONFIG,
-  AIRPORTS_SOURCE_CONFIG,
-  AIRPORT_LAYER_CONFIG,
   POPUP_CONFIG,
 } from "../constants/mapConfig";
 import { createPopupContent } from "../utils/popupContent";
@@ -14,6 +12,7 @@ export const useMapbox = (containerRef: React.RefObject<HTMLDivElement>) => {
   const mapRef = useRef<mapboxgl.Map | null>(null);
   const popupRef = useRef<mapboxgl.Popup | null>(null);
   const selectedFeatureRef = useRef<MapboxGeoJSONFeature | null>(null);
+  const userInteractingRef = useRef(false);
 
   const [selectedFeature, setSelectedFeature] =
     useState<MapboxGeoJSONFeature | null>(null);
@@ -33,48 +32,137 @@ export const useMapbox = (containerRef: React.RefObject<HTMLDivElement>) => {
     }));
 
     map.on("style.load", () => {
-      map.setPaintProperty(
-        "background",
-        "background-color",
-        STYLE_CONFIG.background
-      );
+      map.setFog({
+        range: [1, 10],
+        color: "#ffffff",
+        "horizon-blend": 0.01,
+        "high-color": "#245cdf",
+        "space-color": [
+          "interpolate",
+          ["linear"],
+          ["zoom"],
+          4,
+          "#010b19",
+          7,
+          "#367ab9",
+        ],
+        "star-intensity": 0,
+      });
+    });
+
+    const secondsPerRevolution = 120;
+    const maxSpinZoom = 5;
+    const slowSpinZoom = 3;
+
+    function spinGlobe() {
+      const zoom = map.getZoom();
+      if (!userInteractingRef.current && zoom < maxSpinZoom) {
+        let distancePerSecond = 360 / secondsPerRevolution;
+        if (zoom > slowSpinZoom) {
+          const zoomDif = (maxSpinZoom - zoom) / (maxSpinZoom - slowSpinZoom);
+          distancePerSecond *= zoomDif;
+        }
+        const center = map.getCenter();
+        center.lng -= distancePerSecond;
+        map.easeTo({ center, duration: 1000, easing: (n) => n });
+      }
+    }
+
+    map.on("load", () => {
       map.setPaintProperty("water", "fill-color", STYLE_CONFIG.water as any);
-      map.setPaintProperty("land", "background-color", STYLE_CONFIG.land);
 
-      map.addSource("airports", AIRPORTS_SOURCE_CONFIG);
+      map.addSource("airports", {
+        type: "vector",
+        url: "mapbox://mapbox.04w69w5j",
+      });
 
-      map.addLayer(AIRPORT_LAYER_CONFIG as any);
-
-      map.addInteraction("click", {
-        type: "click",
-        target: { layerId: "airport" },
-        handler: ({ feature }) => {
-          handleAirportClick(map, feature);
+      map.addLayer({
+        id: "airport",
+        source: "airports",
+        "source-layer": "ne_10m_airports",
+        type: "circle",
+        paint: {
+          "circle-color": [
+            "case",
+            ["boolean", ["feature-state", "selected"], false],
+            "#f00",
+            "#4264fb",
+          ],
+          "circle-radius": [
+            "case",
+            ["boolean", ["feature-state", "selected"], false],
+            6,
+            ["boolean", ["feature-state", "highlight"], false],
+            6,
+            4,
+          ],
+          "circle-stroke-width": 2,
+          "circle-stroke-color": "#ffffff",
         },
       });
 
-      map.addInteraction("map-click", {
-        type: "click",
-        handler: () => {
+      map.on("mousemove", "airport", (e) => {
+        if (e.features && e.features.length > 0) {
+          handleAirportMouseEnter(map, e.features[0]);
+        }
+      });
+
+      map.on("mouseleave", "airport", () => {
+        handleAirportMouseLeave(map);
+      });
+
+      map.on("click", "airport", (e) => {
+        if (e.features && e.features.length > 0) {
+          userInteractingRef.current = true;
+          handleAirportClick(map, e.features[0]);
+        }
+      });
+
+      map.on("click", (e) => {
+        const features = map.queryRenderedFeatures(e.point, {
+          layers: ["airport"],
+        });
+        if (features.length === 0) {
           handleMapClick(map);
-        },
+          userInteractingRef.current = false;
+          spinGlobe();
+        }
       });
 
-      map.addInteraction("mouseenter", {
-        type: "mouseenter",
-        target: { layerId: "airport" },
-        handler: ({ feature }) => {
-          handleAirportMouseEnter(map, feature);
-        },
+      map.on("mousedown", () => {
+        userInteractingRef.current = true;
       });
 
-      map.addInteraction("mouseleave", {
-        type: "mouseleave",
-        target: { layerId: "airport" },
-        handler: ({ feature }) => {
-          handleAirportMouseLeave(map, feature);
-        },
+      map.on("dragstart", () => {
+        userInteractingRef.current = true;
       });
+
+      map.on("dragend", () => {
+        userInteractingRef.current = true;
+      });
+
+      map.on("pitchend", () => {
+        userInteractingRef.current = true;
+      });
+
+      map.on("rotateend", () => {
+        userInteractingRef.current = true;
+      });
+
+      map.on("zoomend", () => {
+        if (!selectedFeatureRef.current) {
+          userInteractingRef.current = false;
+          spinGlobe();
+        }
+      });
+
+      map.on("moveend", () => {
+        if (!userInteractingRef.current && !selectedFeatureRef.current) {
+          spinGlobe();
+        }
+      });
+
+      spinGlobe();
     });
 
     return () => map.remove();
@@ -110,6 +198,7 @@ export const useMapbox = (containerRef: React.RefObject<HTMLDivElement>) => {
           map.setFeatureState(selectedFeatureRef.current, { selected: false });
           setSelectedFeature(null);
         }
+        userInteractingRef.current = false;
       });
     }
   };
@@ -135,14 +224,8 @@ export const useMapbox = (containerRef: React.RefObject<HTMLDivElement>) => {
     }
   };
 
-  const handleAirportMouseLeave = (
-    map: mapboxgl.Map,
-    feature: MapboxGeoJSONFeature | undefined
-  ) => {
-    if (feature) {
-      map.setFeatureState(feature, { highlight: false });
-      map.getCanvas().style.cursor = "";
-    }
+  const handleAirportMouseLeave = (map: mapboxgl.Map) => {
+    map.getCanvas().style.cursor = "";
   };
 
   return {

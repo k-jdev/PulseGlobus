@@ -2,7 +2,7 @@ export const MAPBOX_ACCESS_TOKEN =
   "pk.eyJ1Ijoia2pkZXZzIiwiYSI6ImNtaXV6enBocjBmaW4zZ3BmZHpxMGdiMzIifQ.KDQmmvT3fMyuzy6ZNpmnsw";
 
 export const MAP_CONFIG = {
-  style: "mapbox://styles/mapbox/dark-v11",
+  style: "mapbox://styles/mapbox/light-v11",
   center: [-98, 38.88] as [number, number],
   maxZoom: 20,
   minZoom: 1,
