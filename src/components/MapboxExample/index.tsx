@@ -7,9 +7,15 @@ import "./styles.css";
 
 const MapboxExample = () => {
   const mapContainerRef = useRef<HTMLDivElement>(null);
-  useMapbox(mapContainerRef);
+  const { theme, changeTheme } = useMapbox(mapContainerRef);
 
-  return <MapContainer mapContainerRef={mapContainerRef} />;
+  return (
+    <MapContainer
+      mapContainerRef={mapContainerRef}
+      theme={theme}
+      onThemeChange={changeTheme}
+    />
+  );
 };
 
 export default MapboxExample;

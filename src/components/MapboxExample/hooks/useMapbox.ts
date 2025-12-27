@@ -3,12 +3,16 @@ import mapboxgl, { MapboxGeoJSONFeature } from "mapbox-gl";
 import {
   MAPBOX_ACCESS_TOKEN,
   MAP_CONFIG,
-  STYLE_CONFIG,
   POPUP_CONFIG,
+  THEME_CONFIGS,
+  Theme,
 } from "../constants/mapConfig";
 import { createPopupContent } from "../utils/popupContent";
 
-export const useMapbox = (containerRef: React.RefObject<HTMLDivElement>) => {
+export const useMapbox = (
+  containerRef: React.RefObject<HTMLDivElement>,
+  onThemeChange?: (theme: Theme) => void
+) => {
   const mapRef = useRef<mapboxgl.Map | null>(null);
   const popupRef = useRef<mapboxgl.Popup | null>(null);
   const selectedFeatureRef = useRef<MapboxGeoJSONFeature | null>(null);
@@ -16,6 +20,7 @@ export const useMapbox = (containerRef: React.RefObject<HTMLDivElement>) => {
 
   const [selectedFeature, setSelectedFeature] =
     useState<MapboxGeoJSONFeature | null>(null);
+  const [theme, setTheme] = useState<Theme>("light");
 
   useEffect(() => {
     selectedFeatureRef.current = selectedFeature;
@@ -32,22 +37,10 @@ export const useMapbox = (containerRef: React.RefObject<HTMLDivElement>) => {
     }));
 
     map.on("style.load", () => {
-      map.setFog({
-        range: [1, 10],
-        color: "#ffffff",
-        "horizon-blend": 0.01,
-        "high-color": "#245cdf",
-        "space-color": [
-          "interpolate",
-          ["linear"],
-          ["zoom"],
-          4,
-          "#010b19",
-          7,
-          "#367ab9",
-        ],
-        "star-intensity": 0,
-      });
+      const themeConfig = THEME_CONFIGS[theme];
+      map.setFog(themeConfig.fog as any);
+
+      map.setPaintProperty("land", "background-color", themeConfig.land);
     });
 
     const secondsPerRevolution = 120;
@@ -69,7 +62,56 @@ export const useMapbox = (containerRef: React.RefObject<HTMLDivElement>) => {
     }
 
     map.on("load", () => {
-      map.setPaintProperty("water", "fill-color", STYLE_CONFIG.water as any);
+      const themeConfig = THEME_CONFIGS[theme];
+      map.setPaintProperty("water", "fill-color", themeConfig.water as any);
+      map.setPaintProperty("land", "background-color", themeConfig.land);
+
+      const layers = map.getStyle().layers;
+      if (layers) {
+        layers.forEach((layer: any) => {
+          if (layer.type === "fill") {
+            if (
+              layer.id.includes("land") ||
+              layer.id.includes("landcover") ||
+              layer.id.includes("landuse") ||
+              layer.id.includes("park") ||
+              layer.id.includes("pitch") ||
+              layer.id.includes("building")
+            ) {
+              map.setPaintProperty(layer.id, "fill-color", themeConfig.land);
+            }
+          }
+
+          if (layer.type === "line") {
+            if (
+              layer.id.includes("road") ||
+              layer.id.includes("street") ||
+              layer.id.includes("path")
+            ) {
+              map.setPaintProperty(
+                layer.id,
+                "line-color",
+                (themeConfig as any).roadColor
+              );
+            } else if (
+              layer.id.includes("admin") ||
+              layer.id.includes("boundary")
+            ) {
+              map.setPaintProperty(
+                layer.id,
+                "line-color",
+                (themeConfig as any).borderColor
+              );
+            } else if (layer.id.includes("building-outline")) {
+              map.setPaintProperty(
+                layer.id,
+                "line-color",
+                (themeConfig as any).lineColor
+              );
+            }
+          }
+        });
+      }
 
       map.addSource("airports", {
         type: "vector",
@@ -166,7 +208,18 @@ export const useMapbox = (containerRef: React.RefObject<HTMLDivElement>) => {
     });
 
     return () => map.remove();
-  }, [containerRef]);
+  }, [containerRef, theme]);
+
+  const changeTheme = (newTheme: Theme) => {
+    const themeConfig = THEME_CONFIGS[newTheme];
+    if (mapRef.current) {
+      mapRef.current.setStyle(themeConfig.style);
+      setTheme(newTheme);
+      if (onThemeChange) {
+        onThemeChange(newTheme);
+      }
+    }
+  };
 
   const handleAirportClick = (
     map: mapboxgl.Map,
@@ -231,5 +284,7 @@ export const useMapbox = (containerRef: React.RefObject<HTMLDivElement>) => {
   return {
     mapRef,
     selectedFeature,
+    theme,
+    changeTheme,
   };
 };
