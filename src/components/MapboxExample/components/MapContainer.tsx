@@ -50,11 +50,9 @@ export const MapContainer = ({
       <button
         onClick={handleThemeToggle}
         style={buttonStyle}
-        title={`Переключить на ${
-          theme === "light" ? "тёмную" : "светлую"
-        } тему`}
+        title={`Switch on ${theme === "light" ? "dark" : "light"} theme`}
       >
-        {theme === "light" ? "🌙 Dark" : "☀️ Light"}
+        {theme === "light" ? "Dark" : "Light"}
       </button>
     </div>
   );
