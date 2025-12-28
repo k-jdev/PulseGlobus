@@ -102,12 +102,20 @@ export const useMapbox = (
                 "line-color",
                 (themeConfig as any).borderColor
               );
+              map.setPaintProperty(layer.id, "line-width", 0.5);
             } else if (layer.id.includes("building-outline")) {
               map.setPaintProperty(
                 layer.id,
                 "line-color",
                 (themeConfig as any).lineColor
               );
+            }
+          }
+
+          if (layer.type === "symbol") {
+            if (layer.layout && layer.layout["text-field"]) {
+              map.setPaintProperty(layer.id, "text-color", "#ffffff");
+              map.setPaintProperty(layer.id, "text-halo-width", 0);
             }
           }
         });
