@@ -61,6 +61,62 @@ export const useMapbox = (
       }
     }
 
+    const updateLayerVisibility = () => {
+      const zoom = map.getZoom();
+      const minZoomForDetails = 8;
+
+      const layers = map.getStyle().layers;
+      if (layers) {
+        layers.forEach((layer: any) => {
+          if (
+            layer.type === "symbol" &&
+            layer.layout &&
+            layer.layout["text-field"]
+          ) {
+            return;
+          }
+
+          if (zoom < minZoomForDetails) {
+            if (
+              layer.id.includes("river") ||
+              layer.id.includes("stream") ||
+              layer.id.includes("canal") ||
+              layer.id.includes("lake") ||
+              layer.id.includes("road") ||
+              layer.id.includes("street") ||
+              layer.id.includes("path") ||
+              layer.id.includes("building") ||
+              layer.id.includes("landcover") ||
+              layer.id.includes("landuse") ||
+              layer.id.includes("park") ||
+              layer.id.includes("pitch") ||
+              layer.id.includes("poi")
+            ) {
+              map.setLayoutProperty(layer.id, "visibility", "none");
+            }
+          } else {
+            if (
+              layer.id.includes("river") ||
+              layer.id.includes("stream") ||
+              layer.id.includes("canal") ||
+              layer.id.includes("lake") ||
+              layer.id.includes("road") ||
+              layer.id.includes("street") ||
+              layer.id.includes("path") ||
+              layer.id.includes("building") ||
+              layer.id.includes("landcover") ||
+              layer.id.includes("landuse") ||
+              layer.id.includes("park") ||
+              layer.id.includes("pitch") ||
+              layer.id.includes("poi")
+            ) {
+              map.setLayoutProperty(layer.id, "visibility", "visible");
+            }
+          }
+        });
+      }
+    };
+
     map.on("load", () => {
       const themeConfig = THEME_CONFIGS[theme];
       map.setPaintProperty("water", "fill-color", themeConfig.water as any);
@@ -114,7 +170,8 @@ export const useMapbox = (
 
           if (layer.type === "symbol") {
             if (layer.layout && layer.layout["text-field"]) {
-              map.setPaintProperty(layer.id, "text-color", "#ffffff");
+              const textColor = theme === "light" ? "#000000" : "#ffffff";
+              map.setPaintProperty(layer.id, "text-color", textColor);
               map.setPaintProperty(layer.id, "text-halo-width", 0);
             }
           }
@@ -150,6 +207,8 @@ export const useMapbox = (
           "circle-stroke-color": "#ffffff",
         },
       });
+
+      updateLayerVisibility();
 
       map.on("mousemove", "airport", (e) => {
         if (e.features && e.features.length > 0) {
@@ -200,6 +259,7 @@ export const useMapbox = (
       });
 
       map.on("zoomend", () => {
+        updateLayerVisibility();
         if (!selectedFeatureRef.current) {
           userInteractingRef.current = false;
           spinGlobe();

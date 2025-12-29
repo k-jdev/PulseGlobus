@@ -19,14 +19,14 @@ const mapStyle: CSSProperties = {
   height: "100%",
   borderRadius: "0px",
   position: "relative",
-  zIndex: 0,
+  zIndex: 2,
 };
 
 const buttonStyle: CSSProperties = {
   position: "absolute",
   top: "20px",
   right: "20px",
-  zIndex: 10,
+  zIndex: 1000,
   padding: "10px 20px",
   backgroundColor: "rgba(255, 255, 255, 0.9)",
   border: "1px solid #ccc",
@@ -49,6 +49,12 @@ const dotsOverlayStyle: CSSProperties = {
   zIndex: 1,
 };
 
+const popupOverrideStyle = `
+  .mapboxgl-popup {
+    z-index: 999 !important;
+  }
+`;
+
 export const MapContainer = ({
   mapContainerRef,
   theme,
@@ -61,6 +67,7 @@ export const MapContainer = ({
 
   return (
     <div style={containerStyle}>
+      <style>{popupOverrideStyle}</style>
       {theme === "light" && <div style={dotsOverlayStyle} />}
       <div ref={mapContainerRef} style={mapStyle} />
       <button
