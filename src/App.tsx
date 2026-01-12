@@ -1,8 +1,9 @@
-import { GlobusMapboxComponent } from "./components";
+import { GlobusMapboxComponent, NavbarComponent } from "./components";
 
 function App() {
   return (
     <>
+      <NavbarComponent />
       <GlobusMapboxComponent />
     </>
   );
