@@ -17,10 +17,12 @@ export const useMapbox = (
   const popupRef = useRef<mapboxgl.Popup | null>(null);
   const selectedFeatureRef = useRef<MapboxGeoJSONFeature | null>(null);
   const userInteractingRef = useRef(false);
+  const isPausedRef = useRef(false);
 
   const [selectedFeature, setSelectedFeature] =
     useState<MapboxGeoJSONFeature | null>(null);
   const [theme, setTheme] = useState<Theme>("light");
+  const [isPaused, setIsPaused] = useState(false);
 
   useEffect(() => {
     selectedFeatureRef.current = selectedFeature;
@@ -49,7 +51,11 @@ export const useMapbox = (
 
     function spinGlobe() {
       const zoom = map.getZoom();
-      if (!userInteractingRef.current && zoom < maxSpinZoom) {
+      if (
+        !userInteractingRef.current &&
+        !isPausedRef.current &&
+        zoom < maxSpinZoom
+      ) {
         let distancePerSecond = 360 / secondsPerRevolution;
         if (zoom > slowSpinZoom) {
           const zoomDif = (maxSpinZoom - zoom) / (maxSpinZoom - slowSpinZoom);
@@ -289,6 +295,23 @@ export const useMapbox = (
     }
   };
 
+  const toggleSpin = () => {
+    isPausedRef.current = !isPausedRef.current;
+    setIsPaused(isPausedRef.current);
+
+    // Если снимаем паузу, запускаем вращение
+    if (!isPausedRef.current && mapRef.current) {
+      const map = mapRef.current;
+      const zoom = map.getZoom();
+      if (zoom < 5) {
+        const center = map.getCenter();
+        const distancePerSecond = 360 / 120;
+        center.lng -= distancePerSecond;
+        map.easeTo({ center, duration: 1000, easing: (n) => n });
+      }
+    }
+  };
+
   const handleAirportClick = (
     map: mapboxgl.Map,
     feature: MapboxGeoJSONFeature | undefined
@@ -354,5 +377,7 @@ export const useMapbox = (
     selectedFeature,
     theme,
     changeTheme,
+    isPaused,
+    toggleSpin,
   };
 };

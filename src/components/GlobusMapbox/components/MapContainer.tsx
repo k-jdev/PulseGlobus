@@ -22,20 +22,6 @@ const mapStyle: CSSProperties = {
   zIndex: 2,
 };
 
-const buttonStyle: CSSProperties = {
-  position: "absolute",
-  top: "20px",
-  right: "20px",
-  zIndex: 1000,
-  padding: "10px 20px",
-  backgroundColor: "rgba(255, 255, 255, 0.9)",
-  border: "1px solid #ccc",
-  borderRadius: "4px",
-  cursor: "pointer",
-  fontSize: "14px",
-  fontWeight: "500",
-};
-
 const dotsOverlayStyle: CSSProperties = {
   position: "absolute",
   top: 0,
@@ -55,28 +41,12 @@ const popupOverrideStyle = `
   }
 `;
 
-export const MapContainer = ({
-  mapContainerRef,
-  theme,
-  onThemeChange,
-}: MapContainerProps) => {
-  const handleThemeToggle = () => {
-    const newTheme = theme === "light" ? "dark" : "light";
-    onThemeChange(newTheme);
-  };
-
+export const MapContainer = ({ mapContainerRef, theme }: MapContainerProps) => {
   return (
     <div style={containerStyle}>
       <style>{popupOverrideStyle}</style>
       {theme === "light" && <div style={dotsOverlayStyle} />}
       <div ref={mapContainerRef} style={mapStyle} />
-      <button
-        onClick={handleThemeToggle}
-        style={buttonStyle}
-        title={`Switch on ${theme === "light" ? "dark" : "light"} theme`}
-      >
-        {theme === "light" ? "Dark" : "Light"}
-      </button>
     </div>
   );
 };
