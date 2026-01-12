@@ -1,1 +1,1 @@
-export { default as MapboxExample } from "./MapboxExample";
+export { default as GlobusMapboxComponent } from "./GlobusMapbox";

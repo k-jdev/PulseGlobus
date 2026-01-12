@@ -5,7 +5,7 @@ import { MapContainer } from "./components";
 import "mapbox-gl/dist/mapbox-gl.css";
 import "./styles.css";
 
-const MapboxExample = () => {
+const GlobusMapbox = () => {
   const mapContainerRef = useRef<HTMLDivElement>(null);
   const { theme, changeTheme } = useMapbox(mapContainerRef);
 
@@ -18,4 +18,4 @@ const MapboxExample = () => {
   );
 };
 
-export default MapboxExample;
+export default GlobusMapbox;
