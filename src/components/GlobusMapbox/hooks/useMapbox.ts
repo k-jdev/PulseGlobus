@@ -8,10 +8,12 @@ import {
   Theme,
 } from "../constants/mapConfig";
 import { createPopupContent } from "../utils/popupContent";
+import { MapMarker, createGeoJSONFromMarkers } from "../utils/marketMappers";
 
 export const useMapbox = (
   containerRef: React.RefObject<HTMLDivElement>,
-  onThemeChange?: (theme: Theme) => void
+  onThemeChange?: (theme: Theme) => void,
+  markers?: MapMarker[]
 ) => {
   const mapRef = useRef<mapboxgl.Map | null>(null);
   const popupRef = useRef<mapboxgl.Popup | null>(null);
@@ -27,6 +29,29 @@ export const useMapbox = (
   useEffect(() => {
     selectedFeatureRef.current = selectedFeature;
   }, [selectedFeature]);
+
+  const [mapLoaded, setMapLoaded] = useState(false);
+
+  // Обновляем маркеры на карте когда приходят новые данные
+  useEffect(() => {
+    if (mapRef.current && mapLoaded && markers && markers.length > 0) {
+      const map = mapRef.current;
+      const source = map.getSource("markets") as mapboxgl.GeoJSONSource;
+
+      console.log(
+        "📍 Updating markers:",
+        markers.length,
+        "source exists:",
+        !!source
+      );
+
+      if (source) {
+        const geojson = createGeoJSONFromMarkers(markers);
+        console.log("🗺️ GeoJSON features:", geojson.features.length);
+        source.setData(geojson);
+      }
+    }
+  }, [markers, mapLoaded]);
 
   useEffect(() => {
     mapboxgl.accessToken = MAPBOX_ACCESS_TOKEN;
@@ -184,58 +209,91 @@ export const useMapbox = (
         });
       }
 
-      map.addSource("airports", {
-        type: "vector",
-        url: "mapbox://mapbox.04w69w5j",
+      map.addSource("markets", {
+        type: "geojson",
+        data: {
+          type: "FeatureCollection",
+          features: [],
+        },
       });
 
       map.addLayer({
-        id: "airport",
-        source: "airports",
-        "source-layer": "ne_10m_airports",
+        id: "markets",
+        source: "markets",
         type: "circle",
         paint: {
           "circle-color": [
             "case",
             ["boolean", ["feature-state", "selected"], false],
-            "#f00",
-            "#4264fb",
+            "#f59e0b",
+            "#3b82f6",
           ],
           "circle-radius": [
-            "case",
-            ["boolean", ["feature-state", "selected"], false],
+            "interpolate",
+            ["linear"],
+            ["get", "volume"],
+            0,
             6,
-            ["boolean", ["feature-state", "highlight"], false],
-            6,
-            4,
+            100000,
+            10,
+            1000000,
+            14,
+            10000000,
+            18,
           ],
           "circle-stroke-width": 2,
           "circle-stroke-color": "#ffffff",
+          "circle-opacity": 0.9,
+        },
+      });
+
+      // Добавляем пульсирующую анимацию
+      map.addLayer({
+        id: "markets-pulse",
+        source: "markets",
+        type: "circle",
+        paint: {
+          "circle-color": "#3b82f6",
+          "circle-radius": [
+            "interpolate",
+            ["linear"],
+            ["get", "volume"],
+            0,
+            10,
+            100000,
+            16,
+            1000000,
+            22,
+            10000000,
+            28,
+          ],
+          "circle-opacity": 0.3,
+          "circle-stroke-width": 0,
         },
       });
 
       updateLayerVisibility();
 
-      map.on("mousemove", "airport", (e) => {
+      map.on("mousemove", "markets", (e) => {
         if (e.features && e.features.length > 0) {
-          handleAirportMouseEnter(map, e.features[0]);
+          handleMarketMouseEnter(map, e.features[0]);
         }
       });
 
-      map.on("mouseleave", "airport", () => {
-        handleAirportMouseLeave(map);
+      map.on("mouseleave", "markets", () => {
+        handleMarketMouseLeave(map);
       });
 
-      map.on("click", "airport", (e) => {
+      map.on("click", "markets", (e) => {
         if (e.features && e.features.length > 0) {
           userInteractingRef.current = true;
-          handleAirportClick(map, e.features[0]);
+          handleMarketClick(map, e.features[0]);
         }
       });
 
       map.on("click", (e) => {
         const features = map.queryRenderedFeatures(e.point, {
-          layers: ["airport"],
+          layers: ["markets"],
         });
         if (features.length === 0) {
           handleMapClick(map);
@@ -279,9 +337,16 @@ export const useMapbox = (
       });
 
       spinGlobe();
+
+      // Карта загружена, можно обновлять маркеры
+      setMapLoaded(true);
+      console.log("🗺️ Map loaded, ready for markers");
     });
 
-    return () => map.remove();
+    return () => {
+      setMapLoaded(false);
+      map.remove();
+    };
   }, [containerRef, theme]);
 
   const changeTheme = (newTheme: Theme) => {
@@ -312,16 +377,26 @@ export const useMapbox = (
     }
   };
 
-  const handleAirportClick = (
+  const handleMarketClick = (
     map: mapboxgl.Map,
     feature: MapboxGeoJSONFeature | undefined
   ) => {
-    if (selectedFeatureRef.current) {
-      map.setFeatureState(selectedFeatureRef.current, { selected: false });
+    if (
+      selectedFeatureRef.current &&
+      selectedFeatureRef.current.id !== undefined
+    ) {
+      map.setFeatureState(
+        { source: "markets", id: selectedFeatureRef.current.id } as any,
+        { selected: false }
+      );
     }
 
     if (feature && feature.geometry && feature.geometry.type === "Point") {
-      map.setFeatureState(feature, { selected: true });
+      if (feature.id !== undefined) {
+        map.setFeatureState({ source: "markets", id: feature.id } as any, {
+          selected: true,
+        });
+      }
       setSelectedFeature(feature);
 
       if (popupRef.current) {
@@ -338,8 +413,14 @@ export const useMapbox = (
         .addTo(map);
 
       popupRef.current.on("close", () => {
-        if (selectedFeatureRef.current) {
-          map.setFeatureState(selectedFeatureRef.current, { selected: false });
+        if (
+          selectedFeatureRef.current &&
+          selectedFeatureRef.current.id !== undefined
+        ) {
+          map.setFeatureState(
+            { source: "markets", id: selectedFeatureRef.current.id } as any,
+            { selected: false }
+          );
           setSelectedFeature(null);
         }
         userInteractingRef.current = false;
@@ -348,8 +429,14 @@ export const useMapbox = (
   };
 
   const handleMapClick = (map: mapboxgl.Map) => {
-    if (selectedFeatureRef.current) {
-      map.setFeatureState(selectedFeatureRef.current, { selected: false });
+    if (
+      selectedFeatureRef.current &&
+      selectedFeatureRef.current.id !== undefined
+    ) {
+      map.setFeatureState(
+        { source: "markets", id: selectedFeatureRef.current.id } as any,
+        { selected: false }
+      );
       setSelectedFeature(null);
     }
     if (popupRef.current) {
@@ -358,17 +445,16 @@ export const useMapbox = (
     }
   };
 
-  const handleAirportMouseEnter = (
+  const handleMarketMouseEnter = (
     map: mapboxgl.Map,
     feature: MapboxGeoJSONFeature | undefined
   ) => {
     if (feature) {
-      map.setFeatureState(feature, { highlight: true });
       map.getCanvas().style.cursor = "pointer";
     }
   };
 
-  const handleAirportMouseLeave = (map: mapboxgl.Map) => {
+  const handleMarketMouseLeave = (map: mapboxgl.Map) => {
     map.getCanvas().style.cursor = "";
   };
 

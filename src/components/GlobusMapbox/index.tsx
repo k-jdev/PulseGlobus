@@ -1,6 +1,8 @@
-import { useRef } from "react";
+import { useRef, useMemo, useEffect } from "react";
 import { useMapbox } from "./hooks";
 import { MapContainer } from "./components";
+import { useGetMarketsQuery } from "../../store/services/polymarketApi";
+import { convertMarketsToMapMarkers } from "./utils/marketMappers";
 
 import "mapbox-gl/dist/mapbox-gl.css";
 import "./styles.css";
@@ -15,8 +17,39 @@ const GlobusMapbox = ({
   onSpinStateChange,
 }: GlobusMapboxProps) => {
   const mapContainerRef = useRef<HTMLDivElement>(null);
-  const { theme, changeTheme, isPaused, toggleSpin } =
-    useMapbox(mapContainerRef);
+
+  // Получаем данные с Polymarket
+  const {
+    data: markets,
+    isLoading,
+    error,
+  } = useGetMarketsQuery({ limit: 100, active: true });
+
+  // Логируем для отладки
+  useEffect(() => {
+    console.log("📊 Polymarket API:", {
+      isLoading,
+      error,
+      marketsCount: markets?.length || 0,
+    });
+    if (markets && markets.length > 0) {
+      console.log("📈 First market:", markets[0]);
+    }
+  }, [markets, isLoading, error]);
+
+  // Конвертируем маркеты в маркеры для карты
+  const mapMarkers = useMemo(() => {
+    if (!markets) return [];
+    const markers = convertMarketsToMapMarkers(markets);
+    console.log("🎯 Converted markers:", markers.length);
+    return markers;
+  }, [markets]);
+
+  const { theme, changeTheme, isPaused, toggleSpin } = useMapbox(
+    mapContainerRef,
+    undefined,
+    mapMarkers
+  );
 
   if (onThemeChange) {
     onThemeChange(theme, changeTheme);
