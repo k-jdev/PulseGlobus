@@ -226,55 +226,18 @@ export const useMapbox = (
             "case",
             ["boolean", ["feature-state", "selected"], false],
             "#f59e0b",
-            "#3b82f6",
+            "#2563eb",
           ],
-          "circle-radius": [
-            "interpolate",
-            ["linear"],
-            ["get", "volume"],
-            0,
-            6,
-            100000,
-            10,
-            1000000,
-            14,
-            10000000,
-            18,
-          ],
+          "circle-radius": 6,
           "circle-stroke-width": 2,
           "circle-stroke-color": "#ffffff",
-          "circle-opacity": 0.9,
-        },
-      });
-
-      // Добавляем пульсирующую анимацию
-      map.addLayer({
-        id: "markets-pulse",
-        source: "markets",
-        type: "circle",
-        paint: {
-          "circle-color": "#3b82f6",
-          "circle-radius": [
-            "interpolate",
-            ["linear"],
-            ["get", "volume"],
-            0,
-            10,
-            100000,
-            16,
-            1000000,
-            22,
-            10000000,
-            28,
-          ],
-          "circle-opacity": 0.3,
-          "circle-stroke-width": 0,
+          "circle-opacity": 1,
         },
       });
 
       updateLayerVisibility();
 
-      map.on("mousemove", "markets", (e) => {
+      map.on("mouseenter", "markets", (e) => {
         if (e.features && e.features.length > 0) {
           handleMarketMouseEnter(map, e.features[0]);
         }
@@ -282,13 +245,6 @@ export const useMapbox = (
 
       map.on("mouseleave", "markets", () => {
         handleMarketMouseLeave(map);
-      });
-
-      map.on("click", "markets", (e) => {
-        if (e.features && e.features.length > 0) {
-          userInteractingRef.current = true;
-          handleMarketClick(map, e.features[0]);
-        }
       });
 
       map.on("click", (e) => {
@@ -377,56 +333,56 @@ export const useMapbox = (
     }
   };
 
-  const handleMarketClick = (
-    map: mapboxgl.Map,
-    feature: MapboxGeoJSONFeature | undefined
-  ) => {
-    if (
-      selectedFeatureRef.current &&
-      selectedFeatureRef.current.id !== undefined
-    ) {
-      map.setFeatureState(
-        { source: "markets", id: selectedFeatureRef.current.id } as any,
-        { selected: false }
-      );
-    }
+  // const handleMarketClick = (
+  //   map: mapboxgl.Map,
+  //   feature: MapboxGeoJSONFeature | undefined
+  // ) => {
+  //   if (
+  //     selectedFeatureRef.current &&
+  //     selectedFeatureRef.current.id !== undefined
+  //   ) {
+  //     map.setFeatureState(
+  //       { source: "markets", id: selectedFeatureRef.current.id } as any,
+  //       { selected: false }
+  //     );
+  //   }
 
-    if (feature && feature.geometry && feature.geometry.type === "Point") {
-      if (feature.id !== undefined) {
-        map.setFeatureState({ source: "markets", id: feature.id } as any, {
-          selected: true,
-        });
-      }
-      setSelectedFeature(feature);
+  //   if (feature && feature.geometry && feature.geometry.type === "Point") {
+  //     if (feature.id !== undefined) {
+  //       map.setFeatureState({ source: "markets", id: feature.id } as any, {
+  //         selected: true,
+  //       });
+  //     }
+  //     setSelectedFeature(feature);
 
-      if (popupRef.current) {
-        popupRef.current.remove();
-      }
+  //     if (popupRef.current) {
+  //       popupRef.current.remove();
+  //     }
 
-      const properties = feature.properties || {};
-      const popupContent = createPopupContent(properties);
-      const coordinates = feature.geometry.coordinates as [number, number];
+  //     const properties = feature.properties || {};
+  //     const popupContent = createPopupContent(properties);
+  //     const coordinates = feature.geometry.coordinates as [number, number];
 
-      popupRef.current = new mapboxgl.Popup(POPUP_CONFIG as any)
-        .setLngLat(coordinates)
-        .setHTML(popupContent)
-        .addTo(map);
+  //     popupRef.current = new mapboxgl.Popup(POPUP_CONFIG as any)
+  //       .setLngLat(coordinates)
+  //       .setHTML(popupContent)
+  //       .addTo(map);
 
-      popupRef.current.on("close", () => {
-        if (
-          selectedFeatureRef.current &&
-          selectedFeatureRef.current.id !== undefined
-        ) {
-          map.setFeatureState(
-            { source: "markets", id: selectedFeatureRef.current.id } as any,
-            { selected: false }
-          );
-          setSelectedFeature(null);
-        }
-        userInteractingRef.current = false;
-      });
-    }
-  };
+  //     popupRef.current.on("close", () => {
+  //       if (
+  //         selectedFeatureRef.current &&
+  //         selectedFeatureRef.current.id !== undefined
+  //       ) {
+  //         map.setFeatureState(
+  //           { source: "markets", id: selectedFeatureRef.current.id } as any,
+  //           { selected: false }
+  //         );
+  //         setSelectedFeature(null);
+  //       }
+  //       userInteractingRef.current = false;
+  //     });
+  //   }
+  // };
 
   const handleMapClick = (map: mapboxgl.Map) => {
     if (
@@ -451,11 +407,63 @@ export const useMapbox = (
   ) => {
     if (feature) {
       map.getCanvas().style.cursor = "pointer";
+
+      if (
+        selectedFeatureRef.current &&
+        selectedFeatureRef.current.id !== undefined
+      ) {
+        map.setFeatureState(
+          { source: "markets", id: selectedFeatureRef.current.id } as any,
+          { selected: false }
+        );
+      }
+
+      if (feature.id !== undefined) {
+        map.setFeatureState({ source: "markets", id: feature.id } as any, {
+          selected: true,
+        });
+      }
+      setSelectedFeature(feature);
+
+      if (popupRef.current) {
+        popupRef.current.remove();
+      }
+
+      if (feature.geometry && feature.geometry.type === "Point") {
+        const properties = feature.properties || {};
+        const popupContent = createPopupContent(properties);
+        const coordinates = feature.geometry.coordinates as [number, number];
+
+        popupRef.current = new mapboxgl.Popup({
+          ...POPUP_CONFIG,
+          closeButton: false,
+          closeOnClick: false,
+        } as any)
+          .setLngLat(coordinates)
+          .setHTML(popupContent)
+          .addTo(map);
+      }
     }
   };
 
   const handleMarketMouseLeave = (map: mapboxgl.Map) => {
     map.getCanvas().style.cursor = "";
+
+    if (
+      selectedFeatureRef.current &&
+      selectedFeatureRef.current.id !== undefined
+    ) {
+      map.setFeatureState(
+        { source: "markets", id: selectedFeatureRef.current.id } as any,
+        { selected: false }
+      );
+      setSelectedFeature(null);
+    }
+
+    if (popupRef.current) {
+      popupRef.current.remove();
+      popupRef.current = null;
+    }
   };
 
   return {
