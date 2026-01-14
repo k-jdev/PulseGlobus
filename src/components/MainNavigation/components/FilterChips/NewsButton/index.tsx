@@ -1,15 +1,17 @@
-import { useState } from "react";
 import { Button } from "../../../../ui";
 import { arrowDownIcon } from "../../../../../assets/svgs/mainNavigation";
 
-function NewsButton() {
-  const [isOpen, setIsOpen] = useState(false);
+interface NewsButtonProps {
+  isOpen: boolean;
+  onClick: () => void;
+}
 
+function NewsButton({ isOpen, onClick }: NewsButtonProps) {
   return (
     <Button
       variant="navigation"
       className="flex gap-2 items-center"
-      onClick={() => setIsOpen(!isOpen)}
+      onClick={onClick}
     >
       <p>Breaking</p>
       <img

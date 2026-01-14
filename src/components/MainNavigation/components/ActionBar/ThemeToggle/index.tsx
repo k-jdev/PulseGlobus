@@ -16,16 +16,22 @@ function ThemeToggle({ theme, onThemeChange }: ThemeToggleProps) {
         }`}
         title="Light theme"
       >
-        <img src={sunIcon} alt="Sun" className="w-6 h-6" />
+        <img
+          src={sunIcon}
+          alt="Sun"
+          className={`w-6 h-6 ${
+            theme === "light" ? "" : "brightness-0 invert"
+          }`}
+        />
       </button>
       <button
         onClick={() => onThemeChange("dark")}
         className={`w-[48px] h-[48px] flex items-center justify-center rounded-full border-[0.556px] border-[rgba(0,0,0,0.12)] transition-all ${
-          theme === "dark" ? "bg-white" : "bg-[rgba(255,255,255,0.2)]"
+          theme === "dark" ? "bg-white" : "bg-white"
         }`}
         title="Dark theme"
       >
-        <img src={moonIcon} alt="Moon" className="w-6 h-6" />
+        <img src={moonIcon} alt="Moon" className="w-6 h-6 brightness-0" />
       </button>
     </div>
   );
