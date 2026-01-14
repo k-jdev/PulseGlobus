@@ -181,7 +181,7 @@ export function Search() {
 
       {/* Dropdown */}
       {isOpen && (
-        <div className="absolute top-full left-0 right-0 mt-2 bg-white rounded-[14px] border border-[#e9edf8] shadow-[0px_22px_32px_0px_rgba(20,82,240,0.25)] z-50 px-6 py-5 flex flex-col gap-4">
+        <div className="absolute top-[70px] left-0 right-0 mt-2 bg-white rounded-[14px] border border-[#e9edf8] shadow-[0px_22px_32px_0px_rgba(20,82,240,0.25)] z-50 px-6 py-5 flex flex-col gap-4">
           {/* Searching For */}
           <p className="font-semibold text-[16px] leading-[30px] tracking-[-0.4px] text-[#1b2430]">
             Searching For

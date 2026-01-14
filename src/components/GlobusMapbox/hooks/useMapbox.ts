@@ -301,21 +301,28 @@ export const useMapbox = (
       });
 
       map.on("dragend", () => {
-        userInteractingRef.current = true;
+        userInteractingRef.current = false;
+        spinGlobe();
       });
 
       map.on("pitchend", () => {
-        userInteractingRef.current = true;
+        userInteractingRef.current = false;
+        spinGlobe();
       });
 
       map.on("rotateend", () => {
+        userInteractingRef.current = false;
+        spinGlobe();
+      });
+
+      map.on("zoomstart", () => {
         userInteractingRef.current = true;
       });
 
       map.on("zoomend", () => {
         updateLayerVisibility();
+        userInteractingRef.current = false;
         if (!selectedFeatureRef.current) {
-          userInteractingRef.current = false;
           spinGlobe();
         }
       });
@@ -354,15 +361,21 @@ export const useMapbox = (
     isPausedRef.current = !isPausedRef.current;
     setIsPaused(isPausedRef.current);
 
-    // Если снимаем паузу, запускаем вращение
-    if (!isPausedRef.current && mapRef.current) {
+    if (mapRef.current) {
       const map = mapRef.current;
-      const zoom = map.getZoom();
-      if (zoom < 5) {
-        const center = map.getCenter();
-        const distancePerSecond = 360 / 120;
-        center.lng -= distancePerSecond;
-        map.easeTo({ center, duration: 1000, easing: (n) => n });
+
+      if (isPausedRef.current) {
+        // Мгновенно останавливаем анимацию
+        map.stop();
+      } else {
+        // Если снимаем паузу, запускаем вращение
+        const zoom = map.getZoom();
+        if (zoom < 5) {
+          const center = map.getCenter();
+          const distancePerSecond = 360 / 120;
+          center.lng -= distancePerSecond;
+          map.easeTo({ center, duration: 1000, easing: (n) => n });
+        }
       }
     }
   };

@@ -6,6 +6,7 @@ interface NewsItem {
   image: string;
   question: string;
   price: string;
+  priceNum: number;
   outcome: string;
   volume: string;
   slug: string;
@@ -33,6 +34,7 @@ const convertMarketToNews = (market: Market): NewsItem => {
     image: market.imageOptimized?.imageUrlOptimized || market.image || "",
     question: market.question,
     price: formatPrice(price),
+    priceNum: price,
     outcome: outcomes[maxPriceIndex] || "Yes",
     volume: formatVolume(volume),
     slug: market.slug,
@@ -44,7 +46,7 @@ interface BreakingNewsProps {
   onClose: () => void;
 }
 
-export const BreakingNews = ({ isOpen, onClose }: BreakingNewsProps) => {
+export const BreakingNews = ({ isOpen }: BreakingNewsProps) => {
   const [timeFilter, setTimeFilter] = useState<"1h" | "6h" | "24h">("24h");
   const { data: markets } = useGetMarketsQuery({ limit: 20, active: true });
 
@@ -53,15 +55,18 @@ export const BreakingNews = ({ isOpen, onClose }: BreakingNewsProps) => {
   if (!isOpen) return null;
 
   return (
-    <div className="absolute top-[160px] left-8 bg-white border-t-[6px] border-[#EE1616] rounded-[14px] w-[502px] max-h-[70vh] overflow-hidden z-50">
+    <div className="absolute top-[160px] left-8 bg-white border-t-[6px] border-[#EE1616] rounded-[14px] w-[502px] max-h-[70vh] overflow-hidden z-50 shadow-[0px_22px_32px_0px_rgba(20,82,240,0.25)]">
       {/* Header */}
-      <div className="p-6 pb-4">
-        <h2 className="text-[28px] font-bold text-[#1B2430] mb-1">
-          Breaking News
-        </h2>
-        <p className="text-gray-500 text-sm mb-4">
-          Markets reacting in real time. Volatility driven by unfolding events.
-        </p>
+      <div className="px-6 pt-7 pb-4">
+        <div className="flex flex-col gap-2 mb-4">
+          <h2 className="text-[32px] font-bold text-black tracking-[-0.56px] leading-8">
+            Breaking News
+          </h2>
+          <p className="text-[#808080] text-[16px] font-medium tracking-[-0.32px]">
+            Markets reacting in real time. Volatility driven by unfolding
+            events.
+          </p>
+        </div>
 
         {/* Time filters */}
         <div className="flex gap-2">
@@ -69,10 +74,10 @@ export const BreakingNews = ({ isOpen, onClose }: BreakingNewsProps) => {
             <button
               key={filter}
               onClick={() => setTimeFilter(filter)}
-              className={`px-6 py-3 rounded-full text-sm font-medium transition-colors border ${
+              className={`h-12 px-6 py-3 rounded-full text-[15px] font-medium transition-colors border border-[rgba(0,0,0,0.12)] ${
                 timeFilter === filter
-                  ? "bg-[#1452F01A] text-[#1452F0] border-[#0000001F]"
-                  : "bg-white text-[#BBBDC1] border-[#0000001F] hover:bg-gray-50"
+                  ? "bg-[rgba(20,82,240,0.1)] text-[#1452F0]"
+                  : "bg-white text-[#BBBDC1] hover:bg-gray-50"
               }`}
             >
               {filter}
@@ -81,75 +86,69 @@ export const BreakingNews = ({ isOpen, onClose }: BreakingNewsProps) => {
         </div>
       </div>
 
+      {/* Divider */}
+      <div className="mx-6 h-px bg-[#e4e4e4]" />
+
       {/* News List */}
-      <div className="px-6 pb-6 overflow-y-auto max-h-[calc(80vh-180px)]">
-        <div className="space-y-2">
+      <div className="px-6 py-4 overflow-y-auto max-h-[calc(70vh-200px)]">
+        <div className="flex flex-col gap-4">
           {news.map((item) => (
             <NewsRow key={item.id} item={item} />
           ))}
         </div>
       </div>
-
-      {/* Close button */}
-      <button
-        onClick={onClose}
-        className="absolute top-4 right-4 w-8 h-8 flex items-center justify-center rounded-full bg-gray-100 hover:bg-gray-200 transition-colors"
-      >
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          width="16"
-          height="16"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="2"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        >
-          <line x1="18" y1="6" x2="6" y2="18" />
-          <line x1="6" y1="6" x2="18" y2="18" />
-        </svg>
-      </button>
     </div>
   );
 };
 
 const NewsRow = ({ item }: { item: NewsItem }) => {
-  return (
-    <a
-      href={`https://polymarket.com/event/${item.slug}`}
-      target="_blank"
-      rel="noopener noreferrer"
-      className="flex items-start gap-4 py-4 border-b border-gray-100 last:border-b-0 hover:bg-gray-50 transition-colors rounded-lg px-2 -mx-2 cursor-pointer"
-    >
-      {/* Image */}
-      {item.image && (
-        <div className="w-12 h-12 rounded-xl overflow-hidden flex-shrink-0">
-          <img src={item.image} alt="" className="w-full h-full object-cover" />
-        </div>
-      )}
+  // Цена красная если меньше 50%, иначе синяя
+  const priceColor = item.priceNum < 0.5 ? "text-[#EE1616]" : "text-[#1452F0]";
 
-      {/* Content */}
-      <div className="flex-1 min-w-0">
-        <p className="text-[#1B2430] font-semibold text-[15px] leading-tight mb-2 line-clamp-2">
+  return (
+    <div className="flex flex-col gap-4">
+      {/* Main row: Image + Question + Price */}
+      <div className="flex items-center gap-4">
+        {/* Image */}
+        {item.image && (
+          <div className="w-9 h-9 rounded-[4.8px] overflow-hidden flex-shrink-0">
+            <img
+              src={item.image}
+              alt=""
+              className="w-full h-full object-cover"
+            />
+          </div>
+        )}
+
+        {/* Question */}
+        <p className="flex-1 text-[#1B2430] font-semibold text-[19px] leading-[30px] tracking-[-0.4px]">
           {item.question}
         </p>
 
-        {/* Tags */}
-        <div className="flex items-center gap-2">
-          <span className="px-3 py-1 bg-gray-100 rounded-full text-gray-600 text-xs font-medium">
+        {/* Price + Outcome */}
+        <div className="flex flex-col items-end gap-2 flex-shrink-0">
+          <p
+            className={`${priceColor} font-semibold text-[20px] tracking-[-0.4px]`}
+          >
+            {item.price}
+          </p>
+          <p className="text-[#BBBDC1] font-medium text-[14px] tracking-[-0.28px]">
+            {item.outcome}
+          </p>
+        </div>
+      </div>
+
+      {/* Tags row: Volume, Weekly, Chart icon - left | Pin icon - right */}
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-1.5">
+          <span className="px-3 py-1 bg-[#f5f5f5] rounded-full text-[#808080] text-[14px] font-medium tracking-[-0.28px]">
             {item.volume}
           </span>
-          <span className="px-3 py-1 bg-gray-100 rounded-full text-gray-600 text-xs font-medium">
+          <span className="px-3 py-1 bg-[#f5f5f5] rounded-full text-[#808080] text-[14px] font-medium tracking-[-0.28px]">
             Weekly
           </span>
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            width="14"
-            height="14"
-            viewBox="0 0 16 16"
-            fill="none"
-          >
+          {/* Chart icon */}
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
             <g clipPath="url(#clip_news_row)">
               <path
                 d="M14.6649 4.66626L8.99884 10.3323L5.66587 6.99934L1.33301 11.3322"
@@ -173,33 +172,29 @@ const NewsRow = ({ item }: { item: NewsItem }) => {
             </defs>
           </svg>
         </div>
-      </div>
 
-      {/* Price */}
-      <div className="text-right flex-shrink-0">
-        <p className="text-[#1452F0] font-bold text-lg">{item.price}</p>
-        <p className="text-gray-400 text-xs">{item.outcome}</p>
-      </div>
-
-      {/* Pin icon */}
-      <div className="text-gray-300 flex-shrink-0 mt-1">
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          width="20"
-          height="20"
-          viewBox="0 0 24 24"
-          fill="none"
+        {/* Pin icon */}
+        <a
+          href={`https://polymarket.com/event/${item.slug}`}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="text-[#BBBDC1] hover:text-[#808080] transition-colors"
         >
-          <path
-            d="M15 4.5L11 8.5L7 10L5.5 11.5L12.5 18.5L14 17L15.5 13L19.5 9M9 15L4.5 19.5M14.5 4L20 9.5"
-            stroke="#BBBDC1"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          />
-        </svg>
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+            <path
+              d="M15 4.5L11 8.5L7 10L5.5 11.5L12.5 18.5L14 17L15.5 13L19.5 9M9 15L4.5 19.5M14.5 4L20 9.5"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+          </svg>
+        </a>
       </div>
-    </a>
+
+      {/* Divider */}
+      <div className="h-px bg-[#e4e4e4]" />
+    </div>
   );
 };
 

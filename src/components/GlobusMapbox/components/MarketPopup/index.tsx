@@ -50,10 +50,10 @@ export const MarketPopup: FC<MarketPopupProps> = ({
               <span className="text-[#1B2430] text-[20px] font-bold">
                 {outcome.percentage}%
               </span>
-              <span className="text-[#1452F0]  py-2.5 px-3 bg-[#1452F0]/20 rounded-[4px] text-sm font-semibold">
+              <span className="text-[#1452F0]  py-2.5 px-3 bg-[#1452F0]/10 rounded-[4px] text-sm font-semibold">
                 {outcome.buyPrice}
               </span>
-              <span className="text-[#EE1616] py-2.5 px-3 bg-[#EE1616]/20 rounded-[4px] text-sm font-semibold">
+              <span className="text-[#EE1616] py-2.5 px-3 bg-[#EE1616]/10 rounded-[4px] text-sm font-semibold">
                 {outcome.sellPrice}
               </span>
             </div>
