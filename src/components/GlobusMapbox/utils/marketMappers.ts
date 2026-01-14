@@ -14,6 +14,10 @@ export interface MapMarker {
   eventTitle?: string;
   slug: string;
   active: boolean;
+  volume24hr: number;
+  volume1wk: number;
+  volume1mo: number;
+  endDate: string;
 }
 
 function hashCode(str: string): number {
@@ -1200,6 +1204,10 @@ export function convertMarketsToMapMarkers(markets: Market[]): MapMarker[] {
         eventTitle,
         slug: market.slug,
         active: market.active,
+        volume24hr: market.volume24hr || 0,
+        volume1wk: market.volume1wk || 0,
+        volume1mo: market.volume1mo || 0,
+        endDate: market.endDate || "",
       };
     });
 }
@@ -1251,6 +1259,10 @@ export function convertEventsToMapMarkers(
         eventTitle: event.title,
         slug: event.slug,
         active: event.active,
+        volume24hr: event.volume24hr || 0,
+        volume1wk: event.volume1wk || 0,
+        volume1mo: event.volume1mo || 0,
+        endDate: event.endDate || "",
       };
     });
 }
@@ -1275,6 +1287,10 @@ export function createGeoJSONFromMarkers(
         outcomePrices: JSON.stringify(marker.outcomePrices),
         eventTitle: marker.eventTitle,
         slug: marker.slug,
+        volume24hr: marker.volume24hr,
+        volume1wk: marker.volume1wk,
+        volume1mo: marker.volume1mo,
+        endDate: marker.endDate,
       },
       geometry: {
         type: "Point" as const,

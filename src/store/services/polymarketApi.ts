@@ -40,6 +40,9 @@ export interface PolymarketEvent {
   liquidity: number;
   category: string;
   subcategory: string;
+  volume24hr: number;
+  volume1wk: number;
+  volume1mo: number;
   imageOptimized?: ImageOptimized;
 }
 
@@ -100,8 +103,40 @@ export const polymarketApi = createApi({
         `/events?limit=${limit}&active=${active}`,
       providesTags: ["Events"],
     }),
+
+    searchMarkets: builder.query<Market[], { query: string; limit?: number }>({
+      query: ({ limit = 200 }) => `/markets?limit=${limit}&active=true`,
+      transformResponse: (response: Market[], _meta, arg) => {
+        const searchQuery = arg.query.toLowerCase().trim();
+        if (!searchQuery) return response.slice(0, 20);
+
+        // Фильтруем маркеты по запросу
+        const filtered = response.filter((market) => {
+          const question = market.question?.toLowerCase() || "";
+          const description = market.description?.toLowerCase() || "";
+          const category = market.category?.toLowerCase() || "";
+
+          return (
+            question.includes(searchQuery) ||
+            description.includes(searchQuery) ||
+            category.includes(searchQuery)
+          );
+        });
+
+        return filtered.slice(0, 20);
+      },
+      serializeQueryArgs: ({ queryArgs }) => {
+        // Включаем query в ключ кеша
+        return `searchMarkets-${queryArgs.query}`;
+      },
+      providesTags: ["Markets"],
+    }),
   }),
 });
 
-export const { useGetMarketsQuery, useGetMarketByIdQuery, useGetEventsQuery } =
-  polymarketApi;
+export const {
+  useGetMarketsQuery,
+  useGetMarketByIdQuery,
+  useGetEventsQuery,
+  useSearchMarketsQuery,
+} = polymarketApi;

@@ -13,13 +13,27 @@ import { MapMarker, createGeoJSONFromMarkers } from "../utils/marketMappers";
 export const useMapbox = (
   containerRef: React.RefObject<HTMLDivElement>,
   onThemeChange?: (theme: Theme) => void,
-  markers?: MapMarker[]
+  markers?: MapMarker[],
+  onMarkerClick?: (marker: MapMarker) => void
 ) => {
   const mapRef = useRef<mapboxgl.Map | null>(null);
   const popupRef = useRef<mapboxgl.Popup | null>(null);
   const selectedFeatureRef = useRef<MapboxGeoJSONFeature | null>(null);
   const userInteractingRef = useRef(false);
   const isPausedRef = useRef(false);
+  const markersRef = useRef<MapMarker[]>([]);
+  const onMarkerClickRef = useRef<((marker: MapMarker) => void) | undefined>(
+    undefined
+  );
+
+  // Обновляем refs при изменении props
+  useEffect(() => {
+    markersRef.current = markers || [];
+  }, [markers]);
+
+  useEffect(() => {
+    onMarkerClickRef.current = onMarkerClick;
+  }, [onMarkerClick]);
 
   const [selectedFeature, setSelectedFeature] =
     useState<MapboxGeoJSONFeature | null>(null);
@@ -245,6 +259,26 @@ export const useMapbox = (
 
       map.on("mouseleave", "markets", () => {
         handleMarketMouseLeave(map);
+      });
+
+      map.on("click", "markets", (e) => {
+        if (
+          e.features &&
+          e.features.length > 0 &&
+          onMarkerClickRef.current &&
+          markersRef.current.length > 0
+        ) {
+          const feature = e.features[0];
+          const marketId = feature.properties?.id;
+          const marker = markersRef.current.find((m) => m.id === marketId);
+
+          if (marker) {
+            // Закрываем hover попап
+            handleMarketMouseLeave(map);
+
+            onMarkerClickRef.current(marker);
+          }
+        }
       });
 
       map.on("click", (e) => {

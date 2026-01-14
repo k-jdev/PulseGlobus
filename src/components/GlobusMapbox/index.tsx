@@ -1,8 +1,8 @@
-import { useRef, useMemo, useEffect } from "react";
+import { useRef, useMemo, useEffect, useState } from "react";
 import { useMapbox } from "./hooks";
-import { MapContainer } from "./components";
+import { MapContainer, MarketStatsPopup } from "./components";
 import { useGetMarketsQuery } from "../../store/services/polymarketApi";
-import { convertMarketsToMapMarkers } from "./utils/marketMappers";
+import { convertMarketsToMapMarkers, MapMarker } from "./utils/marketMappers";
 
 import "mapbox-gl/dist/mapbox-gl.css";
 import "./styles.css";
@@ -17,6 +17,7 @@ const GlobusMapbox = ({
   onSpinStateChange,
 }: GlobusMapboxProps) => {
   const mapContainerRef = useRef<HTMLDivElement>(null);
+  const [selectedMarket, setSelectedMarket] = useState<MapMarker | null>(null);
 
   // Получаем данные с Polymarket
   const {
@@ -48,8 +49,15 @@ const GlobusMapbox = ({
   const { theme, changeTheme, isPaused, toggleSpin } = useMapbox(
     mapContainerRef,
     undefined,
-    mapMarkers
+    mapMarkers,
+    (marker) => {
+      setSelectedMarket(marker);
+    }
   );
+
+  const handleClosePopup = () => {
+    setSelectedMarket(null);
+  };
 
   if (onThemeChange) {
     onThemeChange(theme, changeTheme);
@@ -60,11 +68,34 @@ const GlobusMapbox = ({
   }
 
   return (
-    <MapContainer
-      mapContainerRef={mapContainerRef}
-      theme={theme}
-      onThemeChange={changeTheme}
-    />
+    <>
+      <MapContainer
+        mapContainerRef={mapContainerRef}
+        theme={theme}
+        onThemeChange={changeTheme}
+      />
+      {selectedMarket && (
+        <div className="fixed top-[160px] right-6 z-50">
+          <MarketStatsPopup
+            title={selectedMarket.title}
+            image={selectedMarket.image}
+            outcomes={selectedMarket.outcomes.map((name, idx) => ({
+              name,
+              price: selectedMarket.outcomePrices[idx] || 0,
+            }))}
+            volume={selectedMarket.volume}
+            volume24hr={selectedMarket.volume24hr}
+            volume1wk={selectedMarket.volume1wk}
+            volume1mo={selectedMarket.volume1mo}
+            liquidity={selectedMarket.liquidity}
+            endDate={selectedMarket.endDate}
+            description={selectedMarket.description}
+            slug={selectedMarket.slug}
+            onClose={handleClosePopup}
+          />
+        </div>
+      )}
+    </>
   );
 };
 
