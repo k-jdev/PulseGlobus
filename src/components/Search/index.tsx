@@ -227,10 +227,15 @@ export function Search() {
             ) : filteredResults && filteredResults.length > 0 ? (
               filteredResults.slice(0, 5).map((market) => {
                 const topOutcome = getTopOutcome(market);
+                const eventSlug = market.events?.[0]?.slug;
+                const marketUrl =
+                  eventSlug && eventSlug !== market.slug
+                    ? `https://polymarket.com/event/${eventSlug}/${market.slug}`
+                    : `https://polymarket.com/event/${market.slug}`;
                 return (
                   <a
                     key={market.id}
-                    href={`https://polymarket.com/event/${market.slug}`}
+                    href={marketUrl}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="flex gap-4 items-center w-full hover:bg-gray-50 rounded-lg transition-colors cursor-pointer py-1"
