@@ -87,7 +87,6 @@ function MainNavigation({
       <BreakingNews
         isOpen={isBreakingNewsOpen}
         onClose={() => setIsBreakingNewsOpen(false)}
-        timeFilter={timeFilter}
       />
 
       <LiveTrades

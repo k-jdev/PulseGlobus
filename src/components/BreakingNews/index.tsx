@@ -1,9 +1,10 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import {
   useGetEventsQuery,
   PolymarketEvent,
 } from "../../store/services/polymarketApi";
-import { TimeFilter } from "../../App";
+
+type TimeFilter = "1h" | "6h" | "24h";
 
 interface NewsItem {
   id: string;
@@ -47,13 +48,11 @@ const convertEventToNews = (event: PolymarketEvent): NewsItem => {
 interface BreakingNewsProps {
   isOpen: boolean;
   onClose: () => void;
-  timeFilter?: TimeFilter;
 }
 
-export const BreakingNews = ({
-  isOpen,
-  timeFilter = "24h",
-}: BreakingNewsProps) => {
+export const BreakingNews = ({ isOpen }: BreakingNewsProps) => {
+  const [timeFilter, setTimeFilter] = useState<TimeFilter>("24h");
+
   const { data: events } = useGetEventsQuery({
     limit: 100,
     active: true,
@@ -86,7 +85,7 @@ export const BreakingNews = ({
     <div className="absolute top-[160px] left-8 bg-white border-t-[6px] border-[#EE1616] rounded-[14px] w-[502px] max-h-[70vh] overflow-hidden z-50 shadow-[0px_22px_32px_0px_rgba(20,82,240,0.25)]">
       {/* Header */}
       <div className="px-6 pt-7 pb-4">
-        <div className="flex flex-col gap-2">
+        <div className="flex flex-col gap-2 mb-4">
           <h2 className="text-[32px] font-bold text-black tracking-[-0.56px] leading-8">
             Breaking News
           </h2>
@@ -94,6 +93,23 @@ export const BreakingNews = ({
             Markets reacting in real time. Volatility driven by unfolding
             events.
           </p>
+        </div>
+
+        {/* Time filters */}
+        <div className="flex gap-2">
+          {(["1h", "6h", "24h"] as const).map((filter) => (
+            <button
+              key={filter}
+              onClick={() => setTimeFilter(filter)}
+              className={`h-12 px-6 py-3 rounded-full text-[15px] font-medium transition-colors border border-[rgba(0,0,0,0.12)] ${
+                timeFilter === filter
+                  ? "bg-[rgba(20,82,240,0.1)] text-[#1452F0]"
+                  : "bg-white text-[#BBBDC1] hover:bg-gray-50"
+              }`}
+            >
+              {filter}
+            </button>
+          ))}
         </div>
       </div>
 
