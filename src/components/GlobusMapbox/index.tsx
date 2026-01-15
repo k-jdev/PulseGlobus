@@ -13,17 +13,26 @@ import "./styles.css";
 
 interface GlobusMapboxProps {
   timeFilter?: TimeFilter;
+  isMobileMenuOpen?: boolean;
   onThemeChange?: (theme: any, changeTheme: any) => void;
   onSpinStateChange?: (isPaused: boolean, toggleSpin: () => void) => void;
 }
 
 const GlobusMapbox = ({
   timeFilter = "24h",
+  isMobileMenuOpen = false,
   onThemeChange,
   onSpinStateChange,
 }: GlobusMapboxProps) => {
   const mapContainerRef = useRef<HTMLDivElement>(null);
   const [selectedMarket, setSelectedMarket] = useState<MapMarker | null>(null);
+
+  // Close popup when mobile menu opens
+  useEffect(() => {
+    if (isMobileMenuOpen) {
+      setSelectedMarket(null);
+    }
+  }, [isMobileMenuOpen]);
 
   const {
     data: events,

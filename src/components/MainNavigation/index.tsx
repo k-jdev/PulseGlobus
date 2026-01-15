@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { arrowLeftIcon } from "../../assets/svgs/mainNavigation";
 import { Button } from "../ui";
 import { Theme } from "../GlobusMapbox/constants/mapConfig";
@@ -22,6 +22,8 @@ interface MainNavigationProps {
   onToggleSpin?: (() => void) | null;
   timeFilter?: TimeFilter;
   onTimeFilterChange?: (filter: TimeFilter) => void;
+  isMobileMenuOpen?: boolean;
+  onClosePopups?: (closeFn: () => void) => void;
 }
 
 function MainNavigation({
@@ -31,9 +33,27 @@ function MainNavigation({
   onToggleSpin,
   timeFilter = "24h",
   onTimeFilterChange,
+  isMobileMenuOpen = false,
+  onClosePopups,
 }: MainNavigationProps) {
   const [isLiveTradesOpen, setIsLiveTradesOpen] = useState(false);
   const [isBreakingNewsOpen, setIsBreakingNewsOpen] = useState(false);
+
+  // Close all popups when mobile menu opens
+  useEffect(() => {
+    if (isMobileMenuOpen) {
+      setIsLiveTradesOpen(false);
+      setIsBreakingNewsOpen(false);
+    }
+  }, [isMobileMenuOpen]);
+
+  // Register close function with parent
+  useEffect(() => {
+    onClosePopups?.(() => {
+      setIsLiveTradesOpen(false);
+      setIsBreakingNewsOpen(false);
+    });
+  }, [onClosePopups]);
 
   const handleLiveClick = () => {
     setIsLiveTradesOpen(!isLiveTradesOpen);

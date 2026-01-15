@@ -19,6 +19,16 @@ function App() {
   const [isPaused, setIsPaused] = useState(isMobileDevice());
   const [toggleSpin, setToggleSpin] = useState<(() => void) | null>(null);
   const [timeFilter, setTimeFilter] = useState<TimeFilter>("24h");
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [closePopups, setClosePopups] = useState<(() => void) | null>(null);
+
+  // Close all popups when mobile menu opens
+  const handleMobileMenuChange = (isOpen: boolean) => {
+    setIsMobileMenuOpen(isOpen);
+    if (isOpen && closePopups) {
+      closePopups();
+    }
+  };
 
   return (
     <div className="relative w-full h-screen overflow-hidden">
@@ -27,9 +37,11 @@ function App() {
         onThemeChange={changeTheme}
         timeFilter={timeFilter}
         onTimeFilterChange={setTimeFilter}
+        onMobileMenuChange={handleMobileMenuChange}
       />
       <GlobusMapboxComponent
         timeFilter={timeFilter}
+        isMobileMenuOpen={isMobileMenuOpen}
         onThemeChange={(currentTheme, changeThemeFn) => {
           setTheme(currentTheme);
           if (!changeTheme) {
@@ -50,6 +62,12 @@ function App() {
         onToggleSpin={toggleSpin}
         timeFilter={timeFilter}
         onTimeFilterChange={setTimeFilter}
+        isMobileMenuOpen={isMobileMenuOpen}
+        onClosePopups={(closeFn) => {
+          if (!closePopups) {
+            setClosePopups(() => closeFn);
+          }
+        }}
       />
     </div>
   );

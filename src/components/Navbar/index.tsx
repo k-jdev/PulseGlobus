@@ -16,6 +16,7 @@ interface NavbarProps {
   onThemeChange?: ((theme: Theme) => void) | null;
   timeFilter?: TimeFilter;
   onTimeFilterChange?: (filter: TimeFilter) => void;
+  onMobileMenuChange?: (isOpen: boolean) => void;
 }
 
 function Navbar({
@@ -23,9 +24,19 @@ function Navbar({
   onThemeChange,
   timeFilter = "24h",
   onTimeFilterChange,
+  onMobileMenuChange,
 }: NavbarProps) {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isMobileSearchOpen, setIsMobileSearchOpen] = useState(false);
+
+  const handleMobileMenuToggle = (isOpen: boolean) => {
+    setIsMobileMenuOpen(isOpen);
+    onMobileMenuChange?.(isOpen);
+
+    if (isOpen) {
+      setIsMobileSearchOpen(false);
+    }
+  };
 
   const timeFilters: TimeFilter[] = ["1h", "6h", "24h"];
 
@@ -65,7 +76,7 @@ function Navbar({
         {/* Menu Button - hide when search is open */}
         {!isMobileSearchOpen && (
           <button
-            onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+            onClick={() => handleMobileMenuToggle(!isMobileMenuOpen)}
             className="flex items-center gap-3 flex-shrink-0"
           >
             <svg
@@ -99,7 +110,7 @@ function Navbar({
               <img src={logo} alt="Logo" className="h-8 w-auto" />
             </div>
             <button
-              onClick={() => setIsMobileMenuOpen(false)}
+              onClick={() => handleMobileMenuToggle(false)}
               className="flex items-center gap-3"
             >
               <svg
