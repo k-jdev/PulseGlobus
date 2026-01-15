@@ -4,5 +4,13 @@ import moonIcon from "./moon.svg";
 import sunIcon from "./sun.svg";
 import playIcon from "./play.svg";
 import pauseIcon from "./pause.svg";
-
-export { arrowLeftIcon, arrowDownIcon, moonIcon, sunIcon, playIcon, pauseIcon };
+import moonBlueIcon from "./moon-blue.svg";
+export {
+  arrowLeftIcon,
+  arrowDownIcon,
+  moonIcon,
+  sunIcon,
+  playIcon,
+  pauseIcon,
+  moonBlueIcon,
+};

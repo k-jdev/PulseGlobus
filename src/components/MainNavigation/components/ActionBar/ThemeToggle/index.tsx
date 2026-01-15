@@ -1,4 +1,8 @@
-import { sunIcon, moonIcon } from "../../../../../assets/svgs/mainNavigation";
+import {
+  sunIcon,
+  moonIcon,
+  moonBlueIcon,
+} from "../../../../../assets/svgs/mainNavigation";
 import { Theme } from "../../../../GlobusMapbox/constants/mapConfig";
 
 interface ThemeToggleProps {
@@ -32,11 +36,15 @@ function ThemeToggle({ theme, onThemeChange }: ThemeToggleProps) {
       <button
         onClick={() => handleThemeChange("dark")}
         className={`w-[48px] h-[48px] flex items-center justify-center rounded-full border-[0.556px] border-[rgba(0,0,0,0.12)] transition-all ${
-          theme === "dark" ? "bg-white" : "bg-white"
+          theme === "dark" ? "bg-white" : "bg-[#002175]/40"
         }`}
         title="Dark theme"
       >
-        <img src={moonIcon} alt="Moon" className="w-6 h-6 brightness-0" />
+        <img
+          src={theme === "dark" ? moonBlueIcon : moonIcon}
+          alt="Moon"
+          className="w-6 h-6"
+        />
       </button>
     </div>
   );

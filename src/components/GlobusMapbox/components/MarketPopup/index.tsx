@@ -13,7 +13,7 @@ interface MarketPopupProps {
   title: string;
   image?: string;
   outcomes: Outcome[];
-  volume?: number; // Общий volume события
+  volume?: number;
   volume24hr: number;
   slug: string;
   eventSlug?: string;
@@ -34,106 +34,151 @@ export const MarketPopup: FC<MarketPopupProps> = ({
   volume24hr,
   slug,
   eventSlug,
-  isMultiMarket,
 }) => {
   const displayVolume = volume && volume > 0 ? volume : volume24hr;
 
+  const isBinaryMarket =
+    outcomes.length === 2 &&
+    outcomes.some((o) => o.name.toLowerCase() === "yes") &&
+    outcomes.some((o) => o.name.toLowerCase() === "no");
+
+  const yesOutcome = outcomes.find((o) => o.name.toLowerCase() === "yes");
+  const noOutcome = outcomes.find((o) => o.name.toLowerCase() === "no");
+
   return (
-    <div className="bg-white rounded-2xl shadow-2xl min-w-[380px] max-w-[420px] p-6">
+    <div className="bg-white border border-[#e9edf8] rounded-[14px] px-6 py-5 min-w-[360px] max-w-[420px]">
       {/* Header with image and title */}
-      <div className="flex items-start gap-4 mb-4">
+      <div className="flex items-center gap-4 mb-4">
         {image && (
-          <div className="w-[60px] h-[60px] rounded-xl overflow-hidden flex-shrink-0">
+          <div className="w-[54px] h-[54px] rounded-[7px] overflow-hidden flex-shrink-0">
             <img src={image} alt="" className="w-full h-full object-cover" />
           </div>
         )}
-        <h3 className="text-lg font-semibold text-gray-900 leading-snug flex-1">
+        <h3 className="text-[19px] font-semibold text-[#1b2430] leading-[30px] tracking-[-0.4px] flex-1">
           {title}
         </h3>
       </div>
 
-      <div className="mb-5">
-        {(isMultiMarket ? outcomes.slice(0, 6) : outcomes).map(
-          (outcome, idx) => (
-            <div
-              key={idx}
-              className="flex justify-between items-center py-1 border-b border-gray-100"
-            >
+      {/* Binary Yes/No market display */}
+      {isBinaryMarket && yesOutcome && noOutcome ? (
+        <div className="flex flex-col gap-3 mb-4">
+          {/* Chance row with progress bar */}
+          <div className="flex items-center gap-2">
+            <div className="flex-1 flex items-center">
+              <span className="text-[16px] font-medium tracking-[-0.32px]">
+                <span className="text-[#1b2430]">Chance </span>
+                <span className="text-[#bbbdc1]">%</span>
+              </span>
+            </div>
+            <div className="flex-1 flex items-center gap-3">
+              <span className="text-[#1b2430] text-[20px] font-semibold tracking-[-0.4px]">
+                {yesOutcome.percentage}%
+              </span>
+              <div className="flex-1 h-[6px] bg-[#ececec] rounded-[41px] overflow-hidden">
+                <div
+                  className="h-full bg-[#1452f0]"
+                  style={{ width: `${yesOutcome.percentage}%` }}
+                />
+              </div>
+            </div>
+          </div>
+          {/* Buy/Sell buttons */}
+          <div className="flex gap-2">
+            <div className="flex-1 h-[46px] bg-[#f1f7ff] rounded-[4px] flex items-center justify-center">
+              <span className="text-[#1452f0] text-[16px] font-semibold tracking-[-0.32px]">
+                {yesOutcome.buyPrice}
+              </span>
+            </div>
+            <div className="flex-1 h-[46px] bg-[#ffebeb] rounded-[4px] flex items-center justify-center">
+              <span className="text-[#ee1616] text-[16px] font-semibold tracking-[-0.32px]">
+                {noOutcome.buyPrice}
+              </span>
+            </div>
+          </div>
+        </div>
+      ) : (
+        <div
+          className={`flex flex-col gap-3 mb-4 ${
+            outcomes.length > 2 ? "max-h-[100px] overflow-y-auto" : ""
+          }`}
+        >
+          {outcomes.map((outcome, idx) => (
+            <div key={idx} className="flex items-center justify-between">
               <span
-                className="text-[#1B2430] text-[16px] font-medium truncate max-w-[180px]"
+                className="text-[#1b2430] text-[16px] font-medium tracking-[-0.32px] truncate max-w-[140px]"
                 title={outcome.name}
               >
                 {outcome.name}
               </span>
-              <div className="flex items-center gap-3">
-                <span className="text-[#1B2430] text-[20px] font-bold">
+              <div className="flex items-center gap-[10px]">
+                <span className="text-[#1b2430] text-[20px] font-semibold tracking-[-0.4px]">
                   {outcome.percentage}%
                 </span>
-                <span className="text-[#1452F0]  py-2.5 px-3 bg-[#1452F0]/10 rounded-[4px] text-sm font-semibold">
-                  {outcome.buyPrice}
-                </span>
-                {!isMultiMarket && (
-                  <span className="text-[#EE1616] py-2.5 px-3 bg-[#EE1616]/10 rounded-[4px] text-sm font-semibold">
-                    {outcome.sellPrice}
-                  </span>
-                )}
+                <div className="flex items-center gap-[6px]">
+                  <div className="w-[54px] bg-[#f1f7ff] rounded-[4px] px-3 py-[10px] flex items-center justify-center">
+                    <span className="text-[#1452f0] text-[14px] font-semibold tracking-[-0.28px]">
+                      {outcome.buyPrice}
+                    </span>
+                  </div>
+                  <div className="w-[54px] bg-[#ffebeb] rounded-[4px] px-3 py-[10px] flex items-center justify-center">
+                    <span className="text-[#ee1616] text-[14px] font-semibold tracking-[-0.28px]">
+                      {outcome.sellPrice}
+                    </span>
+                  </div>
+                </div>
               </div>
             </div>
-          )
-        )}
-        {isMultiMarket && outcomes.length > 6 && (
-          <div className="text-center text-gray-500 text-sm py-2">
-            +{outcomes.length - 6} more outcomes
-          </div>
-        )}
-      </div>
+          ))}
+        </div>
+      )}
 
       {/* Volume and metadata */}
-      <div className="flex items-center gap-3 mb-5 pt-4 border-t border-gray-100">
-        <div className="px-4 py-2 bg-gray-100 rounded-lg text-gray-600 text-sm font-medium">
-          {formatCurrency(displayVolume)} Vol.
-        </div>
-        <div className="px-4 py-2 bg-gray-100 rounded-lg text-gray-600 text-sm font-medium">
-          Weekly
-        </div>
-        <div className="flex items-center ml-1">
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            width="16"
-            height="16"
-            viewBox="0 0 16 16"
-            fill="none"
-          >
-            <g clipPath="url(#clip0_462_13875)">
+      <div className="flex flex-col gap-3">
+        <div className="h-px bg-[#e4e4e4] w-full" />
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-[6px]">
+            <div className="px-3 py-1 bg-[#f5f5f5] rounded-full">
+              <span className="text-[#808080] text-[14px] font-medium leading-[21px] tracking-[-0.28px]">
+                {formatCurrency(displayVolume)} Vol.
+              </span>
+            </div>
+            <div className="px-3 py-1 bg-[#f5f5f5] rounded-full">
+              <span className="text-[#808080] text-[14px] font-medium leading-[21px] tracking-[-0.28px]">
+                Weekly
+              </span>
+            </div>
+            {/* Trend icon */}
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="16"
+              height="16"
+              viewBox="0 0 16 16"
+              fill="none"
+            >
               <path
                 d="M14.6649 4.66626L8.99884 10.3323L5.66587 6.99934L1.33301 11.3322"
                 stroke="#53BB33"
-                strokeWidth="1.33319"
+                strokeWidth="1.33"
                 strokeLinecap="round"
                 strokeLinejoin="round"
               />
               <path
                 d="M10.6655 4.66626H14.6655V8.66626"
                 stroke="#53BB33"
-                strokeWidth="1.33319"
+                strokeWidth="1.33"
                 strokeLinecap="round"
                 strokeLinejoin="round"
               />
-            </g>
-            <defs>
-              <clipPath id="clip0_462_13875">
-                <rect width="15.9983" height="15.9983" fill="white" />
-              </clipPath>
-            </defs>
-          </svg>
-        </div>
-        <div className="ml-auto text-gray-300 cursor-pointer">
+            </svg>
+          </div>
+          {/* Pin icon */}
           <svg
             xmlns="http://www.w3.org/2000/svg"
             width="24"
             height="24"
             viewBox="0 0 24 24"
             fill="none"
+            className="cursor-pointer"
           >
             <path
               d="M15 4.5L11 8.5L7 10L5.5 11.5L12.5 18.5L14 17L15.5 13L19.5 9M9 15L4.5 19.5M14.5 4L20 9.5"
@@ -155,9 +200,11 @@ export const MarketPopup: FC<MarketPopupProps> = ({
         }
         target="_blank"
         rel="noopener noreferrer"
-        className="flex items-center justify-between gap-2 w-full px-6 py-4 bg-[#1452F0] hover:bg-blue-700 text-white rounded-full font-semibold text-base transition-colors"
+        className="flex items-center justify-between w-full  mt-3 px-6 py-4 bg-[#1452f0] rounded-full text-white hover:bg-[#1240c0] transition-colors"
       >
-        View market
+        <span className="text-[16px] font-semibold tracking-[-0.32px]">
+          View market
+        </span>
         <svg
           xmlns="http://www.w3.org/2000/svg"
           width="24"
@@ -166,8 +213,11 @@ export const MarketPopup: FC<MarketPopupProps> = ({
           fill="none"
         >
           <path
-            d="M8.30237 17.5502L15.3248 10.5278L15.3155 16.625C15.3155 16.9734 15.4539 17.3076 15.7003 17.554C15.9467 17.8004 16.2809 17.9388 16.6293 17.9388C16.9777 17.9388 17.3119 17.8004 17.5583 17.554C17.8047 17.3076 17.9431 16.9734 17.9431 16.625L17.9431 7.37285C17.9393 7.20063 17.9016 7.03084 17.8321 6.87323C17.6994 6.55544 17.4467 6.30279 17.1289 6.17007C16.9713 6.10053 16.8015 6.0628 16.6293 6.05904L7.37715 6.05905C7.20442 6.05834 7.03326 6.09184 6.87354 6.15761C6.71383 6.22338 6.56871 6.32013 6.44657 6.44227C6.32443 6.56441 6.22769 6.70952 6.16191 6.86924C6.09614 7.02896 6.06264 7.20012 6.06335 7.37285C6.06264 7.54558 6.09614 7.71674 6.16191 7.87646C6.22769 8.03618 6.32443 8.18129 6.44657 8.30343C6.56871 8.42557 6.71383 8.52232 6.87354 8.58809C7.03326 8.65386 7.20442 8.68736 7.37715 8.68666L13.4743 8.6774L6.45194 15.6998C6.20656 15.9452 6.0687 16.278 6.0687 16.625C6.0687 16.972 6.20656 17.3048 6.45194 17.5502C6.69732 17.7956 7.03013 17.9335 7.37715 17.9335C7.72418 17.9335 8.05699 17.7956 8.30237 17.5502Z"
-            fill="white"
+            d="M7 17L17 7M17 7H7M17 7V17"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
           />
         </svg>
       </a>

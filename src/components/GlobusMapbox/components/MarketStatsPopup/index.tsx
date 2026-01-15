@@ -29,11 +29,11 @@ const formatCurrency = (num: number): string => {
   return "$" + Math.round(num);
 };
 
-const formatNumber = (num: number): string => {
-  if (num >= 1000000) return (num / 1000000).toFixed(1) + "m";
-  if (num >= 1000) return Math.round(num / 1000) + "k";
-  return Math.round(num).toString();
-};
+// const formatNumber = (num: number): string => {
+//   if (num >= 1000000) return (num / 1000000).toFixed(1) + "m";
+//   if (num >= 1000) return Math.round(num / 1000) + "k";
+//   return Math.round(num).toString();
+// };
 
 const formatCents = (price: number): string => {
   return (price * 100).toFixed(1) + "¢";
@@ -61,6 +61,7 @@ export const MarketStatsPopup: FC<MarketStatsPopupProps> = ({
   title,
   image,
   outcomes,
+  volume,
   volume24hr,
   volume1wk,
   volume1mo,
@@ -72,6 +73,8 @@ export const MarketStatsPopup: FC<MarketStatsPopupProps> = ({
   onClose,
 }) => {
   const [activeTab, setActiveTab] = useState<TabType>("price");
+
+  const displayVolume = volume && volume > 0 ? volume : volume24hr;
 
   const tabs: { id: TabType; label: string }[] = [
     { id: "price", label: "Price" },
@@ -86,6 +89,15 @@ export const MarketStatsPopup: FC<MarketStatsPopupProps> = ({
           outcomes[0]
         )
       : null;
+
+  // Check if it's a binary Yes/No market
+  const isBinaryMarket =
+    outcomes.length === 2 &&
+    outcomes.some((o) => o.name.toLowerCase() === "yes") &&
+    outcomes.some((o) => o.name.toLowerCase() === "no");
+
+  const yesOutcome = outcomes.find((o) => o.name.toLowerCase() === "yes");
+  const noOutcome = outcomes.find((o) => o.name.toLowerCase() === "no");
 
   return (
     <div className="bg-white rounded-[14px] shadow-[0px_22px_32px_0px_rgba(20,82,240,0.25)] w-[465px] overflow-hidden">
@@ -150,66 +162,85 @@ export const MarketStatsPopup: FC<MarketStatsPopupProps> = ({
                 </div>
               )}
             </div>
-            {/* 
-            {slug && (
-              <div
-                className="w-full rounded-lg overflow-hidden border border-[#e4e4e4] relative"
-                style={{ height: "120px" }}
-              >
-                <div
-                  className="absolute inset-0"
-                  style={{
-                    top: "-85px",
-                    height: "280px",
-                    pointerEvents: "none",
-                  }}
-                >
-                  <iframe
-                    title="polymarket-price-chart"
-                    src={`https://embed.polymarket.com/market.html?market=${slug}&features=chart&theme=light`}
-                    width="100%"
-                    height="280"
-                    frameBorder="0"
-                    className="bg-white"
-                    style={{ pointerEvents: "none" }}
-                  />
-                </div>
-              </div>
-            )} */}
 
             {/* Outcomes list */}
-            <div className="flex flex-col gap-2">
-              {outcomes.map((outcome, idx) => (
-                <div
-                  key={idx}
-                  className="flex justify-between items-center py-2 border-b border-[#e4e4e4] last:border-b-0"
-                >
-                  <span className="text-[16px] font-medium text-[#1b2430]">
-                    {outcome.name}
-                  </span>
-                  <div className="flex items-center gap-3">
-                    <span className="text-[18px] font-semibold text-[#1b2430]">
-                      {(outcome.price * 100).toFixed(0)}%
+            {isBinaryMarket && yesOutcome && noOutcome ? (
+              <div className="flex flex-col gap-3">
+                {/* Chance row with progress bar */}
+                <div className="flex items-center gap-2">
+                  <div className="flex-1 flex items-center">
+                    <span className="text-[16px] font-medium tracking-[-0.32px]">
+                      <span className="text-[#1b2430]">Chance </span>
+                      <span className="text-[#bbbdc1]">%</span>
                     </span>
-                    <span
-                      className={`text-[14px] font-semibold px-3 py-1 rounded ${
-                        outcome.price >= 0.5
-                          ? "text-[#1452f0] bg-[#1452f0]/10"
-                          : "text-[#808080] bg-gray-100"
-                      }`}
-                    >
-                      {formatCents(outcome.price)}
+                  </div>
+                  <div className="flex-1 flex items-center gap-3">
+                    <span className="text-[#1b2430] text-[20px] font-semibold tracking-[-0.4px]">
+                      {Math.round(yesOutcome.price * 100)}%
+                    </span>
+                    <div className="flex-1 h-[6px] bg-[#ececec] rounded-[41px] overflow-hidden">
+                      <div
+                        className="h-full bg-[#1452f0]"
+                        style={{ width: `${yesOutcome.price * 100}%` }}
+                      />
+                    </div>
+                  </div>
+                </div>
+                {/* Buy/Sell buttons */}
+                <div className="flex gap-2">
+                  <div className="flex-1 h-[46px] bg-[#f1f7ff] rounded-[4px] flex items-center justify-center">
+                    <span className="text-[#1452f0] text-[16px] font-semibold tracking-[-0.32px]">
+                      {formatCents(yesOutcome.price)}
+                    </span>
+                  </div>
+                  <div className="flex-1 h-[46px] bg-[#ffebeb] rounded-[4px] flex items-center justify-center">
+                    <span className="text-[#ee1616] text-[16px] font-semibold tracking-[-0.32px]">
+                      {formatCents(noOutcome.price)}
                     </span>
                   </div>
                 </div>
-              ))}
-            </div>
+              </div>
+            ) : (
+              <div
+                className={`flex flex-col gap-3 ${
+                  outcomes.length > 2 ? "max-h-[100px] overflow-y-auto" : ""
+                }`}
+              >
+                {outcomes.map((outcome, idx) => (
+                  <div key={idx} className="flex items-center justify-between">
+                    <span
+                      className="text-[#1b2430] text-[16px] font-medium tracking-[-0.32px] truncate max-w-[140px]"
+                      title={outcome.name}
+                    >
+                      {outcome.name}
+                    </span>
+                    <div className="flex items-center gap-[10px]">
+                      <span className="text-[#1b2430] text-[20px] font-semibold tracking-[-0.4px]">
+                        {Math.round(outcome.price * 100)}%
+                      </span>
+                      <div className="flex items-center gap-[6px]">
+                        <div className="w-[54px] bg-[#f1f7ff] rounded-[4px] px-3 py-[10px] flex items-center justify-center">
+                          <span className="text-[#1452f0] text-[14px] font-semibold tracking-[-0.28px]">
+                            {formatCents(outcome.price)}
+                          </span>
+                        </div>
+                        <div className="w-[54px] bg-[#ffebeb] rounded-[4px] px-3 py-[10px] flex items-center justify-center">
+                          <span className="text-[#ee1616] text-[14px] font-semibold tracking-[-0.28px]">
+                            {formatCents(1 - outcome.price)}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
 
             {/* Metadata */}
             <div className="flex items-center justify-between pt-4 border-t border-[#e4e4e4]">
               <div className="flex items-center gap-[6px]">
                 <span className="px-3 py-1 bg-[#f5f5f5] rounded-full text-[14px] font-medium text-[#808080] leading-[21px] tracking-[-0.28px]">
-                  {formatCurrency(volume24hr)} Vol.
+                  {formatCurrency(displayVolume)} Vol.
                 </span>
                 <span className="px-3 py-1 bg-[#f5f5f5] rounded-full text-[14px] font-medium text-[#808080] leading-[21px] tracking-[-0.28px]">
                   {formatTimeUntil(endDate)}
@@ -266,25 +297,13 @@ export const MarketStatsPopup: FC<MarketStatsPopupProps> = ({
             <div className="flex gap-4">
               <div className="flex-1 flex flex-col gap-2 py-2">
                 <span className="text-[24px] font-semibold text-black tracking-[-0.56px]">
-                  {formatNumber(
-                    outcomes.reduce(
-                      (sum, o) => sum + (o.price > 0 ? 1000 : 0),
-                      0
-                    )
-                  )}
-                </span>
-                <span className="text-[14px] font-medium text-[#808080] tracking-[-0.32px]">
-                  Shares
-                </span>
-              </div>
-              <div className="flex-1 flex flex-col gap-2 py-2">
-                <span className="text-[24px] font-semibold text-black tracking-[-0.56px]">
                   {formatCurrency(volume1mo)}
                 </span>
                 <span className="text-[14px] font-medium text-[#808080] tracking-[-0.32px]">
                   1m Volume
                 </span>
               </div>
+              <div className="flex-1"></div>
             </div>
 
             {/* CTA Button */}
