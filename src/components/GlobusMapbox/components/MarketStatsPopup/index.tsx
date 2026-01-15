@@ -150,6 +150,32 @@ export const MarketStatsPopup: FC<MarketStatsPopupProps> = ({
                 </div>
               )}
             </div>
+            {/* 
+            {slug && (
+              <div
+                className="w-full rounded-lg overflow-hidden border border-[#e4e4e4] relative"
+                style={{ height: "120px" }}
+              >
+                <div
+                  className="absolute inset-0"
+                  style={{
+                    top: "-85px",
+                    height: "280px",
+                    pointerEvents: "none",
+                  }}
+                >
+                  <iframe
+                    title="polymarket-price-chart"
+                    src={`https://embed.polymarket.com/market.html?market=${slug}&features=chart&theme=light`}
+                    width="100%"
+                    height="280"
+                    frameBorder="0"
+                    className="bg-white"
+                    style={{ pointerEvents: "none" }}
+                  />
+                </div>
+              </div>
+            )} */}
 
             {/* Outcomes list */}
             <div className="flex flex-col gap-2">
