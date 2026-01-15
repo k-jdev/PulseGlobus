@@ -7,10 +7,15 @@ interface ThemeToggleProps {
 }
 
 function ThemeToggle({ theme, onThemeChange }: ThemeToggleProps) {
+  const handleThemeChange = (newTheme: Theme) => {
+    if (theme === newTheme) return;
+    onThemeChange(newTheme);
+  };
+
   return (
     <div className="flex gap-2 items-center pointer-events-auto">
       <button
-        onClick={() => onThemeChange("light")}
+        onClick={() => handleThemeChange("light")}
         className={`w-[48px] h-[48px] flex items-center justify-center rounded-full border-[0.556px] border-[rgba(0,0,0,0.12)] transition-all ${
           theme === "light" ? "bg-white" : "bg-[rgba(255,255,255,0.2)]"
         }`}
@@ -25,7 +30,7 @@ function ThemeToggle({ theme, onThemeChange }: ThemeToggleProps) {
         />
       </button>
       <button
-        onClick={() => onThemeChange("dark")}
+        onClick={() => handleThemeChange("dark")}
         className={`w-[48px] h-[48px] flex items-center justify-center rounded-full border-[0.556px] border-[rgba(0,0,0,0.12)] transition-all ${
           theme === "dark" ? "bg-white" : "bg-white"
         }`}
