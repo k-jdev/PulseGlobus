@@ -272,13 +272,17 @@ export const useMapbox = (
         if (e.features && e.features.length > 0) {
           const feature = e.features[0];
 
+          // Закрываем предыдущий попап и открываем новый
+          if (popupRef.current) {
+            popupRef.current.remove();
+            popupRef.current = null;
+          }
+
           // Закрепляем попап при клике
           isPopupPinnedRef.current = true;
 
-          // Если попап ещё не открыт (например, на мобильном), открываем его
-          if (!popupRef.current) {
-            handleMarketMouseEnter(map, feature);
-          }
+          // Открываем попап для нового маркера
+          handleMarketMouseEnter(map, feature);
 
           // Вызываем callback если есть
           if (onMarkerClickRef.current && markersRef.current.length > 0) {

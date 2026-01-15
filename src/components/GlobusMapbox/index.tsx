@@ -99,6 +99,7 @@ const GlobusMapbox = ({
       {selectedMarket && (
         <div className="fixed top-[160px] right-6 z-50">
           <MarketStatsPopup
+            key={selectedMarket.id}
             title={selectedMarket.title}
             image={selectedMarket.image}
             outcomes={selectedMarket.outcomes.map((name, idx) => ({
