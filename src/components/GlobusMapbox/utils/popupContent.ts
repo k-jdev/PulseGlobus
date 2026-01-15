@@ -39,6 +39,7 @@ export const createMarketPopupContent = (
     outcomes: outcomesData,
     volume: formatNumber(volume),
     slug: properties.slug,
+    eventSlug: properties.eventSlug,
   });
 
   return ReactDOMServer.renderToString(popupElement);

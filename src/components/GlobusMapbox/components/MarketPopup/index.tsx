@@ -13,6 +13,7 @@ interface MarketPopupProps {
   outcomes: Outcome[];
   volume: string;
   slug: string;
+  eventSlug?: string;
 }
 
 export const MarketPopup: FC<MarketPopupProps> = ({
@@ -21,6 +22,7 @@ export const MarketPopup: FC<MarketPopupProps> = ({
   outcomes,
   volume,
   slug,
+  eventSlug,
 }) => {
   return (
     <div className="bg-white rounded-2xl shadow-2xl min-w-[380px] max-w-[420px] p-6">
@@ -121,7 +123,11 @@ export const MarketPopup: FC<MarketPopupProps> = ({
 
       {/* CTA Button */}
       <a
-        href={`https://polymarket.com/event/${slug}`}
+        href={
+          eventSlug && eventSlug !== slug
+            ? `https://polymarket.com/event/${eventSlug}/${slug}`
+            : `https://polymarket.com/event/${slug}`
+        }
         target="_blank"
         rel="noopener noreferrer"
         className="flex items-center justify-between gap-2 w-full px-6 py-4 bg-[#1452F0] hover:bg-blue-700 text-white rounded-full font-semibold text-base transition-colors"

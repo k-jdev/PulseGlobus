@@ -22,6 +22,7 @@ export const useMapbox = (
   const userInteractingRef = useRef(false);
   const isPausedRef = useRef(false);
   const markersRef = useRef<MapMarker[]>([]);
+  const isPopupPinnedRef = useRef(false); // Флаг закреплённого попапа
   const onMarkerClickRef = useRef<((marker: MapMarker) => void) | undefined>(
     undefined
   );
@@ -252,31 +253,40 @@ export const useMapbox = (
       updateLayerVisibility();
 
       map.on("mouseenter", "markets", (e) => {
+        // Не показываем hover попап, если уже есть закреплённый
+        if (isPopupPinnedRef.current) return;
+
         if (e.features && e.features.length > 0) {
           handleMarketMouseEnter(map, e.features[0]);
         }
       });
 
       map.on("mouseleave", "markets", () => {
+        // Не закрываем попап, если он закреплён кликом
+        if (isPopupPinnedRef.current) return;
+
         handleMarketMouseLeave(map);
       });
 
       map.on("click", "markets", (e) => {
-        if (
-          e.features &&
-          e.features.length > 0 &&
-          onMarkerClickRef.current &&
-          markersRef.current.length > 0
-        ) {
+        if (e.features && e.features.length > 0) {
           const feature = e.features[0];
-          const marketId = feature.properties?.id;
-          const marker = markersRef.current.find((m) => m.id === marketId);
 
-          if (marker) {
-            // Закрываем hover попап
-            handleMarketMouseLeave(map);
+          // Закрепляем попап при клике
+          isPopupPinnedRef.current = true;
 
-            onMarkerClickRef.current(marker);
+          // Если попап ещё не открыт (например, на мобильном), открываем его
+          if (!popupRef.current) {
+            handleMarketMouseEnter(map, feature);
+          }
+
+          // Вызываем callback если есть
+          if (onMarkerClickRef.current && markersRef.current.length > 0) {
+            const marketId = feature.properties?.id;
+            const marker = markersRef.current.find((m) => m.id === marketId);
+            if (marker) {
+              onMarkerClickRef.current(marker);
+            }
           }
         }
       });
@@ -285,7 +295,13 @@ export const useMapbox = (
         const features = map.queryRenderedFeatures(e.point, {
           layers: ["markets"],
         });
+
+        // Клик вне маркера - закрываем закреплённый попап
         if (features.length === 0) {
+          if (isPopupPinnedRef.current) {
+            isPopupPinnedRef.current = false;
+            handleMarketMouseLeave(map);
+          }
           handleMapClick(map);
           userInteractingRef.current = false;
           spinGlobe();

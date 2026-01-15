@@ -13,6 +13,7 @@ export interface MapMarker {
   coordinates: [number, number];
   eventTitle?: string;
   slug: string;
+  eventSlug?: string;
   active: boolean;
   volume24hr: number;
   volume1wk: number;
@@ -1169,6 +1170,8 @@ function parseOutcomePrices(prices: string): number[] {
 }
 
 export function convertMarketsToMapMarkers(markets: Market[]): MapMarker[] {
+  const now = new Date();
+
   console.log(
     "🔍 Converting markets, first market fields:",
     markets[0]
@@ -1176,6 +1179,7 @@ export function convertMarketsToMapMarkers(markets: Market[]): MapMarker[] {
           active: markets[0].active,
           closed: markets[0].closed,
           archived: markets[0].archived,
+          endDate: markets[0].endDate,
           question: markets[0].question?.substring(0, 50),
         }
       : "no markets"
@@ -1184,7 +1188,20 @@ export function convertMarketsToMapMarkers(markets: Market[]): MapMarker[] {
   return markets
     .filter((market) => {
       const hasQuestion = !!market.question;
-      return hasQuestion;
+      const isActive = market.active === true;
+      const isNotClosed = market.closed !== true;
+      const isNotArchived = market.archived !== true;
+
+      // Проверяем, что endDate в будущем или не установлен
+      let isNotExpired = true;
+      if (market.endDate) {
+        const endDate = new Date(market.endDate);
+        isNotExpired = endDate > now;
+      }
+
+      return (
+        hasQuestion && isActive && isNotClosed && isNotArchived && isNotExpired
+      );
     })
     .map((market, index) => {
       const coordinates = getCoordinatesForMarket(market, index);
@@ -1203,6 +1220,7 @@ export function convertMarketsToMapMarkers(markets: Market[]): MapMarker[] {
         coordinates,
         eventTitle,
         slug: market.slug,
+        eventSlug: market.events?.[0]?.slug,
         active: market.active,
         volume24hr: market.volume24hr || 0,
         volume1wk: market.volume1wk || 0,
@@ -1287,6 +1305,7 @@ export function createGeoJSONFromMarkers(
         outcomePrices: JSON.stringify(marker.outcomePrices),
         eventTitle: marker.eventTitle,
         slug: marker.slug,
+        eventSlug: marker.eventSlug,
         volume24hr: marker.volume24hr,
         volume1wk: marker.volume1wk,
         volume1mo: marker.volume1mo,

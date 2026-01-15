@@ -86,7 +86,7 @@ export const polymarketApi = createApi({
   endpoints: (builder) => ({
     getMarkets: builder.query<Market[], { limit?: number; active?: boolean }>({
       query: ({ limit = 100, active = true } = {}) =>
-        `/markets?limit=${limit}&active=${active}`,
+        `/markets?limit=${limit}&active=${active}&closed=false&archived=false&order=volume&ascending=false`,
       providesTags: ["Markets"],
     }),
 

@@ -91,6 +91,7 @@ const GlobusMapbox = ({
             endDate={selectedMarket.endDate}
             description={selectedMarket.description}
             slug={selectedMarket.slug}
+            eventSlug={selectedMarket.eventSlug}
             onClose={handleClosePopup}
           />
         </div>

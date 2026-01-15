@@ -19,6 +19,7 @@ interface MarketStatsPopupProps {
   endDate: string;
   description: string;
   slug: string;
+  eventSlug?: string;
   onClose?: () => void;
 }
 
@@ -67,6 +68,7 @@ export const MarketStatsPopup: FC<MarketStatsPopupProps> = ({
   endDate,
   description,
   slug,
+  eventSlug,
   onClose,
 }) => {
   const [activeTab, setActiveTab] = useState<TabType>("price");
@@ -261,7 +263,11 @@ export const MarketStatsPopup: FC<MarketStatsPopupProps> = ({
 
             {/* CTA Button */}
             <a
-              href={`https://polymarket.com/event/${slug}`}
+              href={
+                eventSlug && eventSlug !== slug
+                  ? `https://polymarket.com/event/${eventSlug}/${slug}`
+                  : `https://polymarket.com/event/${slug}`
+              }
               target="_blank"
               rel="noopener noreferrer"
               className="flex items-center justify-between w-full px-6 py-4 bg-[#1452f0] rounded-full text-white hover:bg-[#1240c0] transition-colors"
