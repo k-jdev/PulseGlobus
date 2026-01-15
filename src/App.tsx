@@ -8,12 +8,15 @@ import { Theme } from "./components/GlobusMapbox/constants/mapConfig";
 
 export type TimeFilter = "1h" | "6h" | "24h";
 
+// Check if mobile on initial load
+const isMobileDevice = () => window.innerWidth < 768;
+
 function App() {
   const [theme, setTheme] = useState<Theme>("light");
   const [changeTheme, setChangeTheme] = useState<
     ((theme: Theme) => void) | null
   >(null);
-  const [isPaused, setIsPaused] = useState(false);
+  const [isPaused, setIsPaused] = useState(isMobileDevice());
   const [toggleSpin, setToggleSpin] = useState<(() => void) | null>(null);
   const [timeFilter, setTimeFilter] = useState<TimeFilter>("24h");
 

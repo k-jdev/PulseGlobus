@@ -129,9 +129,10 @@ const GlobusMapbox = ({
               onClose={handleClosePopup}
             />
           </div>
-          {/* Mobile popup - centered */}
-          <div className="md:hidden fixed inset-0 z-50 flex items-center justify-center pointer-events-none">
-            <div className="pointer-events-auto">
+          {/* Mobile popup - centered with backdrop */}
+          <div className="md:hidden fixed inset-0 z-50 flex items-center justify-center">
+            <div className="absolute inset-0 " onClick={handleClosePopup} />
+            <div className="relative z-10">
               <MarketStatsPopup
                 key={`mobile-${selectedMarket.id}`}
                 title={selectedMarket.title}

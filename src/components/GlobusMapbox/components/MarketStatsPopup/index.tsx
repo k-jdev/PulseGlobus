@@ -107,10 +107,10 @@ export const MarketStatsPopup: FC<MarketStatsPopupProps> = ({
         isMobile ? "w-[calc(100vw-32px)] max-w-[372px]" : "w-[465px]"
       }`}
     >
-      {/* Close button */}
+      {/* Close button - desktop only */}
       <button
         onClick={onClose}
-        className="absolute right-4 top-4 w-[17px] h-[17px] flex items-center justify-center text-[#adadad] hover:text-gray-600 transition-colors z-10"
+        className="hidden md:flex absolute right-4 top-4 w-[17px] h-[17px] items-center justify-center text-[#adadad] hover:text-gray-600 transition-colors z-10"
       >
         <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
           <path

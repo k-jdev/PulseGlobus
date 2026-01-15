@@ -20,7 +20,7 @@ export const useMapbox = (
   const popupRef = useRef<mapboxgl.Popup | null>(null);
   const selectedFeatureRef = useRef<MapboxGeoJSONFeature | null>(null);
   const userInteractingRef = useRef(false);
-  const isPausedRef = useRef(false);
+  const isPausedRef = useRef(window.innerWidth < 768);
   const markersRef = useRef<MapMarker[]>([]);
   const isPopupPinnedRef = useRef(false); // Флаг закреплённого попапа
   const onMarkerClickRef = useRef<((marker: MapMarker) => void) | undefined>(
@@ -39,7 +39,7 @@ export const useMapbox = (
   const [selectedFeature, setSelectedFeature] =
     useState<MapboxGeoJSONFeature | null>(null);
   const [theme, setTheme] = useState<Theme>("light");
-  const [isPaused, setIsPaused] = useState(false);
+  const [isPaused, setIsPaused] = useState(() => window.innerWidth < 768);
 
   useEffect(() => {
     selectedFeatureRef.current = selectedFeature;
@@ -314,6 +314,15 @@ export const useMapbox = (
 
       map.on("mousedown", () => {
         userInteractingRef.current = true;
+      });
+
+      // Mobile: stop spinning on touch and allow interaction
+      map.on("touchstart", () => {
+        userInteractingRef.current = true;
+        // On mobile, stop spinning when user touches the globe
+        if (window.innerWidth < 768 && !isPausedRef.current) {
+          setIsPaused(true);
+        }
       });
 
       map.on("dragstart", () => {
