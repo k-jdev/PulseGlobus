@@ -3,30 +3,31 @@ import { useMapbox } from "./hooks";
 import { MapContainer, MarketStatsPopup } from "./components";
 import { useGetMarketsQuery } from "../../store/services/polymarketApi";
 import { convertMarketsToMapMarkers, MapMarker } from "./utils/marketMappers";
+import { TimeFilter } from "../../App";
 
 import "mapbox-gl/dist/mapbox-gl.css";
 import "./styles.css";
 
 interface GlobusMapboxProps {
+  timeFilter?: TimeFilter;
   onThemeChange?: (theme: any, changeTheme: any) => void;
   onSpinStateChange?: (isPaused: boolean, toggleSpin: () => void) => void;
 }
 
 const GlobusMapbox = ({
+  timeFilter = "24h",
   onThemeChange,
   onSpinStateChange,
 }: GlobusMapboxProps) => {
   const mapContainerRef = useRef<HTMLDivElement>(null);
   const [selectedMarket, setSelectedMarket] = useState<MapMarker | null>(null);
 
-  // Получаем данные с Polymarket
   const {
     data: markets,
     isLoading,
     error,
   } = useGetMarketsQuery({ limit: 100, active: true });
 
-  // Логируем для отладки
   useEffect(() => {
     console.log("📊 Polymarket API:", {
       isLoading,
@@ -38,13 +39,34 @@ const GlobusMapbox = ({
     }
   }, [markets, isLoading, error]);
 
-  // Конвертируем маркеты в маркеры для карты
   const mapMarkers = useMemo(() => {
     if (!markets) return [];
-    const markers = convertMarketsToMapMarkers(markets);
-    console.log("🎯 Converted markers:", markers.length);
-    return markers;
-  }, [markets]);
+    const allMarkers = convertMarketsToMapMarkers(markets);
+
+    let filteredMarkers: MapMarker[];
+
+    switch (timeFilter) {
+      case "1h":
+        filteredMarkers = [...allMarkers]
+          .sort((a, b) => b.volume24hr - a.volume24hr)
+          .slice(0, 30);
+        break;
+      case "6h":
+        filteredMarkers = [...allMarkers]
+          .sort((a, b) => b.volume1wk - a.volume1wk)
+          .slice(0, 60);
+        break;
+      case "24h":
+      default:
+        filteredMarkers = [...allMarkers].sort(
+          (a, b) => b.volume1mo - a.volume1mo
+        );
+        break;
+    }
+
+    console.log(`🎯 Filtered markers (${timeFilter}):`, filteredMarkers.length);
+    return filteredMarkers;
+  }, [markets, timeFilter]);
 
   const { theme, changeTheme, isPaused, toggleSpin } = useMapbox(
     mapContainerRef,

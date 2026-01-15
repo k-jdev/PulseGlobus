@@ -1,11 +1,23 @@
-import { useState } from "react";
 import { Button } from "../../../../ui";
-type TimeFilter = "1h" | "6h" | "24h";
 
-function TimeFilters() {
-  const [activeFilter, setActiveFilter] = useState<TimeFilter>("24h");
+export type TimeFilter = "1h" | "6h" | "24h";
 
+interface TimeFiltersProps {
+  activeFilter?: TimeFilter;
+  onFilterChange?: (filter: TimeFilter) => void;
+}
+
+function TimeFilters({
+  activeFilter = "24h",
+  onFilterChange,
+}: TimeFiltersProps) {
   const filters: TimeFilter[] = ["1h", "6h", "24h"];
+
+  const handleFilterClick = (filter: TimeFilter) => {
+    if (onFilterChange) {
+      onFilterChange(filter);
+    }
+  };
 
   return (
     <div className="flex gap-2 items-center pointer-events-auto">
@@ -13,7 +25,7 @@ function TimeFilters() {
         <Button
           variant="navigation"
           key={filter}
-          onClick={() => setActiveFilter(filter)}
+          onClick={() => handleFilterClick(filter)}
           className={`px-6 py-3 rounded-full transition-all font-medium text-[16px] ${
             activeFilter === filter
               ? "bg-white text-[#1452F0]"

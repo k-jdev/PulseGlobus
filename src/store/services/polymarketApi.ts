@@ -97,10 +97,10 @@ export const polymarketApi = createApi({
 
     getEvents: builder.query<
       PolymarketEvent[],
-      { limit?: number; active?: boolean }
+      { limit?: number; active?: boolean; order?: string }
     >({
-      query: ({ limit = 100, active = true } = {}) =>
-        `/events?limit=${limit}&active=${active}`,
+      query: ({ limit = 100, active = true, order = "volume24hr" } = {}) =>
+        `/events?active=${active}&closed=false&limit=${limit}&order=${order}&ascending=false`,
       providesTags: ["Events"],
     }),
 
@@ -110,7 +110,6 @@ export const polymarketApi = createApi({
         const searchQuery = arg.query.toLowerCase().trim();
         if (!searchQuery) return response.slice(0, 20);
 
-        // Фильтруем маркеты по запросу
         const filtered = response.filter((market) => {
           const question = market.question?.toLowerCase() || "";
           const description = market.description?.toLowerCase() || "";
@@ -126,7 +125,6 @@ export const polymarketApi = createApi({
         return filtered.slice(0, 20);
       },
       serializeQueryArgs: ({ queryArgs }) => {
-        // Включаем query в ключ кеша
         return `searchMarkets-${queryArgs.query}`;
       },
       providesTags: ["Markets"],

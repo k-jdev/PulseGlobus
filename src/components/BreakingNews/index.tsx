@@ -1,56 +1,84 @@
-import { useState } from "react";
-import { useGetMarketsQuery, Market } from "../../store/services/polymarketApi";
+import { useMemo } from "react";
+import {
+  useGetEventsQuery,
+  PolymarketEvent,
+} from "../../store/services/polymarketApi";
+import { TimeFilter } from "../../App";
 
 interface NewsItem {
   id: string;
   image: string;
-  question: string;
-  price: string;
-  priceNum: number;
-  outcome: string;
-  volume: string;
+  title: string;
+  volume24hr: number;
+  volume1wk: number;
+  volume1mo: number;
   slug: string;
+  endDate: string;
 }
 
-const formatPrice = (price: number): string => {
-  return (price * 100).toFixed(1) + "¢";
-};
-
 const formatVolume = (volume: number): string => {
-  if (volume >= 1000000) return "$" + (volume / 1000000).toFixed(0) + "m Vol.";
+  if (volume >= 1000000) return "$" + (volume / 1000000).toFixed(1) + "m Vol.";
   if (volume >= 1000) return "$" + (volume / 1000).toFixed(0) + "k Vol.";
   return "$" + volume.toFixed(0) + " Vol.";
 };
 
-const convertMarketToNews = (market: Market): NewsItem => {
-  const outcomes = JSON.parse(market.outcomes || '["Yes", "No"]');
-  const prices = JSON.parse(market.outcomePrices || "[0.5, 0.5]");
-  const maxPriceIndex = prices.indexOf(Math.max(...prices));
-  const price = prices[maxPriceIndex] || 0.5;
-  const volume = market.volumeNum || parseFloat(market.volume) || 0;
+// const endsWithinHours = (endDate: string, hours: number): boolean => {
+//   if (!endDate) return false;
+//   const end = new Date(endDate);
+//   const now = new Date();
+//   const diffMs = end.getTime() - now.getTime();
+//   const diffHours = diffMs / (1000 * 60 * 60);
+//   return diffHours > 0 && diffHours <= hours;
+// };
 
+const convertEventToNews = (event: PolymarketEvent): NewsItem => {
   return {
-    id: market.id,
-    image: market.imageOptimized?.imageUrlOptimized || market.image || "",
-    question: market.question,
-    price: formatPrice(price),
-    priceNum: price,
-    outcome: outcomes[maxPriceIndex] || "Yes",
-    volume: formatVolume(volume),
-    slug: market.slug,
+    id: event.id,
+    image: event.imageOptimized?.imageUrlOptimized || event.image || "",
+    title: event.title,
+    volume24hr: event.volume24hr || 0,
+    volume1wk: event.volume1wk || 0,
+    volume1mo: event.volume1mo || 0,
+    slug: event.slug,
+    endDate: event.endDate || "",
   };
 };
 
 interface BreakingNewsProps {
   isOpen: boolean;
   onClose: () => void;
+  timeFilter?: TimeFilter;
 }
 
-export const BreakingNews = ({ isOpen }: BreakingNewsProps) => {
-  const [timeFilter, setTimeFilter] = useState<"1h" | "6h" | "24h">("24h");
-  const { data: markets } = useGetMarketsQuery({ limit: 20, active: true });
+export const BreakingNews = ({
+  isOpen,
+  timeFilter = "24h",
+}: BreakingNewsProps) => {
+  const { data: events } = useGetEventsQuery({
+    limit: 100,
+    active: true,
+    order: "volume24hr",
+  });
 
-  const news: NewsItem[] = markets?.slice(0, 8).map(convertMarketToNews) || [];
+  const news: NewsItem[] = useMemo(() => {
+    if (!events) return [];
+
+    const converted = events.map(convertEventToNews);
+
+    const sortedByActivity = [...converted]
+      .filter((item) => item.volume24hr > 0)
+      .sort((a, b) => b.volume24hr - a.volume24hr);
+
+    switch (timeFilter) {
+      case "1h":
+        return sortedByActivity.slice(0, 8);
+      case "6h":
+        return sortedByActivity.slice(8, 16);
+      case "24h":
+      default:
+        return sortedByActivity.slice(16, 24);
+    }
+  }, [events, timeFilter]);
 
   if (!isOpen) return null;
 
@@ -58,7 +86,7 @@ export const BreakingNews = ({ isOpen }: BreakingNewsProps) => {
     <div className="absolute top-[160px] left-8 bg-white border-t-[6px] border-[#EE1616] rounded-[14px] w-[502px] max-h-[70vh] overflow-hidden z-50 shadow-[0px_22px_32px_0px_rgba(20,82,240,0.25)]">
       {/* Header */}
       <div className="px-6 pt-7 pb-4">
-        <div className="flex flex-col gap-2 mb-4">
+        <div className="flex flex-col gap-2">
           <h2 className="text-[32px] font-bold text-black tracking-[-0.56px] leading-8">
             Breaking News
           </h2>
@@ -66,23 +94,6 @@ export const BreakingNews = ({ isOpen }: BreakingNewsProps) => {
             Markets reacting in real time. Volatility driven by unfolding
             events.
           </p>
-        </div>
-
-        {/* Time filters */}
-        <div className="flex gap-2">
-          {(["1h", "6h", "24h"] as const).map((filter) => (
-            <button
-              key={filter}
-              onClick={() => setTimeFilter(filter)}
-              className={`h-12 px-6 py-3 rounded-full text-[15px] font-medium transition-colors border border-[rgba(0,0,0,0.12)] ${
-                timeFilter === filter
-                  ? "bg-[rgba(20,82,240,0.1)] text-[#1452F0]"
-                  : "bg-white text-[#BBBDC1] hover:bg-gray-50"
-              }`}
-            >
-              {filter}
-            </button>
-          ))}
         </div>
       </div>
 
@@ -93,7 +104,7 @@ export const BreakingNews = ({ isOpen }: BreakingNewsProps) => {
       <div className="px-6 py-4 overflow-y-auto max-h-[calc(70vh-200px)]">
         <div className="flex flex-col gap-4">
           {news.map((item) => (
-            <NewsRow key={item.id} item={item} />
+            <NewsRow key={item.id} item={item} timeFilter={timeFilter} />
           ))}
         </div>
       </div>
@@ -101,13 +112,23 @@ export const BreakingNews = ({ isOpen }: BreakingNewsProps) => {
   );
 };
 
-const NewsRow = ({ item }: { item: NewsItem }) => {
-  // Цена красная если меньше 50%, иначе синяя
-  const priceColor = item.priceNum < 0.5 ? "text-[#EE1616]" : "text-[#1452F0]";
+const NewsRow = ({
+  item,
+  timeFilter,
+}: {
+  item: NewsItem;
+  timeFilter: TimeFilter;
+}) => {
+  const displayVolume =
+    timeFilter === "1h"
+      ? item.volume24hr
+      : timeFilter === "6h"
+      ? item.volume1wk
+      : item.volume1mo;
 
   return (
     <div className="flex flex-col gap-4">
-      {/* Main row: Image + Question + Price */}
+      {/* Main row: Image + Title */}
       <div className="flex items-center gap-4">
         {/* Image */}
         {item.image && (
@@ -120,32 +141,24 @@ const NewsRow = ({ item }: { item: NewsItem }) => {
           </div>
         )}
 
-        {/* Question */}
+        {/* Title */}
         <p className="flex-1 text-[#1B2430] font-semibold text-[19px] leading-[30px] tracking-[-0.4px]">
-          {item.question}
+          {item.title}
         </p>
-
-        {/* Price + Outcome */}
-        <div className="flex flex-col items-end gap-2 flex-shrink-0">
-          <p
-            className={`${priceColor} font-semibold text-[20px] tracking-[-0.4px]`}
-          >
-            {item.price}
-          </p>
-          <p className="text-[#BBBDC1] font-medium text-[14px] tracking-[-0.28px]">
-            {item.outcome}
-          </p>
-        </div>
       </div>
 
-      {/* Tags row: Volume, Weekly, Chart icon - left | Pin icon - right */}
+      {/* Tags row: Volume, Time filter, Chart icon - left | Link icon - right */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-1.5">
           <span className="px-3 py-1 bg-[#f5f5f5] rounded-full text-[#808080] text-[14px] font-medium tracking-[-0.28px]">
-            {item.volume}
+            {formatVolume(displayVolume)}
           </span>
           <span className="px-3 py-1 bg-[#f5f5f5] rounded-full text-[#808080] text-[14px] font-medium tracking-[-0.28px]">
-            Weekly
+            {timeFilter === "1h"
+              ? "1 Hour"
+              : timeFilter === "6h"
+              ? "6 Hours"
+              : "24 Hours"}
           </span>
           {/* Chart icon */}
           <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
@@ -173,7 +186,7 @@ const NewsRow = ({ item }: { item: NewsItem }) => {
           </svg>
         </div>
 
-        {/* Pin icon */}
+        {/* Link icon */}
         <a
           href={`https://polymarket.com/event/${item.slug}`}
           target="_blank"

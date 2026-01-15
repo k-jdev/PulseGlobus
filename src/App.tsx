@@ -6,6 +6,8 @@ import {
 } from "./components";
 import { Theme } from "./components/GlobusMapbox/constants/mapConfig";
 
+export type TimeFilter = "1h" | "6h" | "24h";
+
 function App() {
   const [theme, setTheme] = useState<Theme>("light");
   const [changeTheme, setChangeTheme] = useState<
@@ -13,11 +15,13 @@ function App() {
   >(null);
   const [isPaused, setIsPaused] = useState(false);
   const [toggleSpin, setToggleSpin] = useState<(() => void) | null>(null);
+  const [timeFilter, setTimeFilter] = useState<TimeFilter>("24h");
 
   return (
     <div className="relative w-full h-screen overflow-hidden">
       <NavbarComponent />
       <GlobusMapboxComponent
+        timeFilter={timeFilter}
         onThemeChange={(currentTheme, changeThemeFn) => {
           setTheme(currentTheme);
           if (!changeTheme) {
@@ -36,6 +40,8 @@ function App() {
         onThemeChange={changeTheme}
         isPaused={isPaused}
         onToggleSpin={toggleSpin}
+        timeFilter={timeFilter}
+        onTimeFilterChange={setTimeFilter}
       />
     </div>
   );

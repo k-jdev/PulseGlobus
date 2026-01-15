@@ -2,12 +2,6 @@ import ReactDOMServer from "react-dom/server";
 import { createElement } from "react";
 import { MarketPopup } from "../components/MarketPopup";
 
-const formatNumber = (num: number): string => {
-  if (num >= 1000000) return "$" + (num / 1000000).toFixed(1) + "m";
-  if (num >= 1000) return "$" + (num / 1000).toFixed(1) + "k";
-  return "$" + num.toFixed(0);
-};
-
 const formatCents = (price: number): string => {
   return (price * 100).toFixed(1) + "¢";
 };
@@ -17,7 +11,7 @@ export const createMarketPopupContent = (
 ): string => {
   const outcomes = JSON.parse(properties.outcomes || "[]");
   const prices = JSON.parse(properties.outcomePrices || "[]");
-  const volume = parseFloat(properties.volume) || 0;
+  const volume24hr = parseFloat(properties.volume24hr) || 0;
 
   const outcomesData = outcomes.map((outcome: string, idx: number) => {
     const price = prices[idx] || 0;
@@ -37,7 +31,7 @@ export const createMarketPopupContent = (
     title: properties.title || "Untitled Market",
     image: properties.image,
     outcomes: outcomesData,
-    volume: formatNumber(volume),
+    volume24hr: volume24hr,
     slug: properties.slug,
     eventSlug: properties.eventSlug,
   });

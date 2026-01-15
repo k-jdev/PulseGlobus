@@ -13,12 +13,15 @@ import {
 import ThemeToggleComponent from "./components/ActionBar/ThemeToggle";
 import LiveTrades from "../LiveTrades";
 import BreakingNews from "../BreakingNews";
+import { TimeFilter } from "../../App";
 
 interface MainNavigationProps {
   theme?: Theme;
   onThemeChange?: ((theme: Theme) => void) | null;
   isPaused?: boolean;
   onToggleSpin?: (() => void) | null;
+  timeFilter?: TimeFilter;
+  onTimeFilterChange?: (filter: TimeFilter) => void;
 }
 
 function MainNavigation({
@@ -26,6 +29,8 @@ function MainNavigation({
   onThemeChange,
   isPaused = false,
   onToggleSpin,
+  timeFilter = "24h",
+  onTimeFilterChange,
 }: MainNavigationProps) {
   const [isLiveTradesOpen, setIsLiveTradesOpen] = useState(false);
   const [isBreakingNewsOpen, setIsBreakingNewsOpen] = useState(false);
@@ -64,7 +69,10 @@ function MainNavigation({
           {onThemeChange && (
             <ThemeToggleComponent theme={theme} onThemeChange={onThemeChange} />
           )}
-          <TimeFiltersComponent />
+          <TimeFiltersComponent
+            activeFilter={timeFilter}
+            onFilterChange={onTimeFilterChange}
+          />
           {onToggleSpin && (
             <div className="pointer-events-auto">
               <PlayButtonComponent
@@ -79,6 +87,7 @@ function MainNavigation({
       <BreakingNews
         isOpen={isBreakingNewsOpen}
         onClose={() => setIsBreakingNewsOpen(false)}
+        timeFilter={timeFilter}
       />
 
       <LiveTrades

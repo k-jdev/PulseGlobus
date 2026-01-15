@@ -11,16 +11,22 @@ interface MarketPopupProps {
   title: string;
   image?: string;
   outcomes: Outcome[];
-  volume: string;
+  volume24hr: number;
   slug: string;
   eventSlug?: string;
 }
+
+const formatCurrency = (num: number): string => {
+  if (num >= 1000000) return "$" + (num / 1000000).toFixed(1) + "m";
+  if (num >= 1000) return "$" + Math.round(num / 1000) + "k";
+  return "$" + Math.round(num);
+};
 
 export const MarketPopup: FC<MarketPopupProps> = ({
   title,
   image,
   outcomes,
-  volume,
+  volume24hr,
   slug,
   eventSlug,
 }) => {
@@ -66,7 +72,7 @@ export const MarketPopup: FC<MarketPopupProps> = ({
       {/* Volume and metadata */}
       <div className="flex items-center gap-3 mb-5 pt-4 border-t border-gray-100">
         <div className="px-4 py-2 bg-gray-100 rounded-lg text-gray-600 text-sm font-medium">
-          {volume} Vol.
+          {formatCurrency(volume24hr)} Vol.
         </div>
         <div className="px-4 py-2 bg-gray-100 rounded-lg text-gray-600 text-sm font-medium">
           Weekly
