@@ -1,7 +1,9 @@
 import { useMemo, useState } from "react";
 import {
   useGetEventsQuery,
+  useGetMarketsQuery,
   PolymarketEvent,
+  Market,
 } from "../../store/services/polymarketApi";
 
 type TimeFilter = "1h" | "6h" | "24h";
@@ -15,12 +17,18 @@ interface NewsItem {
   volume1mo: number;
   slug: string;
   endDate: string;
+  price?: number;
+  outcome?: string;
 }
 
 const formatVolume = (volume: number): string => {
   if (volume >= 1000000) return "$" + (volume / 1000000).toFixed(1) + "m Vol.";
   if (volume >= 1000) return "$" + (volume / 1000).toFixed(0) + "k Vol.";
   return "$" + volume.toFixed(0) + " Vol.";
+};
+
+const formatPrice = (price: number): string => {
+  return (price * 100).toFixed(1) + "¢";
 };
 
 // const endsWithinHours = (endDate: string, hours: number): boolean => {
@@ -59,10 +67,52 @@ export const BreakingNews = ({ isOpen }: BreakingNewsProps) => {
     order: "volume24hr",
   });
 
+  const { data: markets } = useGetMarketsQuery({ limit: 100, active: true });
+
+  // Create a map of event slug to market data for price info
+  const marketMap = useMemo(() => {
+    const map = new Map<string, Market>();
+    if (markets) {
+      markets.forEach((market) => {
+        if (market.slug) {
+          map.set(market.slug, market);
+        }
+      });
+    }
+    return map;
+  }, [markets]);
+
   const news: NewsItem[] = useMemo(() => {
     if (!events) return [];
 
-    const converted = events.map(convertEventToNews);
+    const converted = events.map((event) => {
+      const newsItem = convertEventToNews(event);
+      // Try to find matching market for price data
+      const market = marketMap.get(event.slug);
+      if (market) {
+        try {
+          const outcomes = JSON.parse(market.outcomes);
+          const prices = JSON.parse(market.outcomePrices);
+          // Get the highest price outcome
+          let maxPriceIndex = 0;
+          let maxPrice = parseFloat(prices[0]) || 0;
+          prices.forEach((p: string, i: number) => {
+            const price = parseFloat(p) || 0;
+            if (price > maxPrice) {
+              maxPrice = price;
+              maxPriceIndex = i;
+            }
+          });
+          newsItem.price = maxPrice;
+          newsItem.outcome = outcomes[maxPriceIndex] || "Yes";
+        } catch {
+          // Fallback values
+          newsItem.price = 0.5;
+          newsItem.outcome = "Yes";
+        }
+      }
+      return newsItem;
+    });
 
     const sortedByActivity = [...converted]
       .filter((item) => item.volume24hr > 0)
@@ -77,12 +127,12 @@ export const BreakingNews = ({ isOpen }: BreakingNewsProps) => {
       default:
         return sortedByActivity.slice(16, 24);
     }
-  }, [events, timeFilter]);
+  }, [events, timeFilter, marketMap]);
 
   if (!isOpen) return null;
 
   return (
-    <div className="absolute top-[160px] left-8 bg-white border-t-[6px] border-[#EE1616] rounded-[14px] w-[502px] max-h-[70vh] overflow-hidden z-50 shadow-[0px_22px_32px_0px_rgba(20,82,240,0.25)]">
+    <div className="absolute top-[144px] md:top-[160px] left-4 md:left-8 bg-white border-t-[6px] border-[#EE1616] rounded-[14px] w-[calc(100vw-32px)] md:w-[502px] max-h-[calc(100vh-180px)] md:max-h-[70vh] overflow-hidden z-50 shadow-[0px_22px_32px_0px_rgba(20,82,240,0.25)]">
       {/* Header */}
       <div className="px-6 pt-7 pb-4">
         <div className="flex flex-col gap-2 mb-4">
@@ -117,7 +167,7 @@ export const BreakingNews = ({ isOpen }: BreakingNewsProps) => {
       <div className="mx-6 h-px bg-[#e4e4e4]" />
 
       {/* News List */}
-      <div className="px-6 py-4 overflow-y-auto max-h-[calc(70vh-200px)]">
+      <div className="px-6 py-4 overflow-y-auto max-h-[calc(100vh-380px)] md:max-h-[calc(70vh-200px)]">
         <div className="flex flex-col gap-4">
           {news.map((item) => (
             <NewsRow key={item.id} item={item} timeFilter={timeFilter} />
@@ -142,9 +192,12 @@ const NewsRow = ({
       ? item.volume1wk
       : item.volume1mo;
 
+  const priceColor =
+    item.price && item.price >= 0.5 ? "text-[#1452F0]" : "text-[#EE1616]";
+
   return (
     <div className="flex flex-col gap-4">
-      {/* Main row: Image + Title */}
+      {/* Main row: Image + Title + Price */}
       <div className="flex items-center gap-4">
         {/* Image */}
         {item.image && (
@@ -161,9 +214,23 @@ const NewsRow = ({
         <p className="flex-1 text-[#1B2430] font-semibold text-[19px] leading-[30px] tracking-[-0.4px]">
           {item.title}
         </p>
+
+        {/* Price + Outcome */}
+        {item.price !== undefined && (
+          <div className="flex flex-col items-end gap-2 flex-shrink-0">
+            <p
+              className={`${priceColor} font-semibold text-[20px] tracking-[-0.4px]`}
+            >
+              {formatPrice(item.price)}
+            </p>
+            <p className="text-[#BBBDC1] font-medium text-[14px] tracking-[-0.28px]">
+              {item.outcome}
+            </p>
+          </div>
+        )}
       </div>
 
-      {/* Tags row: Volume, Time filter, Chart icon - left | Link icon - right */}
+      {/* Tags row: Volume, Time filter, Chart icon - left | Pin icon - right */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-1.5">
           <span className="px-3 py-1 bg-[#f5f5f5] rounded-full text-[#808080] text-[14px] font-medium tracking-[-0.28px]">
@@ -171,10 +238,10 @@ const NewsRow = ({
           </span>
           <span className="px-3 py-1 bg-[#f5f5f5] rounded-full text-[#808080] text-[14px] font-medium tracking-[-0.28px]">
             {timeFilter === "1h"
-              ? "1 Hour"
+              ? "Hourly"
               : timeFilter === "6h"
-              ? "6 Hours"
-              : "24 Hours"}
+              ? "Daily"
+              : "Weekly"}
           </span>
           {/* Chart icon */}
           <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
@@ -202,7 +269,7 @@ const NewsRow = ({
           </svg>
         </div>
 
-        {/* Link icon */}
+        {/* Pin icon */}
         <a
           href={`https://polymarket.com/event/${item.slug}`}
           target="_blank"
@@ -211,7 +278,7 @@ const NewsRow = ({
         >
           <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
             <path
-              d="M15 4.5L11 8.5L7 10L5.5 11.5L12.5 18.5L14 17L15.5 13L19.5 9M9 15L4.5 19.5M14.5 4L20 9.5"
+              d="M9.5 14.5L3 21M15 3.5L20.5 9L16.5 13L17 17L7 7L11 6.5L15 3.5Z"
               stroke="currentColor"
               strokeWidth="2"
               strokeLinecap="round"

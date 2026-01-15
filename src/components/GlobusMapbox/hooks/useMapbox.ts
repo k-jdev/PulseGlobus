@@ -496,6 +496,10 @@ export const useMapbox = (
         popupRef.current.remove();
       }
 
+      // Не показываем попап на мобильных устройствах (ширина < 768px)
+      const isMobile = window.innerWidth < 768;
+      if (isMobile) return;
+
       if (feature.geometry && feature.geometry.type === "Point") {
         const properties = feature.properties || {};
         const popupContent = createPopupContent(properties);

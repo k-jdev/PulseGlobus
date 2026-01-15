@@ -21,6 +21,7 @@ interface MarketStatsPopupProps {
   slug: string;
   eventSlug?: string;
   onClose?: () => void;
+  isMobile?: boolean;
 }
 
 const formatCurrency = (num: number): string => {
@@ -71,6 +72,7 @@ export const MarketStatsPopup: FC<MarketStatsPopupProps> = ({
   slug,
   eventSlug,
   onClose,
+  isMobile = false,
 }) => {
   const [activeTab, setActiveTab] = useState<TabType>("price");
 
@@ -100,7 +102,11 @@ export const MarketStatsPopup: FC<MarketStatsPopupProps> = ({
   const noOutcome = outcomes.find((o) => o.name.toLowerCase() === "no");
 
   return (
-    <div className="bg-white rounded-[14px] shadow-[0px_22px_32px_0px_rgba(20,82,240,0.25)] w-[465px] overflow-hidden">
+    <div
+      className={`bg-white rounded-[14px] shadow-[0px_22px_32px_0px_rgba(20,82,240,0.25)] overflow-hidden ${
+        isMobile ? "w-[calc(100vw-32px)] max-w-[372px]" : "w-[465px]"
+      }`}
+    >
       {/* Close button */}
       <button
         onClick={onClose}
@@ -116,7 +122,25 @@ export const MarketStatsPopup: FC<MarketStatsPopupProps> = ({
         </svg>
       </button>
 
-      <div className="px-6 py-5">
+      <div className={`${isMobile ? "px-5 py-4" : "px-6 py-5"}`}>
+        {/* Mobile: Header with image and title above tabs */}
+        {isMobile && (
+          <div className="flex gap-4 items-center mb-4">
+            {image && (
+              <div className="w-[54px] h-[54px] rounded-[7px] overflow-hidden flex-shrink-0">
+                <img
+                  src={image}
+                  alt=""
+                  className="w-full h-full object-cover"
+                />
+              </div>
+            )}
+            <h3 className="flex-1 text-[19px] font-semibold text-[#1b2430] leading-[30px] tracking-[-0.4px]">
+              {title}
+            </h3>
+          </div>
+        )}
+
         {/* Tabs */}
         <div className="flex w-full mb-4">
           {tabs.map((tab) => (
@@ -137,31 +161,33 @@ export const MarketStatsPopup: FC<MarketStatsPopupProps> = ({
         {/* Price Tab */}
         {activeTab === "price" && (
           <div className="flex flex-col gap-4">
-            {/* Header with image and title */}
-            <div className="flex gap-4 items-center">
-              {image && (
-                <div className="w-9 h-9 rounded-[4.8px] overflow-hidden flex-shrink-0">
-                  <img
-                    src={image}
-                    alt=""
-                    className="w-full h-full object-cover"
-                  />
-                </div>
-              )}
-              <h3 className="flex-1 text-[19px] font-semibold text-[#1b2430] leading-[30px] tracking-[-0.4px]">
-                {title}
-              </h3>
-              {topOutcome && (
-                <div className="flex flex-col items-end gap-2">
-                  <span className="text-[20px] font-semibold text-[#ee1616] tracking-[-0.4px]">
-                    {formatCents(topOutcome.price)}
-                  </span>
-                  <span className="text-[14px] font-medium text-[#bbbdc1] tracking-[-0.28px]">
-                    {topOutcome.name}
-                  </span>
-                </div>
-              )}
-            </div>
+            {/* Desktop: Header with image and title */}
+            {!isMobile && (
+              <div className="flex gap-4 items-center">
+                {image && (
+                  <div className="w-9 h-9 rounded-[4.8px] overflow-hidden flex-shrink-0">
+                    <img
+                      src={image}
+                      alt=""
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
+                )}
+                <h3 className="flex-1 text-[19px] font-semibold text-[#1b2430] leading-[30px] tracking-[-0.4px]">
+                  {title}
+                </h3>
+                {topOutcome && (
+                  <div className="flex flex-col items-end gap-2">
+                    <span className="text-[20px] font-semibold text-[#ee1616] tracking-[-0.4px]">
+                      {formatCents(topOutcome.price)}
+                    </span>
+                    <span className="text-[14px] font-medium text-[#bbbdc1] tracking-[-0.28px]">
+                      {topOutcome.name}
+                    </span>
+                  </div>
+                )}
+              </div>
+            )}
 
             {/* Outcomes list */}
             {isBinaryMarket && yesOutcome && noOutcome ? (
@@ -209,7 +235,9 @@ export const MarketStatsPopup: FC<MarketStatsPopupProps> = ({
                 {outcomes.map((outcome, idx) => (
                   <div key={idx} className="flex items-center justify-between">
                     <span
-                      className="text-[#1b2430] text-[16px] font-medium tracking-[-0.32px] truncate max-w-[140px]"
+                      className={`text-[#1b2430] text-[16px] font-medium tracking-[-0.32px] truncate ${
+                        isMobile ? "max-w-[100px]" : "max-w-[140px]"
+                      }`}
                       title={outcome.name}
                     >
                       {outcome.name}
@@ -247,6 +275,33 @@ export const MarketStatsPopup: FC<MarketStatsPopupProps> = ({
                 </span>
               </div>
             </div>
+
+            {/* Mobile: View market button */}
+            {isMobile && (
+              <a
+                href={
+                  eventSlug && eventSlug !== slug
+                    ? `https://polymarket.com/event/${eventSlug}/${slug}`
+                    : `https://polymarket.com/event/${slug}`
+                }
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center justify-between w-full px-6 py-4 bg-[#1452f0] rounded-full text-white hover:bg-[#1240c0] transition-colors"
+              >
+                <span className="text-[16px] font-semibold tracking-[-0.32px]">
+                  View market
+                </span>
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                  <path
+                    d="M7 17L17 7M17 7H7M17 7V17"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                </svg>
+              </a>
+            )}
           </div>
         )}
 

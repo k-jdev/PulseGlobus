@@ -61,7 +61,7 @@ export const LiveTrades = ({ isOpen }: LiveTradesProps) => {
   if (!isOpen) return null;
 
   return (
-    <div className="absolute top-[160px] left-8 bg-white rounded-[14px] w-[502px] max-h-[70vh] border-t-[6px] border-[#53BB33] overflow-hidden z-50 animate-in slide-in-from-left duration-300 shadow-[0px_22px_32px_0px_rgba(20,82,240,0.25)]">
+    <div className="absolute top-[144px] md:top-[160px] left-4 md:left-8 bg-white rounded-[14px] w-[calc(100vw-32px)] md:w-[502px] max-h-[calc(100vh-180px)] md:max-h-[70vh] border-t-[6px] border-[#53BB33] overflow-hidden z-50 animate-in slide-in-from-left duration-300 shadow-[0px_22px_32px_0px_rgba(20,82,240,0.25)]">
       {/* Header */}
       <div className="px-6 pt-7 pb-4">
         <div className="flex items-start justify-between">
@@ -111,7 +111,7 @@ export const LiveTrades = ({ isOpen }: LiveTradesProps) => {
       <div className="mx-6 h-px bg-[#e4e4e4]" />
 
       {/* Trades List */}
-      <div className="px-6 py-4 overflow-y-auto max-h-[calc(70vh-140px)]">
+      <div className="px-6 py-4 overflow-y-auto max-h-[calc(100vh-380px)] md:max-h-[calc(70vh-140px)]">
         <div className="flex flex-col gap-4">
           {trades.map((trade) => (
             <TradeRow key={trade.id} trade={trade} />

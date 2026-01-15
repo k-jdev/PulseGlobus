@@ -19,7 +19,12 @@ function App() {
 
   return (
     <div className="relative w-full h-screen overflow-hidden">
-      <NavbarComponent />
+      <NavbarComponent
+        theme={theme}
+        onThemeChange={changeTheme}
+        timeFilter={timeFilter}
+        onTimeFilterChange={setTimeFilter}
+      />
       <GlobusMapboxComponent
         timeFilter={timeFilter}
         onThemeChange={(currentTheme, changeThemeFn) => {

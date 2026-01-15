@@ -47,7 +47,8 @@ function MainNavigation({
 
   return (
     <>
-      <div className="absolute top-[72px] left-0 bg-transparent px-8 py-6 w-full z-10 pointer-events-none flex items-center justify-between gap-4">
+      {/* Desktop Navigation */}
+      <div className="hidden md:flex absolute top-[72px] left-0 bg-transparent px-8 py-6 w-full z-10 pointer-events-none items-center justify-between gap-4">
         <div className="flex items-center gap-4">
           <Button variant="navigation" className="pointer-events-auto">
             <img src={arrowLeftIcon} alt="Arrow Left" />
@@ -78,6 +79,37 @@ function MainNavigation({
               <PlayButtonComponent
                 isPaused={isPaused}
                 onToggleSpin={onToggleSpin}
+              />
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Mobile Navigation */}
+      <div className="flex md:hidden absolute top-[72px] left-0 bg-transparent px-4 py-4 w-full z-10 pointer-events-none items-center justify-between gap-3">
+        <div className="flex items-center gap-3">
+          <div className="pointer-events-auto">
+            <NewsButtonComponent
+              isOpen={isBreakingNewsOpen}
+              onClick={handleBreakingClick}
+              isMobile={true}
+            />
+          </div>
+          <div className="pointer-events-auto">
+            <LiveButtonComponent
+              isOpen={isLiveTradesOpen}
+              onClick={handleLiveClick}
+              isMobile={true}
+            />
+          </div>
+        </div>
+        <div className="flex gap-3 items-center">
+          {onToggleSpin && (
+            <div className="pointer-events-auto">
+              <PlayButtonComponent
+                isPaused={isPaused}
+                onToggleSpin={onToggleSpin}
+                isMobile={true}
               />
             </div>
           )}

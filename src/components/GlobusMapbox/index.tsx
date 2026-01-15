@@ -106,27 +106,55 @@ const GlobusMapbox = ({
         onThemeChange={changeTheme}
       />
       {selectedMarket && (
-        <div className="fixed top-[160px] right-6 z-50">
-          <MarketStatsPopup
-            key={selectedMarket.id}
-            title={selectedMarket.title}
-            image={selectedMarket.image}
-            outcomes={selectedMarket.outcomes.map((name, idx) => ({
-              name,
-              price: selectedMarket.outcomePrices[idx] || 0,
-            }))}
-            volume={selectedMarket.volume}
-            volume24hr={selectedMarket.volume24hr}
-            volume1wk={selectedMarket.volume1wk}
-            volume1mo={selectedMarket.volume1mo}
-            liquidity={selectedMarket.liquidity}
-            endDate={selectedMarket.endDate}
-            description={selectedMarket.description}
-            slug={selectedMarket.slug}
-            eventSlug={selectedMarket.eventSlug}
-            onClose={handleClosePopup}
-          />
-        </div>
+        <>
+          {/* Desktop popup - right side */}
+          <div className="hidden md:block fixed top-[160px] right-6 z-50">
+            <MarketStatsPopup
+              key={selectedMarket.id}
+              title={selectedMarket.title}
+              image={selectedMarket.image}
+              outcomes={selectedMarket.outcomes.map((name, idx) => ({
+                name,
+                price: selectedMarket.outcomePrices[idx] || 0,
+              }))}
+              volume={selectedMarket.volume}
+              volume24hr={selectedMarket.volume24hr}
+              volume1wk={selectedMarket.volume1wk}
+              volume1mo={selectedMarket.volume1mo}
+              liquidity={selectedMarket.liquidity}
+              endDate={selectedMarket.endDate}
+              description={selectedMarket.description}
+              slug={selectedMarket.slug}
+              eventSlug={selectedMarket.eventSlug}
+              onClose={handleClosePopup}
+            />
+          </div>
+          {/* Mobile popup - centered */}
+          <div className="md:hidden fixed inset-0 z-50 flex items-center justify-center pointer-events-none">
+            <div className="pointer-events-auto">
+              <MarketStatsPopup
+                key={`mobile-${selectedMarket.id}`}
+                title={selectedMarket.title}
+                image={selectedMarket.image}
+                outcomes={selectedMarket.outcomes.map((name, idx) => ({
+                  name,
+                  price: selectedMarket.outcomePrices[idx] || 0,
+                }))}
+                volume={selectedMarket.volume}
+                volume24hr={selectedMarket.volume24hr}
+                volume1wk={selectedMarket.volume1wk}
+                volume1mo={selectedMarket.volume1mo}
+                liquidity={selectedMarket.liquidity}
+                endDate={selectedMarket.endDate}
+                description={selectedMarket.description}
+                slug={selectedMarket.slug}
+                eventSlug={selectedMarket.eventSlug}
+                onClose={handleClosePopup}
+                isMobile={true}
+              />
+            </div>
+          </div>
+        </>
       )}
     </>
   );

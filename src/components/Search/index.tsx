@@ -53,7 +53,13 @@ function parseOutcomes(outcomesStr: string): string[] {
   }
 }
 
-export function Search() {
+interface SearchProps {
+  isMobile?: boolean;
+  onFocus?: () => void;
+  onClose?: () => void;
+}
+
+export function Search({ isMobile = false, onFocus, onClose }: SearchProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [query, setQuery] = useState("");
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
@@ -62,13 +68,11 @@ export function Search() {
 
   const debouncedQuery = useDebounce(query, 300);
 
-  // Используем те же данные, что и карта
   const { data: allMarkets, isFetching } = useGetMarketsQuery({
     limit: 100,
     active: true,
   });
 
-  // Фильтруем маркеты по поисковому запросу
   const searchResults = useMemo(() => {
     if (!allMarkets) return [];
 
@@ -101,16 +105,25 @@ export function Search() {
 
   const handleFocus = () => {
     setIsOpen(true);
+    onFocus?.();
   };
 
-  const handleClickOutside = useCallback((event: MouseEvent) => {
-    if (
-      containerRef.current &&
-      !containerRef.current.contains(event.target as Node)
-    ) {
-      setIsOpen(false);
-    }
-  }, []);
+  const handleClose = useCallback(() => {
+    setIsOpen(false);
+    onClose?.();
+  }, [onClose]);
+
+  const handleClickOutside = useCallback(
+    (event: MouseEvent) => {
+      if (
+        containerRef.current &&
+        !containerRef.current.contains(event.target as Node)
+      ) {
+        handleClose();
+      }
+    },
+    [handleClose]
+  );
 
   useEffect(() => {
     document.addEventListener("mousedown", handleClickOutside);
@@ -155,7 +168,11 @@ export function Search() {
   return (
     <div ref={containerRef} className="relative">
       {/* Search Input */}
-      <div className="flex items-center gap-6 bg-[#f5f7f9] border border-[#ebebec] rounded-full px-6 py-3">
+      <div
+        className={`flex items-center gap-6 bg-[#f5f7f9] border border-[#ebebec] rounded-full px-6 py-3 ${
+          isMobile ? "h-12" : ""
+        }`}
+      >
         <img
           src={searchIcon}
           alt="Search"
@@ -167,9 +184,15 @@ export function Search() {
         />
         <input
           ref={inputRef}
-          className="bg-transparent outline-none text-[16px] font-medium text-black placeholder:text-black placeholder:opacity-50 tracking-[-0.64px] leading-[1.2] w-[700px]"
+          className={`bg-transparent outline-none text-[16px] font-medium text-black placeholder:text-black placeholder:opacity-50 tracking-[-0.64px] leading-[1.2] ${
+            isMobile ? "flex-1 min-w-0" : "w-[700px]"
+          }`}
           type="text"
-          placeholder="Search markets, events, or topics..."
+          placeholder={
+            isMobile
+              ? "Search markets, events, or topics..."
+              : "Search markets, events, or topics..."
+          }
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           onFocus={handleFocus}
@@ -181,14 +204,26 @@ export function Search() {
 
       {/* Dropdown */}
       {isOpen && (
-        <div className="absolute top-[70px] left-0 right-0 mt-2 bg-white rounded-[14px] border border-[#e9edf8] shadow-[0px_22px_32px_0px_rgba(20,82,240,0.25)] z-50 px-6 py-5 flex flex-col gap-4">
+        <div
+          className={`absolute mt-2 bg-white rounded-[14px] border border-[#e9edf8] shadow-[0px_22px_32px_0px_rgba(20,82,240,0.25)] z-50 flex flex-col gap-4 ${
+            isMobile
+              ? "left-0 right-0 px-5 py-4 max-w-[calc(100vw-32px)]"
+              : "top-[70px] left-0 right-0 px-6 py-5"
+          }`}
+        >
           {/* Searching For */}
           <p className="font-semibold text-[16px] leading-[30px] tracking-[-0.4px] text-[#1b2430]">
             Searching For
           </p>
 
           {/* Categories */}
-          <div className="flex flex-wrap gap-2 items-center">
+          <div
+            className={`flex gap-2 items-center ${
+              isMobile
+                ? "overflow-x-auto pb-2 -mx-1 px-1 scrollbar-hide"
+                : "flex-wrap"
+            }`}
+          >
             {CATEGORIES.map((category) => {
               const isSelected =
                 (category.value === "" && selectedCategories.length === 0) ||
@@ -198,7 +233,7 @@ export function Search() {
                 <button
                   key={category.value}
                   onClick={() => toggleCategory(category.value)}
-                  className={`h-12 px-6 py-3 rounded-full text-[15px] font-medium leading-[22.5px] tracking-[-0.3px] transition-all ${
+                  className={`h-12 px-6 py-3 rounded-full text-[15px] font-medium leading-[22.5px] tracking-[-0.3px] transition-all whitespace-nowrap flex-shrink-0 ${
                     isSelected
                       ? "bg-[#1452f0] text-white shadow-[0px_2px_8px_0px_rgba(20,82,240,0.2)]"
                       : "bg-white text-[#808080] border border-[rgba(0,0,0,0.12)] hover:bg-gray-50"
@@ -219,13 +254,17 @@ export function Search() {
           </p>
 
           {/* Results List */}
-          <div className="flex flex-col gap-4 max-h-[300px] overflow-y-auto">
+          <div
+            className={`flex flex-col gap-4 overflow-y-auto ${
+              isMobile ? "max-h-[200px]" : "max-h-[300px]"
+            }`}
+          >
             {debouncedQuery.length < 2 ? (
               <p className="text-[#808080] text-[15px] font-medium">
                 Start typing to search markets...
               </p>
             ) : filteredResults && filteredResults.length > 0 ? (
-              filteredResults.slice(0, 5).map((market) => {
+              filteredResults.slice(0, isMobile ? 3 : 5).map((market) => {
                 const topOutcome = getTopOutcome(market);
                 const eventSlug = market.events?.[0]?.slug;
                 const marketUrl =
@@ -257,17 +296,21 @@ export function Search() {
                     </div>
 
                     {/* Title */}
-                    <p className="flex-1 font-semibold text-[19px] leading-[30px] tracking-[-0.4px] text-[#1b2430] truncate">
+                    <p
+                      className={`flex-1 font-semibold text-[19px] leading-[30px] tracking-[-0.4px] text-[#1b2430] ${
+                        isMobile ? "truncate" : "truncate"
+                      }`}
+                    >
                       {market.question}
                     </p>
 
                     {/* Outcome */}
                     {topOutcome && (
                       <div className="flex flex-col gap-2 items-end flex-shrink-0">
-                        <p className="font-semibold text-[20px] tracking-[-0.4px] text-[#1b2430] text-right">
+                        <p className="font-semibold text-[20px] tracking-[-0.4px] text-[#1b2430] text-right leading-[1.14]">
                           {formatOutcomePrice(topOutcome.price)}
                         </p>
-                        <p className="font-medium text-[14px] tracking-[-0.28px] text-[#bbbdc1]">
+                        <p className="font-medium text-[14px] tracking-[-0.28px] text-[#bbbdc1] leading-[1.14]">
                           {topOutcome.name}
                         </p>
                       </div>
