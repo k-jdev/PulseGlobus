@@ -1,5 +1,13 @@
 import { Market, PolymarketEvent } from "../../../store/services/polymarketApi";
 
+export interface OutcomeData {
+  name: string;
+  percentage: number;
+  price: number;
+  volume?: number;
+  marketSlug?: string;
+}
+
 export interface MapMarker {
   id: string;
   title: string;
@@ -8,8 +16,12 @@ export interface MapMarker {
   volume: number;
   liquidity: number;
   image: string;
+
   outcomes: string[];
   outcomePrices: number[];
+
+  eventOutcomes?: OutcomeData[];
+  isMultiMarket?: boolean;
   coordinates: [number, number];
   eventTitle?: string;
   slug: string;
@@ -1284,6 +1296,142 @@ export function convertEventsToMapMarkers(
       };
     });
 }
+function parseMarketOutcomes(outcomes: string): string[] {
+  try {
+    return JSON.parse(outcomes);
+  } catch {
+    return outcomes.split(",").map((s) => s.trim());
+  }
+}
+
+function parseMarketPrices(prices: string): number[] {
+  try {
+    return JSON.parse(prices).map(Number);
+  } catch {
+    return prices.split(",").map((s) => parseFloat(s.trim()) || 0);
+  }
+}
+
+export function convertEventsWithMarketsToMapMarkers(
+  events: PolymarketEvent[]
+): MapMarker[] {
+  const now = new Date();
+
+  return events
+    .filter((event) => {
+      const isActive = event.active === true;
+      const isNotClosed = event.closed !== true;
+      const hasTitle = !!event.title;
+
+      let isNotExpired = true;
+      if (event.endDate) {
+        const endDate = new Date(event.endDate);
+        isNotExpired = endDate > now;
+      }
+
+      return hasTitle && isActive && isNotClosed && isNotExpired;
+    })
+    .map((event, index) => {
+      const searchText = `${event.title} ${event.description || ""} ${
+        event.subtitle || ""
+      }`.toLowerCase();
+      const category = event.category?.toLowerCase() || "default";
+
+      let coordinates: [number, number] | null = null;
+      for (const item of KEYWORD_CITY_MAP) {
+        if (searchText.includes(item.keyword)) {
+          const offset = getOffset(event.id, index);
+          coordinates = [
+            item.city.coordinates[0] + offset[0],
+            item.city.coordinates[1] + offset[1],
+          ];
+          break;
+        }
+      }
+
+      if (!coordinates) {
+        const cityData =
+          CATEGORY_CITY_MAP[category] || CATEGORY_CITY_MAP["default"];
+        const offset = getOffset(event.id, index);
+        coordinates = [
+          cityData.coordinates[0] + offset[0],
+          cityData.coordinates[1] + offset[1],
+        ];
+      }
+
+      const markets = event.markets || [];
+      const hasMultipleMarkets = markets.length > 1;
+      const hasMarketsWithYesNo = markets.length === 1;
+
+      let eventOutcomes: OutcomeData[] = [];
+      let outcomes: string[] = [];
+      let outcomePrices: number[] = [];
+
+      if (hasMultipleMarkets) {
+        const sortedMarkets = [...markets]
+          .filter((m) => m.active && !m.closed)
+          .sort((a, b) => {
+            const priceA = parseMarketPrices(a.outcomePrices || "[]")[0] || 0;
+            const priceB = parseMarketPrices(b.outcomePrices || "[]")[0] || 0;
+            return priceB - priceA;
+          });
+
+        eventOutcomes = sortedMarkets.map((market) => {
+          const prices = parseMarketPrices(market.outcomePrices || "[]");
+          const yesPrice = prices[0] || 0;
+
+          const outcomeName =
+            market.groupItemTitle ||
+            market.question?.replace(/^Will\s+/i, "").replace(/\?$/, "") ||
+            "Unknown";
+
+          return {
+            name: outcomeName,
+            percentage: Math.round(yesPrice * 100),
+            price: yesPrice,
+            volume: market.volumeNum || parseFloat(market.volume) || 0,
+            marketSlug: market.slug,
+          };
+        });
+
+        outcomes = eventOutcomes.map((o) => o.name);
+        outcomePrices = eventOutcomes.map((o) => o.price);
+      } else if (hasMarketsWithYesNo) {
+        const market = markets[0];
+        outcomes = parseMarketOutcomes(market.outcomes || '["Yes", "No"]');
+        outcomePrices = parseMarketPrices(market.outcomePrices || "[]");
+
+        eventOutcomes = outcomes.map((name, idx) => ({
+          name,
+          percentage: Math.round((outcomePrices[idx] || 0) * 100),
+          price: outcomePrices[idx] || 0,
+        }));
+      }
+
+      return {
+        id: event.id,
+        title: event.title,
+        description: event.description || event.subtitle || "",
+        category: event.category || "general",
+        volume: event.volume || 0,
+        liquidity: event.liquidity || 0,
+        image: event.imageOptimized?.imageUrlOptimized || event.image || "",
+        outcomes,
+        outcomePrices,
+        eventOutcomes,
+        isMultiMarket: hasMultipleMarkets,
+        coordinates,
+        eventTitle: event.title,
+        slug: event.slug,
+        eventSlug: event.slug,
+        active: event.active,
+        volume24hr: event.volume24hr || 0,
+        volume1wk: event.volume1wk || 0,
+        volume1mo: event.volume1mo || 0,
+        endDate: event.endDate || "",
+      };
+    });
+}
 
 export function createGeoJSONFromMarkers(
   markers: MapMarker[]
@@ -1303,6 +1451,10 @@ export function createGeoJSONFromMarkers(
         image: marker.image,
         outcomes: JSON.stringify(marker.outcomes),
         outcomePrices: JSON.stringify(marker.outcomePrices),
+        eventOutcomes: marker.eventOutcomes
+          ? JSON.stringify(marker.eventOutcomes)
+          : undefined,
+        isMultiMarket: marker.isMultiMarket,
         eventTitle: marker.eventTitle,
         slug: marker.slug,
         eventSlug: marker.eventSlug,

@@ -5,15 +5,19 @@ interface Outcome {
   percentage: number;
   buyPrice: string;
   sellPrice: string;
+  volume?: number;
+  marketSlug?: string;
 }
 
 interface MarketPopupProps {
   title: string;
   image?: string;
   outcomes: Outcome[];
+  volume?: number; // Общий volume события
   volume24hr: number;
   slug: string;
   eventSlug?: string;
+  isMultiMarket?: boolean;
 }
 
 const formatCurrency = (num: number): string => {
@@ -26,10 +30,14 @@ export const MarketPopup: FC<MarketPopupProps> = ({
   title,
   image,
   outcomes,
+  volume,
   volume24hr,
   slug,
   eventSlug,
+  isMultiMarket,
 }) => {
+  const displayVolume = volume && volume > 0 ? volume : volume24hr;
+
   return (
     <div className="bg-white rounded-2xl shadow-2xl min-w-[380px] max-w-[420px] p-6">
       {/* Header with image and title */}
@@ -44,35 +52,46 @@ export const MarketPopup: FC<MarketPopupProps> = ({
         </h3>
       </div>
 
-      {/* Outcomes */}
       <div className="mb-5">
-        {outcomes.map((outcome, idx) => (
-          <div
-            key={idx}
-            className="flex justify-between items-center py-1 border-b border-gray-100"
-          >
-            <span className="text-[#1B2430] text-[16px] font-medium">
-              {outcome.name}
-            </span>
-            <div className="flex items-center gap-3">
-              <span className="text-[#1B2430] text-[20px] font-bold">
-                {outcome.percentage}%
+        {(isMultiMarket ? outcomes.slice(0, 6) : outcomes).map(
+          (outcome, idx) => (
+            <div
+              key={idx}
+              className="flex justify-between items-center py-1 border-b border-gray-100"
+            >
+              <span
+                className="text-[#1B2430] text-[16px] font-medium truncate max-w-[180px]"
+                title={outcome.name}
+              >
+                {outcome.name}
               </span>
-              <span className="text-[#1452F0]  py-2.5 px-3 bg-[#1452F0]/10 rounded-[4px] text-sm font-semibold">
-                {outcome.buyPrice}
-              </span>
-              <span className="text-[#EE1616] py-2.5 px-3 bg-[#EE1616]/10 rounded-[4px] text-sm font-semibold">
-                {outcome.sellPrice}
-              </span>
+              <div className="flex items-center gap-3">
+                <span className="text-[#1B2430] text-[20px] font-bold">
+                  {outcome.percentage}%
+                </span>
+                <span className="text-[#1452F0]  py-2.5 px-3 bg-[#1452F0]/10 rounded-[4px] text-sm font-semibold">
+                  {outcome.buyPrice}
+                </span>
+                {!isMultiMarket && (
+                  <span className="text-[#EE1616] py-2.5 px-3 bg-[#EE1616]/10 rounded-[4px] text-sm font-semibold">
+                    {outcome.sellPrice}
+                  </span>
+                )}
+              </div>
             </div>
+          )
+        )}
+        {isMultiMarket && outcomes.length > 6 && (
+          <div className="text-center text-gray-500 text-sm py-2">
+            +{outcomes.length - 6} more outcomes
           </div>
-        ))}
+        )}
       </div>
 
       {/* Volume and metadata */}
       <div className="flex items-center gap-3 mb-5 pt-4 border-t border-gray-100">
         <div className="px-4 py-2 bg-gray-100 rounded-lg text-gray-600 text-sm font-medium">
-          {formatCurrency(volume24hr)} Vol.
+          {formatCurrency(displayVolume)} Vol.
         </div>
         <div className="px-4 py-2 bg-gray-100 rounded-lg text-gray-600 text-sm font-medium">
           Weekly

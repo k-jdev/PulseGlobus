@@ -23,6 +23,36 @@ export interface Tag {
   slug: string;
 }
 
+export interface EventMarket {
+  id: string;
+  question: string;
+  conditionId: string;
+  slug: string;
+  description: string;
+  image: string;
+  icon: string;
+  category: string;
+  startDate: string;
+  endDate: string;
+  outcomes: string; // JSON string: ["Yes", "No"] или ["Option1", "Option2"]
+  outcomePrices: string; // JSON string: ["0.93", "0.07"]
+  volume: string;
+  volumeNum: number;
+  liquidity: string;
+  liquidityNum: number;
+  active: boolean;
+  closed: boolean;
+  archived?: boolean;
+  volume24hr: number;
+  volume1wk: number;
+  volume1mo: number;
+  bestBid: number;
+  bestAsk: number;
+  lastTradePrice: number;
+  groupItemTitle?: string;
+  imageOptimized?: ImageOptimized;
+}
+
 export interface PolymarketEvent {
   id: string;
   ticker: string;
@@ -44,6 +74,10 @@ export interface PolymarketEvent {
   volume1wk: number;
   volume1mo: number;
   imageOptimized?: ImageOptimized;
+
+  markets?: EventMarket[];
+  negRisk?: boolean;
+  showAllOutcomes?: boolean;
 }
 
 export interface Market {
@@ -104,6 +138,15 @@ export const polymarketApi = createApi({
       providesTags: ["Events"],
     }),
 
+    getEventsWithMarkets: builder.query<
+      PolymarketEvent[],
+      { limit?: number; active?: boolean; order?: string }
+    >({
+      query: ({ limit = 100, active = true, order = "volume24hr" } = {}) =>
+        `/events?active=${active}&closed=false&limit=${limit}&order=${order}&ascending=false`,
+      providesTags: ["Events"],
+    }),
+
     searchMarkets: builder.query<Market[], { query: string; limit?: number }>({
       query: ({ limit = 200 }) => `/markets?limit=${limit}&active=true`,
       transformResponse: (response: Market[], _meta, arg) => {
@@ -136,5 +179,6 @@ export const {
   useGetMarketsQuery,
   useGetMarketByIdQuery,
   useGetEventsQuery,
+  useGetEventsWithMarketsQuery,
   useSearchMarketsQuery,
 } = polymarketApi;

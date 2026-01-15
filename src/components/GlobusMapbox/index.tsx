@@ -1,8 +1,11 @@
 import { useRef, useMemo, useEffect, useState } from "react";
 import { useMapbox } from "./hooks";
 import { MapContainer, MarketStatsPopup } from "./components";
-import { useGetMarketsQuery } from "../../store/services/polymarketApi";
-import { convertMarketsToMapMarkers, MapMarker } from "./utils/marketMappers";
+import { useGetEventsWithMarketsQuery } from "../../store/services/polymarketApi";
+import {
+  convertEventsWithMarketsToMapMarkers,
+  MapMarker,
+} from "./utils/marketMappers";
 import { TimeFilter } from "../../App";
 
 import "mapbox-gl/dist/mapbox-gl.css";
@@ -23,25 +26,31 @@ const GlobusMapbox = ({
   const [selectedMarket, setSelectedMarket] = useState<MapMarker | null>(null);
 
   const {
-    data: markets,
+    data: events,
     isLoading,
     error,
-  } = useGetMarketsQuery({ limit: 100, active: true });
+  } = useGetEventsWithMarketsQuery({
+    limit: 100,
+    active: true,
+    order: "volume24hr",
+  });
 
   useEffect(() => {
-    console.log("📊 Polymarket API:", {
+    console.log("📊 Polymarket Events API:", {
       isLoading,
       error,
-      marketsCount: markets?.length || 0,
+      eventsCount: events?.length || 0,
     });
-    if (markets && markets.length > 0) {
-      console.log("📈 First market:", markets[0]);
+    if (events && events.length > 0) {
+      console.log("📈 First event:", events[0]);
+      console.log("📦 First event markets:", events[0].markets?.length || 0);
     }
-  }, [markets, isLoading, error]);
+  }, [events, isLoading, error]);
 
   const mapMarkers = useMemo(() => {
-    if (!markets) return [];
-    const allMarkers = convertMarketsToMapMarkers(markets);
+    if (!events) return [];
+
+    const allMarkers = convertEventsWithMarketsToMapMarkers(events);
 
     let filteredMarkers: MapMarker[];
 
@@ -66,7 +75,7 @@ const GlobusMapbox = ({
 
     console.log(`🎯 Filtered markers (${timeFilter}):`, filteredMarkers.length);
     return filteredMarkers;
-  }, [markets, timeFilter]);
+  }, [events, timeFilter]);
 
   const { theme, changeTheme, isPaused, toggleSpin } = useMapbox(
     mapContainerRef,

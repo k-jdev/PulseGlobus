@@ -9,31 +9,59 @@ const formatCents = (price: number): string => {
 export const createMarketPopupContent = (
   properties: Record<string, any>
 ): string => {
-  const outcomes = JSON.parse(properties.outcomes || "[]");
-  const prices = JSON.parse(properties.outcomePrices || "[]");
+  const isMultiMarket =
+    properties.isMultiMarket === true || properties.isMultiMarket === "true";
+  const eventOutcomes = properties.eventOutcomes
+    ? typeof properties.eventOutcomes === "string"
+      ? JSON.parse(properties.eventOutcomes)
+      : properties.eventOutcomes
+    : null;
+
+  const volume = parseFloat(properties.volume) || 0;
   const volume24hr = parseFloat(properties.volume24hr) || 0;
 
-  const outcomesData = outcomes.map((outcome: string, idx: number) => {
-    const price = prices[idx] || 0;
-    const percentage = (price * 100).toFixed(0);
-    const buyPrice = formatCents(price);
-    const sellPrice = formatCents(1 - price);
+  let outcomesData;
 
-    return {
-      name: outcome,
-      percentage: parseInt(percentage),
-      buyPrice,
-      sellPrice,
-    };
-  });
+  if (isMultiMarket && eventOutcomes && eventOutcomes.length > 0) {
+    outcomesData = eventOutcomes.map((outcome: any) => {
+      const price = outcome.price || 0;
+      return {
+        name: outcome.name,
+        percentage: outcome.percentage || Math.round(price * 100),
+        buyPrice: formatCents(price),
+        sellPrice: formatCents(1 - price),
+        volume: outcome.volume,
+        marketSlug: outcome.marketSlug,
+      };
+    });
+  } else {
+    const outcomes = JSON.parse(properties.outcomes || "[]");
+    const prices = JSON.parse(properties.outcomePrices || "[]");
+
+    outcomesData = outcomes.map((outcome: string, idx: number) => {
+      const price = prices[idx] || 0;
+      const percentage = (price * 100).toFixed(0);
+      const buyPrice = formatCents(price);
+      const sellPrice = formatCents(1 - price);
+
+      return {
+        name: outcome,
+        percentage: parseInt(percentage),
+        buyPrice,
+        sellPrice,
+      };
+    });
+  }
 
   const popupElement = createElement(MarketPopup, {
     title: properties.title || "Untitled Market",
     image: properties.image,
     outcomes: outcomesData,
+    volume: volume, // Общий volume события
     volume24hr: volume24hr,
     slug: properties.slug,
     eventSlug: properties.eventSlug,
+    isMultiMarket: isMultiMarket,
   });
 
   return ReactDOMServer.renderToString(popupElement);
