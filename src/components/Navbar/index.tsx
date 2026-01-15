@@ -198,24 +198,34 @@ function Navbar({
               </div>
 
               {/* Docs Section */}
-              <div className="border-l border-t border-black/25 pl-5 pt-5">
+              <a
+                href="https://docs.pulseterminal.io/"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="border-l border-t border-black/25 pl-5 pt-5 block"
+              >
                 <p className="text-[16px] font-medium text-black/55 tracking-[-0.64px] mb-5">
                   0.003
                 </p>
                 <h2 className="text-[48px] font-bold text-black tracking-[-0.96px] uppercase leading-none">
                   Docs
                 </h2>
-              </div>
+              </a>
 
               {/* $PULSE Section */}
-              <div className="border-l border-t border-black/25 pl-5 pt-5">
+              <a
+                href="https://pulseterminal.io/"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="border-l border-t border-black/25 pl-5 pt-5 block"
+              >
                 <p className="text-[16px] font-medium text-black/55 tracking-[-0.64px] mb-5">
                   0.004
                 </p>
                 <h2 className="text-[48px] font-bold text-black tracking-[-0.96px] uppercase leading-none">
                   $PULSE
                 </h2>
-              </div>
+              </a>
             </div>
 
             {/* Social Links */}
@@ -250,7 +260,12 @@ function Navbar({
                   />
                 </svg>
               </button>
-              <button className="w-14 h-14 bg-black/5 rounded-full flex items-center justify-center">
+              <a
+                href="https://t.me/pulseterminalio"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="w-14 h-14 bg-black/5 rounded-full flex items-center justify-center hover:bg-black/10 transition-colors"
+              >
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
                   width="24"
@@ -264,7 +279,7 @@ function Navbar({
                     stroke="black"
                   />
                 </svg>
-              </button>
+              </a>
             </div>
           </div>
         </div>
