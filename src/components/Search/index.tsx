@@ -1,20 +1,18 @@
 import { useState, useRef, useEffect, useCallback, useMemo } from "react";
 import searchIcon from "../../assets/svgs/navbar/search.svg";
 import { useGetMarketsQuery, Market } from "../../store/services/polymarketApi";
+import { useGetNewsQuery, GdeltArticle } from "../../store/services/gdeltApi";
 
 const CATEGORIES = [
-  { label: "All Markets", value: "" },
+  { label: "All", value: "" },
+  { label: "Markets", value: "markets" },
+  { label: "News", value: "news" },
   { label: "Politics", value: "politics" },
   { label: "Sports", value: "sports" },
   { label: "Crypto", value: "crypto" },
   { label: "Finance", value: "finance" },
-  { label: "Geopolitics", value: "geopolitics" },
   { label: "Tech", value: "tech" },
-  { label: "Culture", value: "culture" },
   { label: "World", value: "world" },
-  { label: "Economy", value: "economy" },
-  { label: "Trump", value: "trump" },
-  { label: "Elections", value: "elections" },
 ];
 
 function useDebounce<T>(value: T, delay: number): T {
@@ -68,13 +66,25 @@ export function Search({ isMobile = false, onFocus, onClose }: SearchProps) {
 
   const debouncedQuery = useDebounce(query, 300);
 
-  const { data: allMarkets, isFetching } = useGetMarketsQuery({
-    limit: 100,
-    active: true,
+  // Markets data
+  const { data: allMarkets, isFetching: isFetchingMarkets } =
+    useGetMarketsQuery({
+      limit: 100,
+      active: true,
+    });
+
+  // News data
+  const { data: allNews, isFetching: isFetchingNews } = useGetNewsQuery({
+    maxrecords: 100,
+    timespan: "1d",
   });
 
-  const searchResults = useMemo(() => {
+  const isFetching = isFetchingMarkets || isFetchingNews;
+
+  // Search in markets
+  const marketResults = useMemo(() => {
     if (!allMarkets) return [];
+    if (selectedCategories.includes("news")) return []; // Skip markets if only news selected
 
     const searchQuery = debouncedQuery.toLowerCase().trim();
     if (searchQuery.length < 2) return [];
@@ -85,23 +95,82 @@ export function Search({ isMobile = false, onFocus, onClose }: SearchProps) {
         const description = market.description?.toLowerCase() || "";
         const category = market.category?.toLowerCase() || "";
 
-        return (
+        const matchesSearch =
           question.includes(searchQuery) ||
           description.includes(searchQuery) ||
-          category.includes(searchQuery)
+          category.includes(searchQuery);
+
+        if (!matchesSearch) return false;
+
+        // Filter by category if selected
+        if (
+          selectedCategories.length === 0 ||
+          selectedCategories.includes("markets")
+        )
+          return true;
+        return selectedCategories.some(
+          (cat) =>
+            cat !== "news" &&
+            cat !== "markets" &&
+            (category.includes(cat) || question.includes(cat)),
         );
       })
-      .slice(0, 20);
-  }, [allMarkets, debouncedQuery]);
+      .slice(0, 10);
+  }, [allMarkets, debouncedQuery, selectedCategories]);
 
-  const filteredResults = searchResults?.filter((market: Market) => {
-    if (selectedCategories.length === 0) return true;
-    const marketCategory = market.category?.toLowerCase() || "";
-    const marketQuestion = market.question?.toLowerCase() || "";
-    return selectedCategories.some(
-      (cat) => marketCategory.includes(cat) || marketQuestion.includes(cat)
-    );
-  });
+  // Search in news
+  const newsResults = useMemo(() => {
+    if (!allNews) return [];
+    if (selectedCategories.includes("markets")) return []; // Skip news if only markets selected
+
+    const searchQuery = debouncedQuery.toLowerCase().trim();
+    if (searchQuery.length < 2) return [];
+
+    return allNews
+      .filter((article: GdeltArticle) => {
+        const title = article.title?.toLowerCase() || "";
+        const domain = article.domain?.toLowerCase() || "";
+
+        const matchesSearch =
+          title.includes(searchQuery) || domain.includes(searchQuery);
+
+        if (!matchesSearch) return false;
+
+        // Filter by category if selected
+        if (
+          selectedCategories.length === 0 ||
+          selectedCategories.includes("news")
+        )
+          return true;
+        return selectedCategories.some(
+          (cat) => cat !== "news" && cat !== "markets" && title.includes(cat),
+        );
+      })
+      .slice(0, 10);
+  }, [allNews, debouncedQuery, selectedCategories]);
+
+  // Combine and filter results
+  const filteredResults = useMemo(() => {
+    const markets = marketResults.map((m) => ({
+      type: "market" as const,
+      data: m,
+    }));
+    const news = newsResults.map((n) => ({ type: "news" as const, data: n }));
+
+    // Interleave results
+    const combined: Array<{
+      type: "market" | "news";
+      data: Market | GdeltArticle;
+    }> = [];
+    const maxLen = Math.max(markets.length, news.length);
+
+    for (let i = 0; i < maxLen; i++) {
+      if (i < markets.length) combined.push(markets[i]);
+      if (i < news.length) combined.push(news[i]);
+    }
+
+    return combined;
+  }, [marketResults, newsResults]);
 
   const handleFocus = () => {
     setIsOpen(true);
@@ -122,7 +191,7 @@ export function Search({ isMobile = false, onFocus, onClose }: SearchProps) {
         handleClose();
       }
     },
-    [handleClose]
+    [handleClose],
   );
 
   useEffect(() => {
@@ -139,7 +208,7 @@ export function Search({ isMobile = false, onFocus, onClose }: SearchProps) {
       setSelectedCategories((prev) =>
         prev.includes(value)
           ? prev.filter((c) => c !== value)
-          : [...prev, value]
+          : [...prev, value],
       );
     }
   };
@@ -261,66 +330,134 @@ export function Search({ isMobile = false, onFocus, onClose }: SearchProps) {
           >
             {debouncedQuery.length < 2 ? (
               <p className="text-[#808080] text-[15px] font-medium">
-                Start typing to search markets...
+                Start typing to search markets and news...
               </p>
             ) : filteredResults && filteredResults.length > 0 ? (
-              filteredResults.slice(0, isMobile ? 3 : 5).map((market) => {
-                const topOutcome = getTopOutcome(market);
-                const eventSlug = market.events?.[0]?.slug;
-                const marketUrl =
-                  eventSlug && eventSlug !== market.slug
-                    ? `https://polymarket.com/event/${eventSlug}/${market.slug}`
-                    : `https://polymarket.com/event/${market.slug}`;
-                return (
-                  <a
-                    key={market.id}
-                    href={marketUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex gap-4 items-center w-full hover:bg-gray-50 rounded-lg transition-colors cursor-pointer py-1"
-                  >
-                    {/* Image */}
-                    <div className="w-9 h-9 rounded-[4.8px] overflow-hidden flex-shrink-0">
-                      {market.image ? (
-                        <img
-                          src={
-                            market.imageOptimized?.imageUrlOptimized ||
-                            market.image
-                          }
-                          alt=""
-                          className="w-full h-full object-cover"
-                        />
-                      ) : (
-                        <div className="w-full h-full bg-gray-200" />
-                      )}
-                    </div>
+              filteredResults
+                .slice(0, isMobile ? 5 : 8)
+                .map((result, index) => {
+                  if (result.type === "market") {
+                    const market = result.data as Market;
+                    const topOutcome = getTopOutcome(market);
+                    const eventSlug = market.events?.[0]?.slug;
+                    const marketUrl =
+                      eventSlug && eventSlug !== market.slug
+                        ? `https://polymarket.com/event/${eventSlug}/${market.slug}`
+                        : `https://polymarket.com/event/${market.slug}`;
+                    return (
+                      <a
+                        key={`market-${market.id}`}
+                        href={marketUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex gap-4 items-center w-full hover:bg-gray-50 rounded-lg transition-colors cursor-pointer py-1"
+                      >
+                        {/* Image */}
+                        <div className="w-9 h-9 rounded-[4.8px] overflow-hidden flex-shrink-0">
+                          {market.image ? (
+                            <img
+                              src={
+                                market.imageOptimized?.imageUrlOptimized ||
+                                market.image
+                              }
+                              alt=""
+                              className="w-full h-full object-cover"
+                            />
+                          ) : (
+                            <div className="w-full h-full bg-gray-200" />
+                          )}
+                        </div>
 
-                    {/* Title */}
-                    <p
-                      className={`flex-1 font-semibold text-[19px] leading-[30px] tracking-[-0.4px] text-[#1b2430] ${
-                        isMobile ? "truncate" : "truncate"
-                      }`}
-                    >
-                      {market.question}
-                    </p>
+                        {/* Title */}
+                        <p
+                          className={`flex-1 font-semibold text-[17px] leading-[26px] tracking-[-0.4px] text-[#1b2430] truncate`}
+                        >
+                          {market.question}
+                        </p>
 
-                    {/* Outcome */}
-                    {topOutcome && (
-                      <div className="flex flex-col gap-2 items-end flex-shrink-0">
-                        <p className="font-semibold text-[20px] tracking-[-0.4px] text-[#1b2430] text-right leading-[1.14]">
-                          {formatOutcomePrice(topOutcome.price)}
+                        {/* Outcome */}
+                        {topOutcome && (
+                          <div className="flex flex-col gap-1 items-end flex-shrink-0">
+                            <p className="font-semibold text-[18px] tracking-[-0.4px] text-[#1b2430] text-right leading-[1.14]">
+                              {formatOutcomePrice(topOutcome.price)}
+                            </p>
+                            <p className="font-medium text-[12px] tracking-[-0.28px] text-[#bbbdc1] leading-[1.14]">
+                              {topOutcome.name}
+                            </p>
+                          </div>
+                        )}
+                      </a>
+                    );
+                  } else {
+                    // News result
+                    const article = result.data as GdeltArticle;
+                    return (
+                      <a
+                        key={`news-${index}-${article.url}`}
+                        href={article.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex gap-4 items-center w-full hover:bg-gray-50 rounded-lg transition-colors cursor-pointer py-1"
+                      >
+                        {/* Image */}
+                        <div className="w-9 h-9 rounded-[4.8px] overflow-hidden flex-shrink-0">
+                          {article.socialimage ? (
+                            <img
+                              src={article.socialimage}
+                              alt=""
+                              className="w-full h-full object-cover"
+                              onError={(e) => {
+                                (e.target as HTMLImageElement).style.display =
+                                  "none";
+                              }}
+                            />
+                          ) : (
+                            <div className="w-full h-full bg-[#1452f0] flex items-center justify-center">
+                              <svg
+                                xmlns="http://www.w3.org/2000/svg"
+                                width="18"
+                                height="18"
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="white"
+                                strokeWidth="2"
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                              >
+                                <path d="M4 22h16a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2H8a2 2 0 0 0-2 2v16a2 2 0 0 1-2 2Zm0 0a2 2 0 0 1-2-2v-9c0-1.1.9-2 2-2h2" />
+                                <path d="M18 14h-8" />
+                                <path d="M15 18h-5" />
+                                <path d="M10 6h8v4h-8V6Z" />
+                              </svg>
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Title */}
+                        <p
+                          className={`flex-1 font-semibold text-[17px] leading-[26px] tracking-[-0.4px] text-[#1b2430] truncate`}
+                        >
+                          {article.title}
                         </p>
-                        <p className="font-medium text-[14px] tracking-[-0.28px] text-[#bbbdc1] leading-[1.14]">
-                          {topOutcome.name}
-                        </p>
-                      </div>
-                    )}
-                  </a>
-                );
-              })
+
+                        {/* News badge */}
+                        <div className="flex flex-col gap-1 items-end flex-shrink-0">
+                          {/* <div className="px-2 py-1 bg-[#1452f0] rounded-full">
+                            <span className="text-white text-[11px] font-semibold">
+                              NEWS
+                            </span>
+                          </div> */}
+                          <p className="font-medium text-[12px] tracking-[-0.28px] text-[#bbbdc1] leading-[1.14]">
+                            {article.domain}
+                          </p>
+                        </div>
+                      </a>
+                    );
+                  }
+                })
             ) : (
               <p className="text-[#808080] text-[15px] font-medium">
-                No markets found for "{debouncedQuery}"
+                No results found for "{debouncedQuery}"
               </p>
             )}
           </div>

@@ -60,6 +60,19 @@ interface BreakingNewsProps {
 
 export const BreakingNews = ({ isOpen }: BreakingNewsProps) => {
   const [timeFilter, setTimeFilter] = useState<TimeFilter>("24h");
+  const [pinnedIds, setPinnedIds] = useState<Set<string>>(new Set());
+
+  const togglePin = (id: string) => {
+    setPinnedIds((prev) => {
+      const newSet = new Set(prev);
+      if (newSet.has(id)) {
+        newSet.delete(id);
+      } else {
+        newSet.add(id);
+      }
+      return newSet;
+    });
+  };
 
   const { data: events } = useGetEventsQuery({
     limit: 100,
@@ -118,16 +131,29 @@ export const BreakingNews = ({ isOpen }: BreakingNewsProps) => {
       .filter((item) => item.volume24hr > 0)
       .sort((a, b) => b.volume24hr - a.volume24hr);
 
+    let result: NewsItem[];
     switch (timeFilter) {
       case "1h":
-        return sortedByActivity.slice(0, 8);
+        result = sortedByActivity.slice(0, 8);
+        break;
       case "6h":
-        return sortedByActivity.slice(8, 16);
+        result = sortedByActivity.slice(8, 16);
+        break;
       case "24h":
       default:
-        return sortedByActivity.slice(16, 24);
+        result = sortedByActivity.slice(16, 24);
+        break;
     }
-  }, [events, timeFilter, marketMap]);
+
+    // Sort pinned items to top
+    return result.sort((a, b) => {
+      const aPinned = pinnedIds.has(a.id);
+      const bPinned = pinnedIds.has(b.id);
+      if (aPinned && !bPinned) return -1;
+      if (!aPinned && bPinned) return 1;
+      return 0;
+    });
+  }, [events, timeFilter, marketMap, pinnedIds]);
 
   if (!isOpen) return null;
 
@@ -170,7 +196,13 @@ export const BreakingNews = ({ isOpen }: BreakingNewsProps) => {
       <div className="px-6 py-4 overflow-y-auto max-h-[calc(100vh-380px)] md:max-h-[calc(70vh-200px)]">
         <div className="flex flex-col gap-4">
           {news.map((item) => (
-            <NewsRow key={item.id} item={item} timeFilter={timeFilter} />
+            <NewsRow
+              key={item.id}
+              item={item}
+              timeFilter={timeFilter}
+              isPinned={pinnedIds.has(item.id)}
+              onTogglePin={() => togglePin(item.id)}
+            />
           ))}
         </div>
       </div>
@@ -181,16 +213,20 @@ export const BreakingNews = ({ isOpen }: BreakingNewsProps) => {
 const NewsRow = ({
   item,
   timeFilter,
+  isPinned,
+  onTogglePin,
 }: {
   item: NewsItem;
   timeFilter: TimeFilter;
+  isPinned: boolean;
+  onTogglePin: () => void;
 }) => {
   const displayVolume =
     timeFilter === "1h"
       ? item.volume24hr
       : timeFilter === "6h"
-      ? item.volume1wk
-      : item.volume1mo;
+        ? item.volume1wk
+        : item.volume1mo;
 
   const priceColor =
     item.price && item.price >= 0.5 ? "text-[#1452F0]" : "text-[#EE1616]";
@@ -240,8 +276,8 @@ const NewsRow = ({
             {timeFilter === "1h"
               ? "Hourly"
               : timeFilter === "6h"
-              ? "Daily"
-              : "Weekly"}
+                ? "Daily"
+                : "Weekly"}
           </span>
           {/* Chart icon */}
           <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
@@ -270,13 +306,18 @@ const NewsRow = ({
         </div>
 
         {/* Pin icon */}
-        <a
-          href={`https://polymarket.com/event/${item.slug}`}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="text-[#BBBDC1] hover:text-[#808080] transition-colors"
+        <button
+          onClick={onTogglePin}
+          className={`transition-colors ${
+            isPinned ? "text-[#1452F0]" : "text-[#BBBDC1] hover:text-[#808080]"
+          }`}
         >
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+          <svg
+            width="24"
+            height="24"
+            viewBox="0 0 24 24"
+            fill={isPinned ? "currentColor" : "none"}
+          >
             <path
               d="M9.5 14.5L3 21M15 3.5L20.5 9L16.5 13L17 17L7 7L11 6.5L15 3.5Z"
               stroke="currentColor"
@@ -285,7 +326,7 @@ const NewsRow = ({
               strokeLinejoin="round"
             />
           </svg>
-        </a>
+        </button>
       </div>
 
       {/* Divider */}

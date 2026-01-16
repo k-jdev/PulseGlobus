@@ -64,23 +64,57 @@ export const LiveTrades = ({ isOpen }: LiveTradesProps) => {
     <div className="absolute top-[144px] md:top-[160px] left-4 md:left-8 bg-white rounded-[14px] w-[calc(100vw-32px)] md:w-[502px] max-h-[calc(100vh-180px)] md:max-h-[70vh] border-t-[6px] border-[#53BB33] overflow-hidden z-50 animate-in slide-in-from-left duration-300 shadow-[0px_22px_32px_0px_rgba(20,82,240,0.25)]">
       {/* Header */}
       <div className="px-6 pt-7 pb-4">
-        <div className="flex items-start justify-between">
-          <div className="flex flex-col gap-2">
-            <h2 className="text-[32px] font-bold text-black tracking-[-0.56px] leading-8">
-              Live Trades <span className="text-[#4EB12F]">•</span>
-            </h2>
-            <p className="text-[#808080] text-[16px] font-medium tracking-[-0.32px]">
-              Streaming Pulse globe markets.
-            </p>
+        <div className="flex flex-col gap-3">
+          <div className="flex items-start justify-between gap-4">
+            <div className="flex flex-col gap-2">
+              <h2 className="text-[28px] md:text-[32px] font-bold text-black tracking-[-0.56px] leading-8">
+                Live Trades <span className="text-[#4EB12F]">•</span>
+              </h2>
+              <p className="text-[#808080] text-[14px] md:text-[16px] font-medium tracking-[-0.32px]">
+                Streaming Pulse globe markets.
+              </p>
+            </div>
+            {/* Desktop controls */}
+            <div className="hidden md:flex items-center gap-1.5">
+              <div className="px-3 py-1 bg-[#f5f5f5] rounded-full text-[#808080] text-[14px] font-medium tracking-[-0.28px]">
+                {tradesCount} Trades
+              </div>
+              <div className="px-3 py-1 bg-[#f5f5f5] rounded-full text-[#808080] text-[14px] font-medium tracking-[-0.28px]">
+                {timeFilter}
+              </div>
+              {/* Chart icon */}
+              <svg
+                width="16"
+                height="16"
+                viewBox="0 0 16 16"
+                fill="none"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  d="M2 11L5.5 7.5L8 10L14 4"
+                  stroke="#808080"
+                  strokeWidth="1.5"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+                <path
+                  d="M10 4H14V8"
+                  stroke="#808080"
+                  strokeWidth="1.5"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+              </svg>
+            </div>
           </div>
-          <div className="flex items-center gap-1.5">
-            <div className="px-3 py-1 bg-[#f5f5f5] rounded-full text-[#808080] text-[14px] font-medium tracking-[-0.28px]">
+          {/* Mobile controls */}
+          <div className="flex md:hidden items-center gap-1.5">
+            <div className="px-3 py-1 bg-[#f5f5f5] rounded-full text-[#808080] text-[13px] font-medium tracking-[-0.28px]">
               {tradesCount} Trades
             </div>
-            <div className="px-3 py-1 bg-[#f5f5f5] rounded-full text-[#808080] text-[14px] font-medium tracking-[-0.28px]">
+            <div className="px-3 py-1 bg-[#f5f5f5] rounded-full text-[#808080] text-[13px] font-medium tracking-[-0.28px]">
               {timeFilter}
             </div>
-            {/* Chart icon */}
             <svg
               width="16"
               height="16"
