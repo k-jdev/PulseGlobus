@@ -29,11 +29,11 @@ export const THEME_CONFIGS = {
         ["linear"],
         ["zoom"],
         4,
-        "#1452F0",
+        "#001D68",
         7,
-        "#1452F0",
+        "#0048FF",
       ] as any,
-      "star-intensity": 0,
+      "star-intensity": 0.5,
     },
   },
   dark: {
@@ -67,7 +67,7 @@ export const THEME_CONFIGS = {
         7,
         "#0a1a2e",
       ] as any,
-      "star-intensity": 0,
+      "star-intensity": 0.5,
     },
   },
 };

@@ -1,6 +1,5 @@
 import { useState, useEffect } from "react";
-import { arrowLeftIcon } from "../../assets/svgs/mainNavigation";
-import { Button } from "../ui";
+
 import { Theme } from "../GlobusMapbox/constants/mapConfig";
 import {
   NewsButtonComponent,
@@ -70,9 +69,9 @@ function MainNavigation({
       {/* Desktop Navigation */}
       <div className="hidden md:flex absolute top-[72px] left-0 bg-transparent px-8 py-6 w-full z-10 pointer-events-none items-center justify-between gap-4">
         <div className="flex items-center gap-4">
-          <Button variant="navigation" className="pointer-events-auto">
+          {/* <Button variant="navigation" className="pointer-events-auto">
             <img src={arrowLeftIcon} alt="Arrow Left" />
-          </Button>
+          </Button> */}
           <div className="pointer-events-auto">
             <NewsButtonComponent
               isOpen={isBreakingNewsOpen}
