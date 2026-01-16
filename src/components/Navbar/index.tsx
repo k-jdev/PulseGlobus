@@ -104,14 +104,16 @@ function Navbar({
       {/* Mobile Menu Overlay */}
       {isMobileMenuOpen && (
         <div className="md:hidden fixed inset-0 z-30 bg-[#f5fcff] flex flex-col">
-          {/* Header */}
-          <div className="bg-white border-b border-[#ebebec] px-4 py-3 flex items-center justify-between h-[72px]">
-            <div className="flex items-center gap-2">
+          {/* Header - same structure as Mobile Navbar */}
+          <nav className="flex bg-white border-b border-[#ebebec] px-4 pt-[18px] pb-3 items-center gap-4 h-[72px]">
+            {/* Logo in place of Search */}
+            <div className="flex-1">
               <img src={logo} alt="Logo" className="h-8 w-auto" />
             </div>
+
             <button
               onClick={() => handleMobileMenuToggle(false)}
-              className="flex items-center gap-3"
+              className="flex items-center gap-3 flex-shrink-0"
             >
               <svg
                 xmlns="http://www.w3.org/2000/svg"
@@ -132,10 +134,10 @@ function Navbar({
                 Close
               </span>
             </button>
-          </div>
+          </nav>
 
           {/* Menu Content */}
-          <div className="flex-1 flex flex-col justify-between p-5">
+          <div className="flex-1 flex flex-col justify-between p-5 overflow-y-auto">
             <div className="flex flex-col gap-5">
               {/* Theme Section */}
               <div className="border-l border-t border-black/25 pl-5 pt-5">
@@ -240,7 +242,7 @@ function Navbar({
             </div>
 
             {/* Social Links */}
-            <div className="flex gap-1">
+            <div className="flex gap-1 mt-4">
               <button className="w-14 h-14 bg-black/5 rounded-full flex items-center justify-center">
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
