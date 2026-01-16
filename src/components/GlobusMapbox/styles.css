@@ -14,3 +14,17 @@
 .mapboxgl-popup-anchor-right .custom-popup {
   margin: 0;
 }
+
+/* Hide Mapbox watermarks */
+.mapboxgl-ctrl-logo {
+  display: none !important;
+}
+
+.mapboxgl-ctrl-attrib {
+  display: none !important;
+}
+
+.mapboxgl-ctrl-bottom-left,
+.mapboxgl-ctrl-bottom-right {
+  display: none !important;
+}
