@@ -49,7 +49,6 @@ export const NewsPopup: FC<NewsPopupProps> = ({
   image,
   url,
   domain,
-  language,
   sourcecountry,
   seendate,
   onClose,
@@ -58,122 +57,110 @@ export const NewsPopup: FC<NewsPopupProps> = ({
   return (
     <div
       className={`bg-white border border-[#e9edf8] rounded-[14px] overflow-hidden shadow-xl ${
-        isMobile ? "w-[90vw] max-w-[360px]" : "w-[380px]"
+        isMobile ? "w-[90vw] max-w-[360px]" : "min-w-[360px] max-w-[420px]"
       }`}
     >
-      {/* Header with close button */}
-      <div className="relative">
-        {/* Image */}
-        {image && (
-          <div className="w-full h-[160px] overflow-hidden">
-            <img
-              src={image}
-              alt=""
-              className="w-full h-full object-cover"
-              onError={(e) => {
-                (e.target as HTMLImageElement).style.display = "none";
-              }}
-            />
-          </div>
-        )}
-
-        {/* Close button */}
-        <button
-          onClick={onClose}
-          className="absolute top-3 right-3 w-8 h-8 rounded-full bg-white/90 backdrop-blur-sm flex items-center justify-center hover:bg-white transition-colors shadow-md"
-        >
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            width="16"
-            height="16"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          >
-            <line x1="18" y1="6" x2="6" y2="18" />
-            <line x1="6" y1="6" x2="18" y2="18" />
-          </svg>
-        </button>
-
-        {/* News badge */}
-        <div className="absolute top-3 left-3 px-3 py-1 bg-[#ff6b35] rounded-full">
-          <span className="text-white text-[12px] font-semibold">NEWS</span>
-        </div>
-      </div>
-
       {/* Content */}
-      <div className="p-5">
-        {/* Title */}
-        <h3 className="text-[17px] font-semibold text-[#1b2430] leading-[24px] tracking-[-0.3px] mb-4 line-clamp-3">
-          {title}
-        </h3>
-
-        {/* Meta info */}
-        <div className="flex flex-wrap items-center gap-2 mb-4">
-          {domain && (
-            <div className="px-3 py-1 bg-[#f5f5f5] rounded-full">
-              <span className="text-[#808080] text-[13px] font-medium">
-                {domain}
-              </span>
+      <div className="px-6 py-5">
+        {/* Header with image and title */}
+        <div className="flex items-start gap-4 mb-4">
+          {image && (
+            <div className="w-[54px] h-[54px] rounded-[7px] overflow-hidden flex-shrink-0">
+              <img
+                src={image}
+                alt=""
+                className="w-full h-full object-cover"
+                onError={(e) => {
+                  (e.target as HTMLImageElement).style.display = "none";
+                }}
+              />
             </div>
           )}
-          {sourcecountry && (
-            <div className="px-3 py-1 bg-[#f5f5f5] rounded-full">
-              <span className="text-[#808080] text-[13px] font-medium">
-                {sourcecountry}
-              </span>
-            </div>
-          )}
-          {language && (
-            <div className="px-3 py-1 bg-[#f5f5f5] rounded-full">
-              <span className="text-[#808080] text-[13px] font-medium capitalize">
-                {language}
-              </span>
-            </div>
-          )}
-        </div>
-
-        {/* Time */}
-        {seendate && (
-          <div className="flex items-center gap-2 mb-4 text-[#808080]">
+          <div className="flex-1 min-w-0">
+            <h3 className="text-[17px] font-semibold text-[#1b2430] leading-[24px] tracking-[-0.3px] line-clamp-3">
+              {title}
+            </h3>
+          </div>
+          {/* Close button */}
+          <button
+            onClick={onClose}
+            className="w-8 h-8 rounded-full bg-[#f5f5f5] flex items-center justify-center hover:bg-[#e5e5e5] transition-colors flex-shrink-0"
+          >
             <svg
               xmlns="http://www.w3.org/2000/svg"
-              width="16"
-              height="16"
+              width="14"
+              height="14"
               viewBox="0 0 24 24"
               fill="none"
-              stroke="currentColor"
+              stroke="#808080"
               strokeWidth="2"
               strokeLinecap="round"
               strokeLinejoin="round"
             >
-              <circle cx="12" cy="12" r="10" />
-              <polyline points="12 6 12 12 16 14" />
+              <line x1="18" y1="6" x2="6" y2="18" />
+              <line x1="6" y1="6" x2="18" y2="18" />
             </svg>
-            <span className="text-[13px]">{formatDate(seendate)}</span>
-          </div>
-        )}
+          </button>
+        </div>
 
-        {/* Divider */}
-        <div className="h-px bg-[#e4e4e4] w-full mb-4" />
+        {/* Meta info */}
+        <div className="flex flex-col gap-3">
+          <div className="h-px bg-[#e4e4e4] w-full" />
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-[6px] flex-wrap">
+              {domain && (
+                <div className="px-3 py-1 bg-[#f5f5f5] rounded-full">
+                  <span className="text-[#808080] text-[14px] font-medium leading-[21px] tracking-[-0.28px]">
+                    {domain}
+                  </span>
+                </div>
+              )}
+              {sourcecountry && (
+                <div className="px-3 py-1 bg-[#f5f5f5] rounded-full">
+                  <span className="text-[#808080] text-[14px] font-medium leading-[21px] tracking-[-0.28px]">
+                    {sourcecountry}
+                  </span>
+                </div>
+              )}
+              {seendate && (
+                <div className="flex items-center gap-1 px-3 py-1 bg-[#f1f7ff] rounded-full">
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="14"
+                    height="14"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="#1452f0"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
+                    <circle cx="12" cy="12" r="10" />
+                    <polyline points="12 6 12 12 16 14" />
+                  </svg>
+                  <span className="text-[#1452f0] text-[14px] font-medium leading-[21px] tracking-[-0.28px]">
+                    {formatDate(seendate)}
+                  </span>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
 
         {/* CTA Button */}
         <a
           href={url}
           target="_blank"
           rel="noopener noreferrer"
-          className="flex items-center justify-between w-full px-6 py-4 bg-[#ff6b35] rounded-full text-white hover:bg-[#e55a28] transition-colors"
+          className="flex items-center justify-between w-full mt-4 px-6 py-4 bg-[#1452f0] rounded-full text-white hover:bg-[#1240c0] transition-colors"
         >
-          <span className="text-[15px] font-semibold tracking-[-0.3px]">
+          <span className="text-[16px] font-semibold tracking-[-0.32px]">
             Read full article
           </span>
           <svg
             xmlns="http://www.w3.org/2000/svg"
-            width="20"
-            height="20"
+            width="24"
+            height="24"
             viewBox="0 0 24 24"
             fill="none"
           >

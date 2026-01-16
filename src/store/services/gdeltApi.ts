@@ -26,6 +26,34 @@ export interface GdeltQueryParams {
   theme?: string;
 }
 
+function diversifyArticlesByCountry(
+  articles: GdeltArticle[],
+  maxPerCountry: number = 12,
+): GdeltArticle[] {
+  const countryCount: Record<string, number> = {};
+  const diversified: GdeltArticle[] = [];
+
+  const shuffled = [...articles].sort(() => Math.random() - 0.5);
+
+  for (const article of shuffled) {
+    const country = article.sourcecountry || "Unknown";
+    const currentCount = countryCount[country] || 0;
+
+    const isChineseSource =
+      country.toLowerCase().includes("china") ||
+      country.toLowerCase().includes("taiwan") ||
+      article.language === "Chinese";
+    const limit = isChineseSource ? 4 : maxPerCountry;
+
+    if (currentCount < limit) {
+      countryCount[country] = currentCount + 1;
+      diversified.push(article);
+    }
+  }
+
+  return diversified;
+}
+
 export const gdeltApi = createApi({
   reducerPath: "gdeltApi",
   baseQuery: fetchBaseQuery({ baseUrl: GDELT_API_BASE_URL }),
@@ -34,9 +62,9 @@ export const gdeltApi = createApi({
     getNews: builder.query<GdeltArticle[], GdeltQueryParams>({
       query: ({
         query = "(politics OR economy OR technology OR sports OR business)",
-        maxrecords = 150,
+        maxrecords = 250,
         timespan = "1d",
-        sourcelang,
+
         sourcecountry,
         theme,
       } = {}) => {
@@ -47,22 +75,23 @@ export const gdeltApi = createApi({
           timespan,
         });
 
-        // Build query string with filters
         let queryParts: string[] = [];
         if (query) queryParts.push(query);
-        if (sourcelang) queryParts.push(`sourcelang:${sourcelang}`);
+        queryParts.push("sourcelang:english");
         if (sourcecountry) queryParts.push(`sourcecountry:${sourcecountry}`);
         if (theme) queryParts.push(`theme:${theme}`);
 
         params.set(
           "query",
-          queryParts.join(" ") || "(politics OR economy OR technology)"
+          queryParts.join(" ") || "(politics OR economy OR technology)",
         );
 
         return `/doc?${params.toString()}`;
       },
       transformResponse: (response: GdeltResponse) => {
-        return response.articles || [];
+        const articles = response.articles || [];
+
+        return diversifyArticlesByCountry(articles, 12);
       },
       providesTags: ["News"],
     }),
@@ -70,16 +99,17 @@ export const gdeltApi = createApi({
     getNewsByQuery: builder.query<GdeltArticle[], string>({
       query: (searchQuery) => {
         const params = new URLSearchParams({
-          query: searchQuery || "(politics OR economy OR technology)",
+          query: `${searchQuery || "(politics OR economy OR technology)"} sourcelang:english`,
           mode: "ArtList",
           format: "json",
-          maxrecords: "150",
+          maxrecords: "250",
           timespan: "1d",
         });
         return `/doc?${params.toString()}`;
       },
       transformResponse: (response: GdeltResponse) => {
-        return response.articles || [];
+        const articles = response.articles || [];
+        return diversifyArticlesByCountry(articles, 12);
       },
       providesTags: ["News"],
     }),
@@ -88,9 +118,10 @@ export const gdeltApi = createApi({
       GdeltArticle[],
       { maxrecords?: number; timespan?: string }
     >({
-      query: ({ maxrecords = 100, timespan = "1h" } = {}) => {
+      query: ({ maxrecords = 200, timespan = "1h" } = {}) => {
         const params = new URLSearchParams({
-          query: "(politics OR economy OR technology OR sports)",
+          query:
+            "(politics OR economy OR technology OR sports) sourcelang:english",
           mode: "ArtList",
           format: "json",
           maxrecords: maxrecords.toString(),
@@ -99,7 +130,8 @@ export const gdeltApi = createApi({
         return `/doc?${params.toString()}`;
       },
       transformResponse: (response: GdeltResponse) => {
-        return response.articles || [];
+        const articles = response.articles || [];
+        return diversifyArticlesByCountry(articles, 10);
       },
       providesTags: ["News"],
     }),

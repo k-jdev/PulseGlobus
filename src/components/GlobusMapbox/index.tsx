@@ -1,6 +1,6 @@
 import { useRef, useMemo, useEffect, useState } from "react";
 import { useMapbox } from "./hooks";
-import { MapContainer, MarketStatsPopup, NewsPopup } from "./components";
+import { MapContainer, MarketStatsPopup, NewsMarker } from "./components";
 import { useGetEventsWithMarketsQuery } from "../../store/services/polymarketApi";
 import { useGetNewsQuery } from "../../store/services/gdeltApi";
 import {
@@ -55,7 +55,7 @@ const GlobusMapbox = ({
     isLoading: isLoadingNews,
     error: newsError,
   } = useGetNewsQuery({
-    maxrecords: 75,
+    maxrecords: 200,
     timespan: "1d",
   });
 
@@ -122,7 +122,7 @@ const GlobusMapbox = ({
     console.log(
       `🎯 Filtered markers (${timeFilter}):`,
       filteredMarkers.length,
-      `(markets: ${marketMarkers.length}, news: ${newsMarkers.length})`
+      `(markets: ${marketMarkers.length}, news: ${newsMarkers.length})`,
     );
     return filteredMarkers;
   }, [events, newsArticles, timeFilter, showNews]);
@@ -132,8 +132,9 @@ const GlobusMapbox = ({
     undefined,
     mapMarkers,
     (marker) => {
+      console.log("🔍 Marker clicked:", marker.id, "type:", marker.type);
       setSelectedMarket(marker);
-    }
+    },
   );
 
   const handleClosePopup = () => {
@@ -160,13 +161,12 @@ const GlobusMapbox = ({
           {/* Desktop popup - right side */}
           <div className="hidden md:block fixed top-[160px] right-6 z-50">
             {selectedMarket.type === "news" ? (
-              <NewsPopup
+              <NewsMarker
                 key={selectedMarket.id}
                 title={selectedMarket.title}
                 image={selectedMarket.image}
                 url={selectedMarket.url || selectedMarket.slug}
                 domain={selectedMarket.domain}
-                language={selectedMarket.language}
                 sourcecountry={selectedMarket.sourcecountry}
                 seendate={selectedMarket.seendate}
                 onClose={handleClosePopup}
@@ -198,13 +198,12 @@ const GlobusMapbox = ({
             <div className="absolute inset-0 " onClick={handleClosePopup} />
             <div className="relative z-10">
               {selectedMarket.type === "news" ? (
-                <NewsPopup
+                <NewsMarker
                   key={`mobile-${selectedMarket.id}`}
                   title={selectedMarket.title}
                   image={selectedMarket.image}
                   url={selectedMarket.url || selectedMarket.slug}
                   domain={selectedMarket.domain}
-                  language={selectedMarket.language}
                   sourcecountry={selectedMarket.sourcecountry}
                   seendate={selectedMarket.seendate}
                   onClose={handleClosePopup}
