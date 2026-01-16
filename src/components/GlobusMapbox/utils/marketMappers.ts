@@ -1,4 +1,5 @@
 import { Market, PolymarketEvent } from "../../../store/services/polymarketApi";
+import { GdeltArticle } from "../../../store/services/gdeltApi";
 
 export interface OutcomeData {
   name: string;
@@ -7,6 +8,8 @@ export interface OutcomeData {
   volume?: number;
   marketSlug?: string;
 }
+
+export type MarkerType = "market" | "news";
 
 export interface MapMarker {
   id: string;
@@ -31,6 +34,14 @@ export interface MapMarker {
   volume1wk: number;
   volume1mo: number;
   endDate: string;
+
+  // News-specific fields
+  type: MarkerType;
+  url?: string;
+  domain?: string;
+  language?: string;
+  sourcecountry?: string;
+  seendate?: string;
 }
 
 function hashCode(str: string): number {
@@ -1238,6 +1249,7 @@ export function convertMarketsToMapMarkers(markets: Market[]): MapMarker[] {
         volume1wk: market.volume1wk || 0,
         volume1mo: market.volume1mo || 0,
         endDate: market.endDate || "",
+        type: "market" as MarkerType,
       };
     });
 }
@@ -1293,6 +1305,7 @@ export function convertEventsToMapMarkers(
         volume1wk: event.volume1wk || 0,
         volume1mo: event.volume1mo || 0,
         endDate: event.endDate || "",
+        type: "market" as MarkerType,
       };
     });
 }
@@ -1429,8 +1442,133 @@ export function convertEventsWithMarketsToMapMarkers(
         volume1wk: event.volume1wk || 0,
         volume1mo: event.volume1mo || 0,
         endDate: event.endDate || "",
+        type: "market" as MarkerType,
       };
     });
+}
+
+// Country to coordinates mapping for GDELT
+const COUNTRY_COORDINATES: Record<string, [number, number]> = {
+  "United States": [-98.5795, 39.8283],
+  "United Kingdom": [-0.1276, 51.5074],
+  UK: [-0.1276, 51.5074],
+  Russia: [37.6173, 55.7558],
+  China: [116.4074, 39.9042],
+  Germany: [13.405, 52.52],
+  France: [2.3522, 48.8566],
+  Japan: [139.6917, 35.6895],
+  India: [77.209, 28.6139],
+  Brazil: [-47.8825, -15.7942],
+  Canada: [-75.6972, 45.4215],
+  Australia: [149.1281, -35.2835],
+  Italy: [12.4964, 41.9028],
+  Spain: [-3.7038, 40.4168],
+  Mexico: [-99.1332, 19.4326],
+  "South Korea": [126.978, 37.5665],
+  Netherlands: [4.9041, 52.3676],
+  Turkey: [28.9784, 41.0082],
+  Switzerland: [8.5417, 47.3769],
+  Poland: [21.0122, 52.2297],
+  Belgium: [4.3517, 50.8503],
+  Sweden: [18.0686, 59.3293],
+  Argentina: [-58.3816, -34.6037],
+  Austria: [16.3738, 48.2082],
+  Norway: [10.7522, 59.9139],
+  "United Arab Emirates": [55.2708, 25.2048],
+  Israel: [34.7818, 32.0853],
+  Ireland: [-6.2603, 53.3498],
+  Denmark: [12.5683, 55.6761],
+  Singapore: [103.8198, 1.3521],
+  "Hong Kong": [114.1694, 22.3193],
+  "Saudi Arabia": [46.6753, 24.7136],
+  Malaysia: [101.6869, 3.139],
+  "South Africa": [28.0473, -26.2041],
+  Thailand: [100.5018, 13.7563],
+  Indonesia: [106.8456, -6.2088],
+  Egypt: [31.2357, 30.0444],
+  Philippines: [120.9842, 14.5995],
+  Finland: [24.9384, 60.1699],
+  Chile: [-70.6693, -33.4489],
+  Portugal: [-9.1393, 38.7223],
+  Vietnam: [105.8342, 21.0278],
+  Greece: [23.7275, 37.9838],
+  Czechia: [14.4378, 50.0755],
+  "Czech Republic": [14.4378, 50.0755],
+  Romania: [26.1025, 44.4268],
+  "New Zealand": [174.7762, -41.2865],
+  Iraq: [44.3661, 33.3152],
+  Algeria: [3.0588, 36.7538],
+  Qatar: [51.5074, 25.2867],
+  Kazakhstan: [71.4704, 51.1605],
+  Hungary: [19.0402, 47.4979],
+  Kuwait: [47.9783, 29.3759],
+  Ukraine: [30.5234, 50.4501],
+  Morocco: [-7.5898, 33.5731],
+  Ecuador: [-78.4678, -0.1807],
+  "Puerto Rico": [-66.1057, 18.4655],
+  Colombia: [-74.0721, 4.711],
+  Pakistan: [73.0479, 33.6844],
+  Peru: [-77.0428, -12.0464],
+  Nigeria: [3.3792, 6.5244],
+  Bangladesh: [90.4125, 23.8103],
+  Iran: [51.3891, 35.6892],
+  Taiwan: [121.5654, 25.033],
+  Venezuela: [-66.9036, 10.4806],
+};
+
+function getCountryCoordinates(
+  sourcecountry: string,
+  articleId: string,
+  index: number
+): [number, number] {
+  const baseCoords = COUNTRY_COORDINATES[sourcecountry];
+  const offset = getOffset(articleId, index);
+
+  if (baseCoords) {
+    return [baseCoords[0] + offset[0], baseCoords[1] + offset[1]];
+  }
+
+  // Default to random location if country not found
+  const defaultCoords = COUNTRY_COORDINATES["United States"];
+  return [defaultCoords[0] + offset[0], defaultCoords[1] + offset[1]];
+}
+
+export function convertGdeltArticlesToMapMarkers(
+  articles: GdeltArticle[]
+): MapMarker[] {
+  return articles.map((article, index) => {
+    const coordinates = getCountryCoordinates(
+      article.sourcecountry,
+      article.url,
+      index
+    );
+
+    return {
+      id: `gdelt-${index}-${hashCode(article.url)}`,
+      title: article.title,
+      description: "",
+      category: "news",
+      volume: 0,
+      liquidity: 0,
+      image: article.socialimage || "",
+      outcomes: [],
+      outcomePrices: [],
+      coordinates,
+      slug: article.url,
+      eventSlug: article.domain,
+      active: true,
+      volume24hr: 0,
+      volume1wk: 0,
+      volume1mo: 0,
+      endDate: article.seendate,
+      type: "news" as MarkerType,
+      url: article.url,
+      domain: article.domain,
+      language: article.language,
+      sourcecountry: article.sourcecountry,
+      seendate: article.seendate,
+    };
+  });
 }
 
 export function createGeoJSONFromMarkers(
@@ -1462,6 +1600,12 @@ export function createGeoJSONFromMarkers(
         volume1wk: marker.volume1wk,
         volume1mo: marker.volume1mo,
         endDate: marker.endDate,
+        type: marker.type,
+        url: marker.url,
+        domain: marker.domain,
+        language: marker.language,
+        sourcecountry: marker.sourcecountry,
+        seendate: marker.seendate,
       },
       geometry: {
         type: "Point" as const,
