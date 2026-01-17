@@ -141,8 +141,10 @@ function MainNavigation({
       />
 
       <LiveTrades
-        isOpen={isLiveTradesOpen}
-        onClose={() => setIsLiveTradesOpen(false)}
+        {...({
+          isOpen: isLiveTradesOpen,
+          onClose: () => setIsLiveTradesOpen(false),
+        } as any)}
       />
     </>
   );

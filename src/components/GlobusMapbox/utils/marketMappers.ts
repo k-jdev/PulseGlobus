@@ -1754,7 +1754,7 @@ const KEYWORD_CITY_MAP: {
 
 function getCoordinatesForMarket(
   market: Market,
-  index: number = 0,
+  index: number = 0
 ): [number, number] {
   const searchText = `${market.question} ${market.description || ""} ${
     market.events?.[0]?.title || ""
@@ -1823,7 +1823,7 @@ export function convertMarketsToMapMarkers(markets: Market[]): MapMarker[] {
           endDate: markets[0].endDate,
           question: markets[0].question?.substring(0, 50),
         }
-      : "no markets",
+      : "no markets"
   );
 
   return markets
@@ -1873,7 +1873,7 @@ export function convertMarketsToMapMarkers(markets: Market[]): MapMarker[] {
 }
 
 export function convertEventsToMapMarkers(
-  events: PolymarketEvent[],
+  events: PolymarketEvent[]
 ): MapMarker[] {
   return events
     .filter((event) => event.active && !event.closed)
@@ -1958,7 +1958,7 @@ function parseMarketPrices(prices: string): number[] {
 }
 
 export function convertEventsWithMarketsToMapMarkers(
-  events: PolymarketEvent[],
+  events: PolymarketEvent[]
 ): MapMarker[] {
   const now = new Date();
 
@@ -2416,7 +2416,7 @@ const countryIndexTracker: Record<string, number> = {};
 function getCountryCoordinates(
   sourcecountry: string,
   articleId: string,
-  index: number,
+  index: number
 ): [number, number] {
   const cities = COUNTRY_CITIES[sourcecountry];
   const offset = getOffset(articleId, index);
@@ -2448,7 +2448,7 @@ function getCountryCoordinates(
 function getLocationFromTitle(
   title: string,
   articleId: string,
-  index: number,
+  index: number
 ): [number, number] | null {
   const lowerTitle = title.toLowerCase();
   const offset = getOffset(articleId, index);
@@ -2471,7 +2471,7 @@ function getNewsCoordinates(
   title: string,
   sourcecountry: string,
   articleId: string,
-  index: number,
+  index: number
 ): [number, number] {
   // 1. First try to extract location from title
   const titleLocation = getLocationFromTitle(title, articleId, index);
@@ -2484,7 +2484,7 @@ function getNewsCoordinates(
 }
 
 export function convertGdeltArticlesToMapMarkers(
-  articles: GdeltArticle[],
+  articles: GdeltArticle[]
 ): MapMarker[] {
   // Reset country index tracker for fresh distribution
   Object.keys(countryIndexTracker).forEach((key) => {
@@ -2497,7 +2497,7 @@ export function convertGdeltArticlesToMapMarkers(
       article.title,
       article.sourcecountry,
       article.url,
-      index,
+      index
     );
 
     return {
@@ -2638,19 +2638,19 @@ function findMatchingKeywords(text1: string, text2: string): string[] {
 }
 
 // Topic to location mapping for markets
-const TOPIC_LOCATION_MAP: Record<string, [number, number]> = {
-  ukraine: [30.5234, 50.4501], // Kyiv
-  russia: [37.6173, 55.7558], // Moscow
-  china: [116.4074, 39.9042], // Beijing
-  taiwan: [121.5654, 25.033], // Taipei
-  israel: [35.2137, 31.7683], // Jerusalem
-  iran: [51.389, 35.6892], // Tehran
-  trump: [-80.0364, 26.6774], // Mar-a-Lago
-  biden: [-77.0369, 38.9072], // Washington DC
-  election: [-77.0369, 38.9072], // Washington DC
-  crypto: [103.8198, 1.3521], // Singapore
-  nato: [4.3517, 50.8503], // Brussels
-};
+// const TOPIC_LOCATION_MAP: Record<string, [number, number]> = {
+//   ukraine: [30.5234, 50.4501], // Kyiv
+//   russia: [37.6173, 55.7558], // Moscow
+//   china: [116.4074, 39.9042], // Beijing
+//   taiwan: [121.5654, 25.033], // Taipei
+//   israel: [35.2137, 31.7683], // Jerusalem
+//   iran: [51.389, 35.6892], // Tehran
+//   trump: [-80.0364, 26.6774], // Mar-a-Lago
+//   biden: [-77.0369, 38.9072], // Washington DC
+//   election: [-77.0369, 38.9072], // Washington DC
+//   crypto: [103.8198, 1.3521], // Singapore
+//   nato: [4.3517, 50.8503], // Brussels
+// };
 
 // Get location for market based on its content
 // function getMarketLocation(title: string): [number, number] | null {
@@ -2700,7 +2700,7 @@ const TOPIC_LOCATION_MAP: Record<string, [number, number]> = {
 // Link markets to nearby news and adjust their positions
 export function linkMarketsToNews(
   marketMarkers: MapMarker[],
-  newsMarkers: MapMarker[],
+  newsMarkers: MapMarker[]
 ): MapMarker[] {
   // Simply return markets as-is - they already have correct coordinates
   // from convertEventsWithMarketsToMapMarkers based on their content.
@@ -2728,7 +2728,7 @@ export function linkMarketsToNews(
 }
 
 export function createGeoJSONFromMarkers(
-  markers: MapMarker[],
+  markers: MapMarker[]
 ): GeoJSON.FeatureCollection {
   return {
     type: "FeatureCollection",
