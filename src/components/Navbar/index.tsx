@@ -235,6 +235,11 @@ function Navbar({
               </a>
             </div>
 
+            {/* Connect Wallet */}
+            <div className="mt-4">
+              <ConnectWallet isMobile={true} className="w-full" />
+            </div>
+
             {/* Social Links */}
             <div className="flex gap-1 mt-4">
               <button className="w-14 h-14 bg-black/5 rounded-full flex items-center justify-center">

@@ -1,9 +1,14 @@
-import { useGetMarketsQuery } from "../../store/services/polymarketApi";
+import { useEffect, useState, useCallback } from "react";
+import {
+  polymarketWS,
+  LiveTradeMessage,
+} from "../../store/services/polymarketWebSocket";
 
 interface TradeItem {
   id: string;
   image: string;
   question: string;
+  traderName: string;
   price: string;
   amount: string;
   action: "Buy" | "Sell";
@@ -11,40 +16,59 @@ interface TradeItem {
   timeAgo: string;
   slug: string;
   eventSlug?: string;
+  timestamp: number;
+  transactionHash?: string;
 }
 
-const formatPrice = (price: number): string => {
-  return (price * 100).toFixed(1) + "¢";
+const formatPrice = (price: string | number): string => {
+  const numPrice = typeof price === "string" ? parseFloat(price) : price;
+  return (numPrice * 100).toFixed(1) + "¢";
 };
 
-const formatAmount = (amount: number): string => {
+const formatAmount = (size: string | number): string => {
+  const amount = typeof size === "string" ? parseFloat(size) : size;
+  if (amount >= 1000) {
+    return "$" + (amount / 1000).toFixed(1) + "k";
+  }
   return "$" + amount.toFixed(0);
 };
 
-const getRandomTimeAgo = (): string => {
-  const seconds = Math.floor(Math.random() * 30) + 1;
-  return `${seconds}s ago`;
+const getTimeAgo = (timestampMs: number): string => {
+  const now = Date.now();
+  const diff = Math.floor((now - timestampMs) / 1000);
+
+  if (diff < 0) return "just now";
+  if (diff < 60) return `${diff}s ago`;
+  if (diff < 3600) return `${Math.floor(diff / 60)}m ago`;
+  return `${Math.floor(diff / 3600)}h ago`;
 };
 
-const convertMarketToTrade = (market: any): TradeItem => {
-  const outcomes = JSON.parse(market.outcomes || '["Yes", "No"]');
-  const prices = JSON.parse(market.outcomePrices || '["0.5", "0.5"]');
-  const randomOutcomeIndex = Math.floor(Math.random() * outcomes.length);
-  const price = prices[randomOutcomeIndex] || 0.5;
+const convertLiveTradeToItem = (trade: LiveTradeMessage): TradeItem => {
+  // Timestamp comes in seconds, convert to milliseconds
+  const timestampMs = trade.timestamp
+    ? trade.timestamp > 1e12
+      ? trade.timestamp
+      : trade.timestamp * 1000
+    : Date.now();
 
-  const eventSlug = market.events?.[0]?.slug;
+  // Get transaction hash from various possible fields
+  const txHash = trade.transactionHash || trade.txHash || trade.hash;
 
   return {
-    id: market.id,
-    image: market.imageOptimized?.imageUrlOptimized || market.image || "",
-    question: market.question,
-    price: formatPrice(price),
-    amount: formatAmount(Math.floor(Math.random() * 500) + 50),
-    action: Math.random() > 0.5 ? "Buy" : "Sell",
-    outcome: outcomes[randomOutcomeIndex] || "Yes",
-    timeAgo: getRandomTimeAgo(),
-    slug: market.slug,
-    eventSlug: eventSlug,
+    id: `${trade.conditionId}-${Date.now()}-${Math.random()}`,
+    image: trade.icon || "",
+    question:
+      trade.market || trade.question || trade.eventSlug || "Unknown Market",
+    traderName: trade.name || "Anonymous",
+    price: formatPrice(trade.price || "0.5"),
+    amount: formatAmount(trade.size || "0"),
+    action: trade.side?.toLowerCase() === "sell" ? "Sell" : "Buy",
+    outcome: trade.outcome || "Yes",
+    timeAgo: getTimeAgo(timestampMs),
+    slug: trade.asset || "",
+    eventSlug: trade.eventSlug,
+    timestamp: timestampMs,
+    transactionHash: txHash,
   };
 };
 
@@ -53,13 +77,52 @@ interface LiveTradesProps {
 }
 
 export const LiveTrades = ({ isOpen }: LiveTradesProps) => {
-  const { data: markets, isLoading } = useGetMarketsQuery(
-    { limit: 20, active: true },
-    { pollingInterval: 15000 },
-  );
+  const [trades, setTrades] = useState<TradeItem[]>([]);
+  const [isConnected, setIsConnected] = useState(false);
 
-  const trades: TradeItem[] =
-    markets?.slice(0, 10).map(convertMarketToTrade) || [];
+  const handleNewTrade = useCallback((trade: LiveTradeMessage) => {
+    const tradeItem = convertLiveTradeToItem(trade);
+
+    setTrades((prev) => {
+      // Add new trade at the beginning, keep max 20 trades
+      const newTrades = [tradeItem, ...prev].slice(0, 20);
+      return newTrades;
+    });
+  }, []);
+
+  useEffect(() => {
+    if (!isOpen) return;
+
+    // Connect to WebSocket
+    polymarketWS.connect();
+
+    // Subscribe to trades
+    const unsubscribeTrade = polymarketWS.onTrade(handleNewTrade);
+
+    // Subscribe to connection changes
+    const unsubscribeConnection = polymarketWS.onConnectionChange(
+      (connected) => {
+        setIsConnected(connected);
+      }
+    );
+
+    // Update time ago every 5 seconds
+    const timeInterval = setInterval(() => {
+      setTrades((prev) =>
+        prev.map((trade) => ({
+          ...trade,
+          timeAgo: getTimeAgo(trade.timestamp),
+        }))
+      );
+    }, 5000);
+
+    return () => {
+      unsubscribeTrade();
+      unsubscribeConnection();
+      clearInterval(timeInterval);
+    };
+  }, [isOpen, handleNewTrade]);
+
   const tradesCount = trades.length;
 
   if (!isOpen) return null;
@@ -142,22 +205,56 @@ export const LiveTrades = ({ isOpen }: LiveTradesProps) => {
       {/* Divider */}
       <div className="mx-6 h-px bg-[#e4e4e4]" />
 
-      {/* Trades List */}
+      {/* Coming Soon Overlay */}
       <div className="px-6 py-4 overflow-y-auto max-h-[calc(100vh-380px)] md:max-h-[calc(70vh-140px)]">
-        {isLoading ? (
+        <div className="flex flex-col items-center justify-center py-12 gap-4">
+          <div className="w-16 h-16 bg-[#f5f5f5] rounded-full flex items-center justify-center">
+            <svg
+              width="32"
+              height="32"
+              viewBox="0 0 24 24"
+              fill="none"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                d="M12 2V6M12 18V22M6 12H2M22 12H18M19.07 4.93L16.24 7.76M7.76 16.24L4.93 19.07M19.07 19.07L16.24 16.24M7.76 7.76L4.93 4.93"
+                stroke="#808080"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </svg>
+          </div>
+          <div className="text-center">
+            <h3 className="text-[20px] font-bold text-black tracking-[-0.4px] mb-2">
+              Coming Soon
+            </h3>
+            <p className="text-[14px] text-[#808080] font-medium tracking-[-0.28px]">
+              Live trades streaming will be available soon.
+            </p>
+          </div>
+        </div>
+      </div>
+
+      {/* Hidden: Original Trades List (logic preserved) */}
+      <div className="hidden">
+        {!isConnected && trades.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-8 gap-3">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#4EB12F]"></div>
             <span className="text-[14px] text-[#808080] font-medium">
-              Loading trades...
+              Connecting to live feed...
             </span>
           </div>
         ) : trades.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-8 gap-2">
-            <span className="text-[16px] text-[#808080] font-medium">
-              No recent trades
-            </span>
+            <div className="flex items-center gap-2">
+              <span className="w-2 h-2 bg-[#4EB12F] rounded-full animate-pulse"></span>
+              <span className="text-[16px] text-[#808080] font-medium">
+                Connected
+              </span>
+            </div>
             <span className="text-[14px] text-[#BBBDC1]">
-              Waiting for activity...
+              Waiting for trades...
             </span>
           </div>
         ) : (
@@ -178,9 +275,16 @@ const TradeRow = ({ trade }: { trade: TradeItem }) => {
   const actionBgColor = isBuy ? "bg-[#f1f7ff]" : "bg-[#ffebeb]";
   const actionTextColor = isBuy ? "text-[#1452F0]" : "text-[#EE1616]";
 
+  // Link to Polygonscan transaction if available, otherwise to Polymarket event
+  const tradeLink = trade.transactionHash
+    ? `https://polygonscan.com/tx/${trade.transactionHash}`
+    : trade.eventSlug && trade.eventSlug !== trade.slug
+    ? `https://polymarket.com/event/${trade.eventSlug}/${trade.slug}`
+    : `https://polymarket.com/event/${trade.slug}`;
+
   return (
     <div className="flex flex-col gap-4">
-      {/* Main row: Image + Question + Price */}
+      {/* Main row: Image + Event/Market name + Price */}
       <div className="flex items-center gap-4">
         {/* Image */}
         {trade.image && (
@@ -193,8 +297,8 @@ const TradeRow = ({ trade }: { trade: TradeItem }) => {
           </div>
         )}
 
-        {/* Question */}
-        <p className="flex-1 text-[#1B2430] font-semibold text-[19px] leading-[30px] tracking-[-0.4px]">
+        {/* Event/Market name */}
+        <p className="flex-1 text-[#1B2430] font-semibold text-[19px] leading-[30px] tracking-[-0.4px] line-clamp-2">
           {trade.question}
         </p>
 
@@ -211,9 +315,9 @@ const TradeRow = ({ trade }: { trade: TradeItem }) => {
         </div>
       </div>
 
-      {/* Tags row: Buy/Sell, Outcome, Time - left | View market - right */}
+      {/* Tags row: Buy/Sell, Outcome, Time, Trader - left | View tx - right */}
       <div className="flex items-center justify-between">
-        <div className="flex items-center gap-1.5">
+        <div className="flex items-center gap-1.5 flex-wrap">
           <span
             className={`px-3 py-1 rounded-full text-[14px] font-semibold tracking-[-0.28px] ${actionBgColor} ${actionTextColor}`}
           >
@@ -225,20 +329,21 @@ const TradeRow = ({ trade }: { trade: TradeItem }) => {
           <span className="px-3 py-1 bg-[#f5f5f5] rounded-full text-[#808080] text-[14px] font-medium tracking-[-0.28px]">
             {trade.timeAgo}
           </span>
+          {trade.traderName && trade.traderName !== "Anonymous" && (
+            <span className="px-3 py-1 bg-[#f5f5f5] rounded-full text-[#808080] text-[14px] font-medium tracking-[-0.28px]">
+              {trade.traderName}
+            </span>
+          )}
         </div>
 
-        {/* View market button */}
+        {/* View transaction button */}
         <a
-          href={
-            trade.eventSlug && trade.eventSlug !== trade.slug
-              ? `https://polymarket.com/event/${trade.eventSlug}/${trade.slug}`
-              : `https://polymarket.com/event/${trade.slug}`
-          }
+          href={tradeLink}
           target="_blank"
           rel="noopener noreferrer"
-          className="flex items-center gap-1.5 px-3 py-1 bg-[#f5f5f5] rounded-full text-[#808080] text-[14px] font-medium tracking-[-0.28px] hover:bg-[#e9e9e9] transition-colors"
+          className="flex items-center gap-1.5 px-3 py-1 bg-[#f5f5f5] rounded-full text-[#808080] text-[14px] font-medium tracking-[-0.28px] hover:bg-[#e9e9e9] transition-colors flex-shrink-0"
         >
-          View market
+          {trade.transactionHash ? "View tx" : "View market"}
           <svg
             width="16"
             height="16"
