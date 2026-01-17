@@ -28,7 +28,7 @@ export interface GdeltQueryParams {
 
 function diversifyArticlesByCountry(
   articles: GdeltArticle[],
-  maxPerCountry: number = 12,
+  maxPerCountry: number = 20,
 ): GdeltArticle[] {
   const countryCount: Record<string, number> = {};
   const diversified: GdeltArticle[] = [];
@@ -43,7 +43,7 @@ function diversifyArticlesByCountry(
       country.toLowerCase().includes("china") ||
       country.toLowerCase().includes("taiwan") ||
       article.language === "Chinese";
-    const limit = isChineseSource ? 4 : maxPerCountry;
+    const limit = isChineseSource ? 6 : maxPerCountry;
 
     if (currentCount < limit) {
       countryCount[country] = currentCount + 1;
@@ -62,7 +62,7 @@ export const gdeltApi = createApi({
     getNews: builder.query<GdeltArticle[], GdeltQueryParams>({
       query: ({
         query = "(politics OR economy OR technology OR sports OR business)",
-        maxrecords = 250,
+        maxrecords = 500,
         timespan = "1d",
 
         sourcecountry,
@@ -102,8 +102,8 @@ export const gdeltApi = createApi({
           query: `${searchQuery || "(politics OR economy OR technology)"} sourcelang:english`,
           mode: "ArtList",
           format: "json",
-          maxrecords: "250",
-          timespan: "1d",
+          maxrecords: "500",
+          timespan: "2d",
         });
         return `/doc?${params.toString()}`;
       },
@@ -118,10 +118,10 @@ export const gdeltApi = createApi({
       GdeltArticle[],
       { maxrecords?: number; timespan?: string }
     >({
-      query: ({ maxrecords = 200, timespan = "1h" } = {}) => {
+      query: ({ maxrecords = 400, timespan = "4h" } = {}) => {
         const params = new URLSearchParams({
           query:
-            "(politics OR economy OR technology OR sports) sourcelang:english",
+            "(politics OR economy OR technology OR sports OR business OR world) sourcelang:english",
           mode: "ArtList",
           format: "json",
           maxrecords: maxrecords.toString(),
@@ -131,7 +131,7 @@ export const gdeltApi = createApi({
       },
       transformResponse: (response: GdeltResponse) => {
         const articles = response.articles || [];
-        return diversifyArticlesByCountry(articles, 10);
+        return diversifyArticlesByCountry(articles, 15);
       },
       providesTags: ["News"],
     }),

@@ -1,10 +1,5 @@
 import { useMemo, useState } from "react";
-import {
-  useGetEventsQuery,
-  useGetMarketsQuery,
-  PolymarketEvent,
-  Market,
-} from "../../store/services/polymarketApi";
+import { useGetNewsQuery, GdeltArticle } from "../../store/services/gdeltApi";
 
 type TimeFilter = "1h" | "6h" | "24h";
 
@@ -12,44 +7,68 @@ interface NewsItem {
   id: string;
   image: string;
   title: string;
-  volume24hr: number;
-  volume1wk: number;
-  volume1mo: number;
-  slug: string;
-  endDate: string;
-  price?: number;
-  outcome?: string;
+  source: string;
+  date: string;
+  country: string;
+  url: string;
 }
 
-const formatVolume = (volume: number): string => {
-  if (volume >= 1000000) return "$" + (volume / 1000000).toFixed(1) + "m Vol.";
-  if (volume >= 1000) return "$" + (volume / 1000).toFixed(0) + "k Vol.";
-  return "$" + volume.toFixed(0) + " Vol.";
+const formatDate = (dateStr: string): string => {
+  if (!dateStr) return "";
+  try {
+    const year = dateStr.substring(0, 4);
+    const month = dateStr.substring(4, 6);
+    const day = dateStr.substring(6, 8);
+    const date = new Date(`${year}-${month}-${day}`);
+    return date.toLocaleDateString("en-US", {
+      month: "short",
+      day: "numeric",
+      year: "numeric",
+    });
+  } catch {
+    return dateStr;
+  }
 };
 
-const formatPrice = (price: number): string => {
-  return (price * 100).toFixed(1) + "¢";
+const formatCountry = (country: string): string => {
+  if (!country) return "World";
+  const countryMap: Record<string, string> = {
+    US: "United States",
+    UK: "United Kingdom",
+    UA: "Ukraine",
+    RU: "Russia",
+    CN: "China",
+    DE: "Germany",
+    FR: "France",
+    JP: "Japan",
+    IN: "India",
+    BR: "Brazil",
+    AU: "Australia",
+    CA: "Canada",
+    KR: "South Korea",
+    IL: "Israel",
+    IR: "Iran",
+    SA: "Saudi Arabia",
+    TR: "Turkey",
+    MX: "Mexico",
+    AR: "Argentina",
+    VE: "Venezuela",
+  };
+  return countryMap[country.toUpperCase()] || country;
 };
 
-// const endsWithinHours = (endDate: string, hours: number): boolean => {
-//   if (!endDate) return false;
-//   const end = new Date(endDate);
-//   const now = new Date();
-//   const diffMs = end.getTime() - now.getTime();
-//   const diffHours = diffMs / (1000 * 60 * 60);
-//   return diffHours > 0 && diffHours <= hours;
-// };
-
-const convertEventToNews = (event: PolymarketEvent): NewsItem => {
+const convertArticleToNews = (
+  article: GdeltArticle,
+  index: number,
+): NewsItem => {
   return {
-    id: event.id,
-    image: event.imageOptimized?.imageUrlOptimized || event.image || "",
-    title: event.title,
-    volume24hr: event.volume24hr || 0,
-    volume1wk: event.volume1wk || 0,
-    volume1mo: event.volume1mo || 0,
-    slug: event.slug,
-    endDate: event.endDate || "",
+    id: `${article.url}-${index}`,
+    image: article.socialimage || "",
+    title: article.title,
+    source: article.domain?.replace("www.", "") || "Unknown",
+    date: formatDate(article.seendate),
+    country: formatCountry(article.sourcecountry),
+    url: article.url,
   };
 };
 
@@ -60,100 +79,35 @@ interface BreakingNewsProps {
 
 export const BreakingNews = ({ isOpen }: BreakingNewsProps) => {
   const [timeFilter, setTimeFilter] = useState<TimeFilter>("24h");
-  const [pinnedIds, setPinnedIds] = useState<Set<string>>(new Set());
 
-  const togglePin = (id: string) => {
-    setPinnedIds((prev) => {
-      const newSet = new Set(prev);
-      if (newSet.has(id)) {
-        newSet.delete(id);
-      } else {
-        newSet.add(id);
-      }
-      return newSet;
-    });
+  const timespanMap: Record<TimeFilter, string> = {
+    "1h": "1h",
+    "6h": "6h",
+    "24h": "1d",
   };
 
-  const { data: events } = useGetEventsQuery({
-    limit: 100,
-    active: true,
-    order: "volume24hr",
+  // Crypto-relevant news: geopolitics, economy, conflicts, disasters
+  const breakingNewsQuery =
+    "(war OR conflict OR earthquake OR election OR sanctions OR bitcoin OR crisis OR Ukraine OR Israel OR China)";
+
+  const {
+    data: articles,
+    isLoading,
+    isFetching,
+  } = useGetNewsQuery({
+    query: breakingNewsQuery,
+    maxrecords: 150,
+    timespan: timespanMap[timeFilter],
   });
 
-  const { data: markets } = useGetMarketsQuery({ limit: 100, active: true });
-
-  // Create a map of event slug to market data for price info
-  const marketMap = useMemo(() => {
-    const map = new Map<string, Market>();
-    if (markets) {
-      markets.forEach((market) => {
-        if (market.slug) {
-          map.set(market.slug, market);
-        }
-      });
-    }
-    return map;
-  }, [markets]);
-
   const news: NewsItem[] = useMemo(() => {
-    if (!events) return [];
+    if (!articles) return [];
+    return articles
+      .slice(0, 30)
+      .map((article, index) => convertArticleToNews(article, index));
+  }, [articles]);
 
-    const converted = events.map((event) => {
-      const newsItem = convertEventToNews(event);
-      // Try to find matching market for price data
-      const market = marketMap.get(event.slug);
-      if (market) {
-        try {
-          const outcomes = JSON.parse(market.outcomes);
-          const prices = JSON.parse(market.outcomePrices);
-          // Get the highest price outcome
-          let maxPriceIndex = 0;
-          let maxPrice = parseFloat(prices[0]) || 0;
-          prices.forEach((p: string, i: number) => {
-            const price = parseFloat(p) || 0;
-            if (price > maxPrice) {
-              maxPrice = price;
-              maxPriceIndex = i;
-            }
-          });
-          newsItem.price = maxPrice;
-          newsItem.outcome = outcomes[maxPriceIndex] || "Yes";
-        } catch {
-          // Fallback values
-          newsItem.price = 0.5;
-          newsItem.outcome = "Yes";
-        }
-      }
-      return newsItem;
-    });
-
-    const sortedByActivity = [...converted]
-      .filter((item) => item.volume24hr > 0)
-      .sort((a, b) => b.volume24hr - a.volume24hr);
-
-    let result: NewsItem[];
-    switch (timeFilter) {
-      case "1h":
-        result = sortedByActivity.slice(0, 8);
-        break;
-      case "6h":
-        result = sortedByActivity.slice(8, 16);
-        break;
-      case "24h":
-      default:
-        result = sortedByActivity.slice(16, 24);
-        break;
-    }
-
-    // Sort pinned items to top
-    return result.sort((a, b) => {
-      const aPinned = pinnedIds.has(a.id);
-      const bPinned = pinnedIds.has(b.id);
-      if (aPinned && !bPinned) return -1;
-      if (!aPinned && bPinned) return 1;
-      return 0;
-    });
-  }, [events, timeFilter, marketMap, pinnedIds]);
+  const showLoading = isLoading || isFetching;
 
   if (!isOpen) return null;
 
@@ -166,8 +120,8 @@ export const BreakingNews = ({ isOpen }: BreakingNewsProps) => {
             Breaking News
           </h2>
           <p className="text-[#808080] text-[16px] font-medium tracking-[-0.32px]">
-            Markets reacting in real time. Volatility driven by unfolding
-            events.
+            Global events affecting markets. Click on globe markers to see
+            related predictions.
           </p>
         </div>
 
@@ -194,143 +148,105 @@ export const BreakingNews = ({ isOpen }: BreakingNewsProps) => {
 
       {/* News List */}
       <div className="px-6 py-4 overflow-y-auto max-h-[calc(100vh-380px)] md:max-h-[calc(70vh-200px)]">
-        <div className="flex flex-col gap-4">
-          {news.map((item) => (
-            <NewsRow
-              key={item.id}
-              item={item}
-              timeFilter={timeFilter}
-              isPinned={pinnedIds.has(item.id)}
-              onTogglePin={() => togglePin(item.id)}
-            />
-          ))}
-        </div>
+        {showLoading ? (
+          <div className="flex flex-col items-center justify-center py-8 gap-3">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#1452F0]"></div>
+            <span className="text-[14px] text-[#808080] font-medium">
+              Loading news...
+            </span>
+          </div>
+        ) : news.length === 0 ? (
+          <div className="flex flex-col items-center justify-center py-8 gap-2">
+            <span className="text-[16px] text-[#808080] font-medium">
+              No news found
+            </span>
+            <span className="text-[14px] text-[#BBBDC1]">
+              Try a different time filter
+            </span>
+          </div>
+        ) : (
+          <div className="flex flex-col">
+            {news.map((item) => (
+              <NewsRow key={item.id} item={item} />
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );
 };
 
-const NewsRow = ({
-  item,
-  timeFilter,
-  isPinned,
-  onTogglePin,
-}: {
-  item: NewsItem;
-  timeFilter: TimeFilter;
-  isPinned: boolean;
-  onTogglePin: () => void;
-}) => {
-  const displayVolume =
-    timeFilter === "1h"
-      ? item.volume24hr
-      : timeFilter === "6h"
-        ? item.volume1wk
-        : item.volume1mo;
-
-  const priceColor =
-    item.price && item.price >= 0.5 ? "text-[#1452F0]" : "text-[#EE1616]";
+const NewsRow = ({ item }: { item: NewsItem }) => {
+  const handleClick = () => {
+    window.open(item.url, "_blank", "noopener,noreferrer");
+  };
 
   return (
-    <div className="flex flex-col gap-4">
-      {/* Main row: Image + Title + Price */}
-      <div className="flex items-center gap-4">
-        {/* Image */}
-        {item.image && (
-          <div className="w-9 h-9 rounded-[4.8px] overflow-hidden flex-shrink-0">
-            <img
-              src={item.image}
-              alt=""
-              className="w-full h-full object-cover"
-            />
-          </div>
-        )}
-
-        {/* Title */}
-        <p className="flex-1 text-[#1B2430] font-semibold text-[19px] leading-[30px] tracking-[-0.4px]">
-          {item.title}
-        </p>
-
-        {/* Price + Outcome */}
-        {item.price !== undefined && (
-          <div className="flex flex-col items-end gap-2 flex-shrink-0">
-            <p
-              className={`${priceColor} font-semibold text-[20px] tracking-[-0.4px]`}
-            >
-              {formatPrice(item.price)}
-            </p>
-            <p className="text-[#BBBDC1] font-medium text-[14px] tracking-[-0.28px]">
-              {item.outcome}
-            </p>
-          </div>
-        )}
-      </div>
-
-      {/* Tags row: Volume, Time filter, Chart icon - left | Pin icon - right */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-1.5">
-          <span className="px-3 py-1 bg-[#f5f5f5] rounded-full text-[#808080] text-[14px] font-medium tracking-[-0.28px]">
-            {formatVolume(displayVolume)}
-          </span>
-          <span className="px-3 py-1 bg-[#f5f5f5] rounded-full text-[#808080] text-[14px] font-medium tracking-[-0.28px]">
-            {timeFilter === "1h"
-              ? "Hourly"
-              : timeFilter === "6h"
-                ? "Daily"
-                : "Weekly"}
-          </span>
-          {/* Chart icon */}
-          <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-            <g clipPath="url(#clip_news_row)">
-              <path
-                d="M14.6649 4.66626L8.99884 10.3323L5.66587 6.99934L1.33301 11.3322"
-                stroke="#53BB33"
-                strokeWidth="1.33319"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-              <path
-                d="M10.6655 4.66626H14.6655V8.66626"
-                stroke="#53BB33"
-                strokeWidth="1.33319"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-            </g>
-            <defs>
-              <clipPath id="clip_news_row">
-                <rect width="15.9983" height="15.9983" fill="white" />
-              </clipPath>
-            </defs>
-          </svg>
+    <div
+      className="flex items-start gap-4 py-4 border-b border-[#e4e4e4] last:border-b-0 cursor-pointer hover:bg-gray-50 -mx-2 px-2 rounded-lg transition-colors"
+      onClick={handleClick}
+    >
+      {/* Image */}
+      {item.image ? (
+        <div className="w-[72px] h-[72px] rounded-lg overflow-hidden flex-shrink-0 bg-gray-100">
+          <img
+            src={item.image}
+            alt=""
+            className="w-full h-full object-cover"
+            onError={(e) => {
+              (e.target as HTMLImageElement).style.display = "none";
+            }}
+          />
         </div>
-
-        {/* Pin icon */}
-        <button
-          onClick={onTogglePin}
-          className={`transition-colors ${
-            isPinned ? "text-[#1452F0]" : "text-[#BBBDC1] hover:text-[#808080]"
-          }`}
-        >
+      ) : (
+        <div className="w-[72px] h-[72px] rounded-lg flex-shrink-0 bg-gradient-to-br from-[#EE1616] to-[#cc1010] flex items-center justify-center">
           <svg
             width="24"
             height="24"
             viewBox="0 0 24 24"
-            fill={isPinned ? "currentColor" : "none"}
+            fill="none"
+            stroke="white"
+            strokeWidth="2"
           >
-            <path
-              d="M9.5 14.5L3 21M15 3.5L20.5 9L16.5 13L17 17L7 7L11 6.5L15 3.5Z"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            />
+            <path d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 8h6v4H7V8z" />
           </svg>
-        </button>
+        </div>
+      )}
+
+      {/* Content */}
+      <div className="flex-1 min-w-0">
+        {/* Title */}
+        <h3 className="text-[#1B2430] font-semibold text-[17px] leading-[24px] tracking-[-0.3px] mb-2 line-clamp-2">
+          {item.title}
+        </h3>
+
+        {/* Meta info: Source • Date • Country */}
+        <div className="flex items-center gap-2 text-[14px] text-[#808080] font-medium">
+          <span className="truncate max-w-[120px]">{item.source}</span>
+          <span className="text-[#BBBDC1]">•</span>
+          <span>{item.date}</span>
+          <span className="w-1.5 h-1.5 rounded-full bg-[#1452F0]"></span>
+          <span className="text-[#1452F0]">{item.country}</span>
+        </div>
       </div>
 
-      {/* Divider */}
-      <div className="h-px bg-[#e4e4e4]" />
+      {/* External link icon */}
+      <div className="flex-shrink-0 text-[#1452F0]">
+        <svg
+          width="20"
+          height="20"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        >
+          <path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6" />
+          <polyline points="15 3 21 3 21 9" />
+          <line x1="10" y1="14" x2="21" y2="3" />
+        </svg>
+      </div>
     </div>
   );
 };

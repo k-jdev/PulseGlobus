@@ -1,5 +1,4 @@
-import { useState } from "react";
-import { useGetMarketsQuery, Market } from "../../store/services/polymarketApi";
+import { useGetMarketsQuery } from "../../store/services/polymarketApi";
 
 interface TradeItem {
   id: string;
@@ -27,9 +26,9 @@ const getRandomTimeAgo = (): string => {
   return `${seconds}s ago`;
 };
 
-const convertMarketToTrade = (market: Market): TradeItem => {
-  const outcomes = JSON.parse(market.outcomes);
-  const prices = JSON.parse(market.outcomePrices);
+const convertMarketToTrade = (market: any): TradeItem => {
+  const outcomes = JSON.parse(market.outcomes || '["Yes", "No"]');
+  const prices = JSON.parse(market.outcomePrices || '["0.5", "0.5"]');
   const randomOutcomeIndex = Math.floor(Math.random() * outcomes.length);
   const price = prices[randomOutcomeIndex] || 0.5;
 
@@ -51,12 +50,13 @@ const convertMarketToTrade = (market: Market): TradeItem => {
 
 interface LiveTradesProps {
   isOpen: boolean;
-  onClose: () => void;
 }
 
 export const LiveTrades = ({ isOpen }: LiveTradesProps) => {
-  const [timeFilter] = useState<"2m" | "5m" | "15m">("2m");
-  const { data: markets } = useGetMarketsQuery({ limit: 20, active: true });
+  const { data: markets, isLoading } = useGetMarketsQuery(
+    { limit: 20, active: true },
+    { pollingInterval: 15000 },
+  );
 
   const trades: TradeItem[] =
     markets?.slice(0, 10).map(convertMarketToTrade) || [];
@@ -82,9 +82,6 @@ export const LiveTrades = ({ isOpen }: LiveTradesProps) => {
             <div className="hidden md:flex items-center gap-1.5">
               <div className="px-3 py-1 bg-[#f5f5f5] rounded-full text-[#808080] text-[14px] font-medium tracking-[-0.28px]">
                 {tradesCount} Trades
-              </div>
-              <div className="px-3 py-1 bg-[#f5f5f5] rounded-full text-[#808080] text-[14px] font-medium tracking-[-0.28px]">
-                {timeFilter}
               </div>
               {/* Chart icon */}
               <svg
@@ -115,9 +112,6 @@ export const LiveTrades = ({ isOpen }: LiveTradesProps) => {
           <div className="flex md:hidden items-center gap-1.5">
             <div className="px-3 py-1 bg-[#f5f5f5] rounded-full text-[#808080] text-[13px] font-medium tracking-[-0.28px]">
               {tradesCount} Trades
-            </div>
-            <div className="px-3 py-1 bg-[#f5f5f5] rounded-full text-[#808080] text-[13px] font-medium tracking-[-0.28px]">
-              {timeFilter}
             </div>
             <svg
               width="16"
@@ -150,11 +144,29 @@ export const LiveTrades = ({ isOpen }: LiveTradesProps) => {
 
       {/* Trades List */}
       <div className="px-6 py-4 overflow-y-auto max-h-[calc(100vh-380px)] md:max-h-[calc(70vh-140px)]">
-        <div className="flex flex-col gap-4">
-          {trades.map((trade) => (
-            <TradeRow key={trade.id} trade={trade} />
-          ))}
-        </div>
+        {isLoading ? (
+          <div className="flex flex-col items-center justify-center py-8 gap-3">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#4EB12F]"></div>
+            <span className="text-[14px] text-[#808080] font-medium">
+              Loading trades...
+            </span>
+          </div>
+        ) : trades.length === 0 ? (
+          <div className="flex flex-col items-center justify-center py-8 gap-2">
+            <span className="text-[16px] text-[#808080] font-medium">
+              No recent trades
+            </span>
+            <span className="text-[14px] text-[#BBBDC1]">
+              Waiting for activity...
+            </span>
+          </div>
+        ) : (
+          <div className="flex flex-col gap-4">
+            {trades.map((trade) => (
+              <TradeRow key={trade.id} trade={trade} />
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );

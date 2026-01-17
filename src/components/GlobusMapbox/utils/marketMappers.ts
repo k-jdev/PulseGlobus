@@ -42,6 +42,9 @@ export interface MapMarker {
   language?: string;
   sourcecountry?: string;
   seendate?: string;
+
+  // Linked news reference (for markets placed near news)
+  relatedNewsId?: string;
 }
 
 function hashCode(str: string): number {
@@ -68,16 +71,19 @@ const CATEGORY_CITY_MAP: Record<
 > = {
   politics: { name: "Washington DC", coordinates: [-77.0369, 38.9072] },
   "us-politics": { name: "Washington DC", coordinates: [-77.0369, 38.9072] },
-  elections: { name: "Washington DC", coordinates: [-77.0369, 38.9072] },
+  elections: { name: "Brussels", coordinates: [4.3517, 50.8503] },
   "world-politics": { name: "Brussels", coordinates: [4.3517, 50.8503] },
+  Politics: { name: "Washington DC", coordinates: [-77.0369, 38.9072] },
 
   crypto: { name: "Singapore", coordinates: [103.8198, 1.3521] },
   cryptocurrency: { name: "Singapore", coordinates: [103.8198, 1.3521] },
+  Crypto: { name: "Singapore", coordinates: [103.8198, 1.3521] },
   finance: { name: "New York", coordinates: [-74.006, 40.7128] },
   economics: { name: "London", coordinates: [-0.1276, 51.5074] },
   business: { name: "Hong Kong", coordinates: [114.1694, 22.3193] },
 
   sports: { name: "Los Angeles", coordinates: [-118.2437, 34.0522] },
+  Sports: { name: "Los Angeles", coordinates: [-118.2437, 34.0522] },
   football: { name: "London", coordinates: [-0.1276, 51.5074] },
   basketball: { name: "Chicago", coordinates: [-87.6298, 41.8781] },
   soccer: { name: "Madrid", coordinates: [-3.7038, 40.4168] },
@@ -91,6 +97,7 @@ const CATEGORY_CITY_MAP: Record<
 
   entertainment: { name: "Los Angeles", coordinates: [-118.2437, 34.0522] },
   "pop-culture": { name: "Los Angeles", coordinates: [-118.2437, 34.0522] },
+  "Pop Culture": { name: "Los Angeles", coordinates: [-118.2437, 34.0522] },
   culture: { name: "Tokyo", coordinates: [139.6917, 35.6895] },
   music: { name: "Nashville", coordinates: [-86.7816, 36.1627] },
 
@@ -102,7 +109,8 @@ const CATEGORY_CITY_MAP: Record<
   world: { name: "London", coordinates: [-0.1276, 51.5074] },
   climate: { name: "Copenhagen", coordinates: [12.5683, 55.6761] },
 
-  default: { name: "New York", coordinates: [-74.006, 40.7128] },
+  // Default should be a neutral location
+  default: { name: "London", coordinates: [-0.1276, 51.5074] },
 };
 
 const KEYWORD_CITY_MAP: {
@@ -217,7 +225,19 @@ const KEYWORD_CITY_MAP: {
     city: { name: "Paris", coordinates: [2.3522, 48.8566] },
   },
   {
+    keyword: "french",
+    city: { name: "Paris", coordinates: [2.3522, 48.8566] },
+  },
+  {
     keyword: "macron",
+    city: { name: "Paris", coordinates: [2.3522, 48.8566] },
+  },
+  {
+    keyword: "le pen",
+    city: { name: "Paris", coordinates: [2.3522, 48.8566] },
+  },
+  {
+    keyword: "bardella",
     city: { name: "Paris", coordinates: [2.3522, 48.8566] },
   },
   {
@@ -236,7 +256,15 @@ const KEYWORD_CITY_MAP: {
     city: { name: "Madrid", coordinates: [-3.7038, 40.4168] },
   },
   {
+    keyword: "spanish",
+    city: { name: "Madrid", coordinates: [-3.7038, 40.4168] },
+  },
+  {
     keyword: "portugal",
+    city: { name: "Lisbon", coordinates: [-9.1393, 38.7223] },
+  },
+  {
+    keyword: "portuguese",
     city: { name: "Lisbon", coordinates: [-9.1393, 38.7223] },
   },
   {
@@ -304,8 +332,132 @@ const KEYWORD_CITY_MAP: {
     city: { name: "Budapest", coordinates: [19.0402, 47.4979] },
   },
   {
+    keyword: "hungarian",
+    city: { name: "Budapest", coordinates: [19.0402, 47.4979] },
+  },
+  {
     keyword: "romania",
     city: { name: "Bucharest", coordinates: [26.1025, 44.4268] },
+  },
+  {
+    keyword: "romanian",
+    city: { name: "Bucharest", coordinates: [26.1025, 44.4268] },
+  },
+  {
+    keyword: "bulgaria",
+    city: { name: "Sofia", coordinates: [23.3219, 42.6977] },
+  },
+  {
+    keyword: "bulgarian",
+    city: { name: "Sofia", coordinates: [23.3219, 42.6977] },
+  },
+  {
+    keyword: "croatia",
+    city: { name: "Zagreb", coordinates: [15.9819, 45.815] },
+  },
+  {
+    keyword: "croatian",
+    city: { name: "Zagreb", coordinates: [15.9819, 45.815] },
+  },
+  {
+    keyword: "serbia",
+    city: { name: "Belgrade", coordinates: [20.4651, 44.8176] },
+  },
+  {
+    keyword: "serbian",
+    city: { name: "Belgrade", coordinates: [20.4651, 44.8176] },
+  },
+  {
+    keyword: "slovenia",
+    city: { name: "Ljubljana", coordinates: [14.5058, 46.0569] },
+  },
+  {
+    keyword: "slovakia",
+    city: { name: "Bratislava", coordinates: [17.1077, 48.1486] },
+  },
+  {
+    keyword: "slovak",
+    city: { name: "Bratislava", coordinates: [17.1077, 48.1486] },
+  },
+  {
+    keyword: "bosnia",
+    city: { name: "Sarajevo", coordinates: [18.4131, 43.8563] },
+  },
+  {
+    keyword: "albania",
+    city: { name: "Tirana", coordinates: [19.8187, 41.3275] },
+  },
+  {
+    keyword: "albanian",
+    city: { name: "Tirana", coordinates: [19.8187, 41.3275] },
+  },
+  {
+    keyword: "kosovo",
+    city: { name: "Pristina", coordinates: [21.1655, 42.6629] },
+  },
+  {
+    keyword: "montenegro",
+    city: { name: "Podgorica", coordinates: [19.2636, 42.4304] },
+  },
+  {
+    keyword: "north macedonia",
+    city: { name: "Skopje", coordinates: [21.4254, 41.9981] },
+  },
+  {
+    keyword: "macedon",
+    city: { name: "Skopje", coordinates: [21.4254, 41.9981] },
+  },
+  {
+    keyword: "baltic",
+    city: { name: "Riga", coordinates: [24.1052, 56.9496] },
+  },
+  {
+    keyword: "estonia",
+    city: { name: "Tallinn", coordinates: [24.7536, 59.4369] },
+  },
+  {
+    keyword: "estonian",
+    city: { name: "Tallinn", coordinates: [24.7536, 59.4369] },
+  },
+  {
+    keyword: "latvia",
+    city: { name: "Riga", coordinates: [24.1052, 56.9496] },
+  },
+  {
+    keyword: "latvian",
+    city: { name: "Riga", coordinates: [24.1052, 56.9496] },
+  },
+  {
+    keyword: "lithuania",
+    city: { name: "Vilnius", coordinates: [25.2797, 54.6872] },
+  },
+  {
+    keyword: "lithuanian",
+    city: { name: "Vilnius", coordinates: [25.2797, 54.6872] },
+  },
+  {
+    keyword: "greek",
+    city: { name: "Athens", coordinates: [23.7275, 37.9838] },
+  },
+  {
+    keyword: "irish",
+    city: { name: "Dublin", coordinates: [-6.2603, 53.3498] },
+  },
+  {
+    keyword: "scottish",
+    city: { name: "Edinburgh", coordinates: [-3.1883, 55.9533] },
+  },
+  {
+    keyword: "scotland",
+    city: { name: "Edinburgh", coordinates: [-3.1883, 55.9533] },
+  },
+  {
+    keyword: "welsh",
+    city: { name: "Cardiff", coordinates: [-3.1791, 51.4816] },
+  },
+  {
+    keyword: "wales",
+    city: { name: "Cardiff", coordinates: [-3.1791, 51.4816] },
   },
   {
     keyword: "eu ",
@@ -320,9 +472,71 @@ const KEYWORD_CITY_MAP: {
     city: { name: "Brussels", coordinates: [4.3517, 50.8503] },
   },
 
-  // === Восточная Европа и СНГ ===
+  // === Украина (проверяется первой для новостей о войне) ===
+  {
+    keyword: "ukraine",
+    city: { name: "Kyiv", coordinates: [30.5234, 50.4501] },
+  },
+  {
+    keyword: "ukrainian",
+    city: { name: "Kyiv", coordinates: [30.5234, 50.4501] },
+  },
+  {
+    keyword: "zelensky",
+    city: { name: "Kyiv", coordinates: [30.5234, 50.4501] },
+  },
+  {
+    keyword: "kyiv",
+    city: { name: "Kyiv", coordinates: [30.5234, 50.4501] },
+  },
+  {
+    keyword: "kiev",
+    city: { name: "Kyiv", coordinates: [30.5234, 50.4501] },
+  },
+  {
+    keyword: "kharkiv",
+    city: { name: "Kharkiv", coordinates: [36.2304, 49.9935] },
+  },
+  {
+    keyword: "odessa",
+    city: { name: "Odessa", coordinates: [30.7233, 46.4825] },
+  },
+  {
+    keyword: "donbas",
+    city: { name: "Donetsk", coordinates: [37.8028, 48.0159] },
+  },
+  {
+    keyword: "donetsk",
+    city: { name: "Donetsk", coordinates: [37.8028, 48.0159] },
+  },
+  {
+    keyword: "luhansk",
+    city: { name: "Luhansk", coordinates: [39.3078, 48.574] },
+  },
+  {
+    keyword: "crimea",
+    city: { name: "Simferopol", coordinates: [34.1008, 44.9521] },
+  },
+  {
+    keyword: "mariupol",
+    city: { name: "Mariupol", coordinates: [37.5494, 47.0971] },
+  },
+  {
+    keyword: "zaporizhzhia",
+    city: { name: "Zaporizhzhia", coordinates: [35.1396, 47.8388] },
+  },
+  {
+    keyword: "lviv",
+    city: { name: "Lviv", coordinates: [24.0297, 49.8397] },
+  },
+
+  // === Россия ===
   {
     keyword: "russia",
+    city: { name: "Moscow", coordinates: [37.6173, 55.7558] },
+  },
+  {
+    keyword: "russian",
     city: { name: "Moscow", coordinates: [37.6173, 55.7558] },
   },
   {
@@ -334,13 +548,11 @@ const KEYWORD_CITY_MAP: {
     city: { name: "Moscow", coordinates: [37.6173, 55.7558] },
   },
   {
-    keyword: "ukraine",
-    city: { name: "Kyiv", coordinates: [30.5234, 50.4501] },
+    keyword: "medvedev",
+    city: { name: "Moscow", coordinates: [37.6173, 55.7558] },
   },
-  {
-    keyword: "zelensky",
-    city: { name: "Kyiv", coordinates: [30.5234, 50.4501] },
-  },
+
+  // === Беларусь ===
   {
     keyword: "belarus",
     city: { name: "Minsk", coordinates: [27.5615, 53.9006] },
@@ -350,7 +562,35 @@ const KEYWORD_CITY_MAP: {
     city: { name: "Astana", coordinates: [71.4704, 51.1605] },
   },
   {
+    keyword: "kazakh",
+    city: { name: "Astana", coordinates: [71.4704, 51.1605] },
+  },
+  {
+    keyword: "uzbekistan",
+    city: { name: "Tashkent", coordinates: [69.2401, 41.2995] },
+  },
+  {
+    keyword: "uzbek",
+    city: { name: "Tashkent", coordinates: [69.2401, 41.2995] },
+  },
+  {
+    keyword: "turkmenistan",
+    city: { name: "Ashgabat", coordinates: [58.3794, 37.9601] },
+  },
+  {
+    keyword: "tajikistan",
+    city: { name: "Dushanbe", coordinates: [68.7738, 38.5598] },
+  },
+  {
+    keyword: "kyrgyzstan",
+    city: { name: "Bishkek", coordinates: [74.5698, 42.8746] },
+  },
+  {
     keyword: "georgia",
+    city: { name: "Tbilisi", coordinates: [44.827, 41.7151] },
+  },
+  {
+    keyword: "georgian",
     city: { name: "Tbilisi", coordinates: [44.827, 41.7151] },
   },
   {
@@ -358,8 +598,36 @@ const KEYWORD_CITY_MAP: {
     city: { name: "Yerevan", coordinates: [44.5126, 40.1792] },
   },
   {
+    keyword: "armenian",
+    city: { name: "Yerevan", coordinates: [44.5126, 40.1792] },
+  },
+  {
     keyword: "azerbaijan",
     city: { name: "Baku", coordinates: [49.8671, 40.4093] },
+  },
+  {
+    keyword: "azeri",
+    city: { name: "Baku", coordinates: [49.8671, 40.4093] },
+  },
+  {
+    keyword: "nagorno",
+    city: { name: "Stepanakert", coordinates: [46.7559, 39.8266] },
+  },
+  {
+    keyword: "karabakh",
+    city: { name: "Stepanakert", coordinates: [46.7559, 39.8266] },
+  },
+  {
+    keyword: "moldova",
+    city: { name: "Chișinău", coordinates: [28.8353, 47.0105] },
+  },
+  {
+    keyword: "moldovan",
+    city: { name: "Chișinău", coordinates: [28.8353, 47.0105] },
+  },
+  {
+    keyword: "transnistria",
+    city: { name: "Tiraspol", coordinates: [29.9, 46.85] },
   },
 
   // === Азия ===
@@ -376,15 +644,39 @@ const KEYWORD_CITY_MAP: {
     city: { name: "Beijing", coordinates: [116.4074, 39.9042] },
   },
   {
+    keyword: "beijing",
+    city: { name: "Beijing", coordinates: [116.4074, 39.9042] },
+  },
+  {
     keyword: "shanghai",
     city: { name: "Shanghai", coordinates: [121.4737, 31.2304] },
+  },
+  {
+    keyword: "shenzhen",
+    city: { name: "Shenzhen", coordinates: [114.0579, 22.5431] },
+  },
+  {
+    keyword: "guangzhou",
+    city: { name: "Guangzhou", coordinates: [113.2644, 23.1291] },
   },
   {
     keyword: "hong kong",
     city: { name: "Hong Kong", coordinates: [114.1694, 22.3193] },
   },
   {
+    keyword: "macau",
+    city: { name: "Macau", coordinates: [113.5439, 22.1987] },
+  },
+  {
     keyword: "taiwan",
+    city: { name: "Taipei", coordinates: [121.5654, 25.033] },
+  },
+  {
+    keyword: "taiwanese",
+    city: { name: "Taipei", coordinates: [121.5654, 25.033] },
+  },
+  {
+    keyword: "taipei",
     city: { name: "Taipei", coordinates: [121.5654, 25.033] },
   },
   {
@@ -428,7 +720,15 @@ const KEYWORD_CITY_MAP: {
     city: { name: "Islamabad", coordinates: [73.0479, 33.6844] },
   },
   {
+    keyword: "pakistani",
+    city: { name: "Islamabad", coordinates: [73.0479, 33.6844] },
+  },
+  {
     keyword: "bangladesh",
+    city: { name: "Dhaka", coordinates: [90.4125, 23.8103] },
+  },
+  {
+    keyword: "bangladeshi",
     city: { name: "Dhaka", coordinates: [90.4125, 23.8103] },
   },
   {
@@ -436,7 +736,15 @@ const KEYWORD_CITY_MAP: {
     city: { name: "Jakarta", coordinates: [106.8456, -6.2088] },
   },
   {
+    keyword: "indonesian",
+    city: { name: "Jakarta", coordinates: [106.8456, -6.2088] },
+  },
+  {
     keyword: "malaysia",
+    city: { name: "Kuala Lumpur", coordinates: [101.6869, 3.139] },
+  },
+  {
+    keyword: "malaysian",
     city: { name: "Kuala Lumpur", coordinates: [101.6869, 3.139] },
   },
   {
@@ -444,7 +752,15 @@ const KEYWORD_CITY_MAP: {
     city: { name: "Singapore", coordinates: [103.8198, 1.3521] },
   },
   {
+    keyword: "singaporean",
+    city: { name: "Singapore", coordinates: [103.8198, 1.3521] },
+  },
+  {
     keyword: "thailand",
+    city: { name: "Bangkok", coordinates: [100.5018, 13.7563] },
+  },
+  {
+    keyword: "thai",
     city: { name: "Bangkok", coordinates: [100.5018, 13.7563] },
   },
   {
@@ -452,8 +768,56 @@ const KEYWORD_CITY_MAP: {
     city: { name: "Hanoi", coordinates: [105.8342, 21.0278] },
   },
   {
+    keyword: "vietnamese",
+    city: { name: "Hanoi", coordinates: [105.8342, 21.0278] },
+  },
+  {
     keyword: "philippines",
     city: { name: "Manila", coordinates: [120.9842, 14.5995] },
+  },
+  {
+    keyword: "filipino",
+    city: { name: "Manila", coordinates: [120.9842, 14.5995] },
+  },
+  {
+    keyword: "myanmar",
+    city: { name: "Naypyidaw", coordinates: [96.1297, 19.7633] },
+  },
+  {
+    keyword: "burma",
+    city: { name: "Naypyidaw", coordinates: [96.1297, 19.7633] },
+  },
+  {
+    keyword: "cambodia",
+    city: { name: "Phnom Penh", coordinates: [104.9282, 11.5564] },
+  },
+  {
+    keyword: "laos",
+    city: { name: "Vientiane", coordinates: [102.6331, 17.9757] },
+  },
+  {
+    keyword: "nepal",
+    city: { name: "Kathmandu", coordinates: [85.324, 27.7172] },
+  },
+  {
+    keyword: "sri lanka",
+    city: { name: "Colombo", coordinates: [79.8612, 6.9271] },
+  },
+  {
+    keyword: "mongolia",
+    city: { name: "Ulaanbaatar", coordinates: [106.9057, 47.8864] },
+  },
+  {
+    keyword: "afghan",
+    city: { name: "Kabul", coordinates: [69.1723, 34.5553] },
+  },
+  {
+    keyword: "afghanistan",
+    city: { name: "Kabul", coordinates: [69.1723, 34.5553] },
+  },
+  {
+    keyword: "taliban",
+    city: { name: "Kabul", coordinates: [69.1723, 34.5553] },
   },
 
   // === Ближний Восток ===
@@ -462,35 +826,107 @@ const KEYWORD_CITY_MAP: {
     city: { name: "Tel Aviv", coordinates: [34.7818, 32.0853] },
   },
   {
+    keyword: "israeli",
+    city: { name: "Tel Aviv", coordinates: [34.7818, 32.0853] },
+  },
+  {
     keyword: "netanyahu",
     city: { name: "Tel Aviv", coordinates: [34.7818, 32.0853] },
+  },
+  {
+    keyword: "jerusalem",
+    city: { name: "Jerusalem", coordinates: [35.2137, 31.7683] },
   },
   {
     keyword: "palestine",
     city: { name: "Gaza", coordinates: [34.4668, 31.5017] },
   },
+  {
+    keyword: "palestinian",
+    city: { name: "Gaza", coordinates: [34.4668, 31.5017] },
+  },
+  {
+    keyword: "west bank",
+    city: { name: "Ramallah", coordinates: [35.2038, 31.9038] },
+  },
   { keyword: "gaza", city: { name: "Gaza", coordinates: [34.4668, 31.5017] } },
   { keyword: "hamas", city: { name: "Gaza", coordinates: [34.4668, 31.5017] } },
   {
+    keyword: "hezbollah",
+    city: { name: "Beirut", coordinates: [35.5018, 33.8938] },
+  },
+  {
+    keyword: "lebanon",
+    city: { name: "Beirut", coordinates: [35.5018, 33.8938] },
+  },
+  {
+    keyword: "lebanese",
+    city: { name: "Beirut", coordinates: [35.5018, 33.8938] },
+  },
+  {
     keyword: "iran",
+    city: { name: "Tehran", coordinates: [51.3891, 35.6892] },
+  },
+  {
+    keyword: "iranian",
+    city: { name: "Tehran", coordinates: [51.3891, 35.6892] },
+  },
+  {
+    keyword: "persian",
     city: { name: "Tehran", coordinates: [51.3891, 35.6892] },
   },
   {
     keyword: "saudi",
     city: { name: "Riyadh", coordinates: [46.6753, 24.7136] },
   },
+  {
+    keyword: "arabia",
+    city: { name: "Riyadh", coordinates: [46.6753, 24.7136] },
+  },
   { keyword: "uae", city: { name: "Dubai", coordinates: [55.2708, 25.2048] } },
+  {
+    keyword: "emirates",
+    city: { name: "Dubai", coordinates: [55.2708, 25.2048] },
+  },
   {
     keyword: "dubai",
     city: { name: "Dubai", coordinates: [55.2708, 25.2048] },
   },
+  {
+    keyword: "abu dhabi",
+    city: { name: "Abu Dhabi", coordinates: [54.3773, 24.4539] },
+  },
   { keyword: "qatar", city: { name: "Doha", coordinates: [51.5074, 25.2867] } },
+  {
+    keyword: "qatari",
+    city: { name: "Doha", coordinates: [51.5074, 25.2867] },
+  },
+  {
+    keyword: "bahrain",
+    city: { name: "Manama", coordinates: [50.5876, 26.2285] },
+  },
+  {
+    keyword: "oman",
+    city: { name: "Muscat", coordinates: [58.4059, 23.588] },
+  },
+  {
+    keyword: "yemen",
+    city: { name: "Sanaa", coordinates: [44.2067, 15.3694] },
+  },
+  {
+    keyword: "houthi",
+    city: { name: "Sanaa", coordinates: [44.2067, 15.3694] },
+  },
   {
     keyword: "kuwait",
     city: { name: "Kuwait City", coordinates: [47.9783, 29.3759] },
   },
   {
     keyword: "iraq",
+    city: { name: "Baghdad", coordinates: [44.3661, 33.3152] },
+  },
+  {
+    keyword: "iraqi",
     city: { name: "Baghdad", coordinates: [44.3661, 33.3152] },
   },
   {
@@ -564,10 +1000,78 @@ const KEYWORD_CITY_MAP: {
     city: { name: "Khartoum", coordinates: [32.5599, 15.5007] },
   },
   { keyword: "ghana", city: { name: "Accra", coordinates: [-0.187, 5.6037] } },
+  {
+    keyword: "nigerian",
+    city: { name: "Lagos", coordinates: [3.3792, 6.5244] },
+  },
+  {
+    keyword: "egyptian",
+    city: { name: "Cairo", coordinates: [31.2357, 30.0444] },
+  },
+  {
+    keyword: "moroccan",
+    city: { name: "Casablanca", coordinates: [-7.5898, 33.5731] },
+  },
+  {
+    keyword: "congo",
+    city: { name: "Kinshasa", coordinates: [15.2663, -4.4419] },
+  },
+  {
+    keyword: "angola",
+    city: { name: "Luanda", coordinates: [13.2343, -8.839] },
+  },
+  {
+    keyword: "tanzania",
+    city: { name: "Dar es Salaam", coordinates: [39.2083, -6.7924] },
+  },
+  {
+    keyword: "uganda",
+    city: { name: "Kampala", coordinates: [32.5825, 0.3476] },
+  },
+  {
+    keyword: "rwanda",
+    city: { name: "Kigali", coordinates: [30.0619, -1.9403] },
+  },
+  {
+    keyword: "zambia",
+    city: { name: "Lusaka", coordinates: [28.2871, -15.3875] },
+  },
+  {
+    keyword: "zimbabwe",
+    city: { name: "Harare", coordinates: [31.0522, -17.8292] },
+  },
+  {
+    keyword: "botswana",
+    city: { name: "Gaborone", coordinates: [25.9201, -24.6282] },
+  },
+  {
+    keyword: "namibia",
+    city: { name: "Windhoek", coordinates: [17.0658, -22.5609] },
+  },
+  {
+    keyword: "mozambique",
+    city: { name: "Maputo", coordinates: [32.5732, -25.9692] },
+  },
+  {
+    keyword: "senegal",
+    city: { name: "Dakar", coordinates: [-17.4677, 14.7167] },
+  },
+  {
+    keyword: "ivory coast",
+    city: { name: "Abidjan", coordinates: [-4.0083, 5.3599] },
+  },
+  {
+    keyword: "cameroon",
+    city: { name: "Yaoundé", coordinates: [11.5021, 3.848] },
+  },
 
   // === Латинская Америка ===
   {
     keyword: "brazil",
+    city: { name: "Brasília", coordinates: [-47.8825, -15.7942] },
+  },
+  {
+    keyword: "brazilian",
     city: { name: "Brasília", coordinates: [-47.8825, -15.7942] },
   },
   {
@@ -591,6 +1095,10 @@ const KEYWORD_CITY_MAP: {
     city: { name: "Buenos Aires", coordinates: [-58.3816, -34.6037] },
   },
   {
+    keyword: "argentine",
+    city: { name: "Buenos Aires", coordinates: [-58.3816, -34.6037] },
+  },
+  {
     keyword: "milei",
     city: { name: "Buenos Aires", coordinates: [-58.3816, -34.6037] },
   },
@@ -599,7 +1107,15 @@ const KEYWORD_CITY_MAP: {
     city: { name: "Bogotá", coordinates: [-74.0721, 4.711] },
   },
   {
+    keyword: "colombian",
+    city: { name: "Bogotá", coordinates: [-74.0721, 4.711] },
+  },
+  {
     keyword: "venezuela",
+    city: { name: "Caracas", coordinates: [-66.9036, 10.4806] },
+  },
+  {
+    keyword: "venezuelan",
     city: { name: "Caracas", coordinates: [-66.9036, 10.4806] },
   },
   {
@@ -623,8 +1139,76 @@ const KEYWORD_CITY_MAP: {
     city: { name: "Havana", coordinates: [-82.3666, 23.1136] },
   },
   {
+    keyword: "cuban",
+    city: { name: "Havana", coordinates: [-82.3666, 23.1136] },
+  },
+  {
     keyword: "puerto rico",
     city: { name: "San Juan", coordinates: [-66.1057, 18.4655] },
+  },
+  {
+    keyword: "chilean",
+    city: { name: "Santiago", coordinates: [-70.6693, -33.4489] },
+  },
+  {
+    keyword: "peruvian",
+    city: { name: "Lima", coordinates: [-77.0428, -12.0464] },
+  },
+  {
+    keyword: "paraguay",
+    city: { name: "Asunción", coordinates: [-57.5759, -25.2637] },
+  },
+  {
+    keyword: "uruguay",
+    city: { name: "Montevideo", coordinates: [-56.1645, -34.9011] },
+  },
+  {
+    keyword: "bolivia",
+    city: { name: "La Paz", coordinates: [-68.1193, -16.4897] },
+  },
+  {
+    keyword: "guatemala",
+    city: { name: "Guatemala City", coordinates: [-90.5069, 14.6349] },
+  },
+  {
+    keyword: "honduras",
+    city: { name: "Tegucigalpa", coordinates: [-87.2068, 14.0723] },
+  },
+  {
+    keyword: "nicaragua",
+    city: { name: "Managua", coordinates: [-86.2362, 12.1364] },
+  },
+  {
+    keyword: "costa rica",
+    city: { name: "San José", coordinates: [-84.0907, 9.9281] },
+  },
+  {
+    keyword: "panama",
+    city: { name: "Panama City", coordinates: [-79.5199, 8.9824] },
+  },
+  {
+    keyword: "el salvador",
+    city: { name: "San Salvador", coordinates: [-89.1914, 13.6929] },
+  },
+  {
+    keyword: "jamaica",
+    city: { name: "Kingston", coordinates: [-76.7936, 18.0179] },
+  },
+  {
+    keyword: "dominican",
+    city: { name: "Santo Domingo", coordinates: [-69.9312, 18.4861] },
+  },
+  {
+    keyword: "haiti",
+    city: { name: "Port-au-Prince", coordinates: [-72.3388, 18.5944] },
+  },
+  {
+    keyword: "bahamas",
+    city: { name: "Nassau", coordinates: [-77.351, 25.0443] },
+  },
+  {
+    keyword: "trinidad",
+    city: { name: "Port of Spain", coordinates: [-61.5125, 10.6596] },
   },
 
   // === Океания ===
@@ -637,8 +1221,28 @@ const KEYWORD_CITY_MAP: {
     city: { name: "Sydney", coordinates: [151.2093, -33.8688] },
   },
   {
+    keyword: "melbourne",
+    city: { name: "Melbourne", coordinates: [144.9631, -37.8136] },
+  },
+  {
+    keyword: "sydney",
+    city: { name: "Sydney", coordinates: [151.2093, -33.8688] },
+  },
+  {
     keyword: "new zealand",
     city: { name: "Auckland", coordinates: [174.7633, -36.8485] },
+  },
+  {
+    keyword: "kiwi",
+    city: { name: "Auckland", coordinates: [174.7633, -36.8485] },
+  },
+  {
+    keyword: "fiji",
+    city: { name: "Suva", coordinates: [178.441, -18.1416] },
+  },
+  {
+    keyword: "papua",
+    city: { name: "Port Moresby", coordinates: [147.1803, -9.4438] },
   },
 
   // === Канада ===
@@ -1157,14 +1761,28 @@ function getCoordinatesForMarket(
   }`.toLowerCase();
   const category = market.category?.toLowerCase() || "";
 
+  // Find the LONGEST matching keyword (more specific = better match)
+  let bestMatch: {
+    keyword: string;
+    city: { name: string; coordinates: [number, number] };
+  } | null = null;
+  let bestMatchLength = 0;
+
   for (const item of KEYWORD_CITY_MAP) {
     if (searchText.includes(item.keyword)) {
-      const offset = getOffset(market.id, index);
-      return [
-        item.city.coordinates[0] + offset[0],
-        item.city.coordinates[1] + offset[1],
-      ];
+      if (item.keyword.length > bestMatchLength) {
+        bestMatch = item;
+        bestMatchLength = item.keyword.length;
+      }
     }
+  }
+
+  if (bestMatch) {
+    const offset = getOffset(market.id, index);
+    return [
+      bestMatch.city.coordinates[0] + offset[0],
+      bestMatch.city.coordinates[1] + offset[1],
+    ];
   }
 
   const cityData = CATEGORY_CITY_MAP[category] || CATEGORY_CITY_MAP["default"];
@@ -1266,15 +1884,29 @@ export function convertEventsToMapMarkers(
       const category = event.category?.toLowerCase() || "default";
 
       let coordinates: [number, number] | null = null;
+
+      // Find the LONGEST matching keyword
+      let bestMatch: {
+        keyword: string;
+        city: { name: string; coordinates: [number, number] };
+      } | null = null;
+      let bestMatchLength = 0;
+
       for (const item of KEYWORD_CITY_MAP) {
         if (searchText.includes(item.keyword)) {
-          const offset = getOffset(event.id, index);
-          coordinates = [
-            item.city.coordinates[0] + offset[0],
-            item.city.coordinates[1] + offset[1],
-          ];
-          break;
+          if (item.keyword.length > bestMatchLength) {
+            bestMatch = item;
+            bestMatchLength = item.keyword.length;
+          }
         }
+      }
+
+      if (bestMatch) {
+        const offset = getOffset(event.id, index);
+        coordinates = [
+          bestMatch.city.coordinates[0] + offset[0],
+          bestMatch.city.coordinates[1] + offset[1],
+        ];
       }
 
       if (!coordinates) {
@@ -1351,15 +1983,46 @@ export function convertEventsWithMarketsToMapMarkers(
       const category = event.category?.toLowerCase() || "default";
 
       let coordinates: [number, number] | null = null;
+
+      // Find the LONGEST matching keyword (more specific = better match)
+      let bestMatch: {
+        keyword: string;
+        city: { name: string; coordinates: [number, number] };
+      } | null = null;
+      let bestMatchLength = 0;
+
       for (const item of KEYWORD_CITY_MAP) {
         if (searchText.includes(item.keyword)) {
-          const offset = getOffset(event.id, index);
-          coordinates = [
-            item.city.coordinates[0] + offset[0],
-            item.city.coordinates[1] + offset[1],
-          ];
-          break;
+          // Prioritize longer keywords (more specific)
+          if (item.keyword.length > bestMatchLength) {
+            bestMatch = item;
+            bestMatchLength = item.keyword.length;
+          }
         }
+      }
+
+      // DEBUG: Log what's happening
+      if (
+        event.title.toLowerCase().includes("french") ||
+        event.title.toLowerCase().includes("portugal") ||
+        event.title.toLowerCase().includes("colombia")
+      ) {
+        console.log("🔍 DEBUG MARKET:", {
+          title: event.title,
+          searchText: searchText.substring(0, 100),
+          bestMatch: bestMatch
+            ? { keyword: bestMatch.keyword, city: bestMatch.city.name }
+            : null,
+          category,
+        });
+      }
+
+      if (bestMatch) {
+        const offset = getOffset(event.id, index);
+        coordinates = [
+          bestMatch.city.coordinates[0] + offset[0],
+          bestMatch.city.coordinates[1] + offset[1],
+        ];
       }
 
       if (!coordinates) {
@@ -1862,6 +2525,205 @@ export function convertGdeltArticlesToMapMarkers(
       sourcecountry: article.sourcecountry,
       seendate: article.seendate,
     };
+  });
+}
+
+// Keywords to match news with markets
+const NEWS_MARKET_KEYWORDS: Record<string, string[]> = {
+  ukraine: [
+    "ukraine",
+    "kyiv",
+    "kiev",
+    "zelensky",
+    "ukrainian",
+    "donbas",
+    "crimea",
+    "kharkiv",
+    "odessa",
+  ],
+  russia: ["russia", "russian", "putin", "moscow", "kremlin", "medvedev"],
+  war: [
+    "war",
+    "military",
+    "troops",
+    "invasion",
+    "conflict",
+    "battle",
+    "attack",
+    "offensive",
+    "defense",
+  ],
+  trump: ["trump", "donald trump", "maga", "mar-a-lago"],
+  biden: ["biden", "joe biden", "white house"],
+  china: ["china", "chinese", "beijing", "xi jinping", "ccp"],
+  taiwan: ["taiwan", "taiwanese", "taipei"],
+  crypto: [
+    "bitcoin",
+    "crypto",
+    "ethereum",
+    "btc",
+    "cryptocurrency",
+    "blockchain",
+    "defi",
+  ],
+  ai: [
+    "artificial intelligence",
+    " ai ",
+    "openai",
+    "chatgpt",
+    "machine learning",
+    "gpt",
+  ],
+  election: [
+    "election",
+    "vote",
+    "voting",
+    "ballot",
+    "poll",
+    "primary",
+    "candidate",
+  ],
+  economy: [
+    "economy",
+    "inflation",
+    "fed",
+    "interest rate",
+    "recession",
+    "gdp",
+    "unemployment",
+  ],
+  israel: [
+    "israel",
+    "israeli",
+    "gaza",
+    "hamas",
+    "palestinian",
+    "netanyahu",
+    "tel aviv",
+    "idf",
+  ],
+  iran: ["iran", "iranian", "tehran", "khamenei"],
+  oil: ["oil", "opec", "crude", "petroleum", "barrel"],
+  nato: ["nato", "alliance", "article 5"],
+  earthquake: ["earthquake", "seismic", "tremor", "magnitude"],
+  disaster: [
+    "disaster",
+    "hurricane",
+    "tsunami",
+    "flood",
+    "wildfire",
+    "cyclone",
+  ],
+  coup: ["coup", "overthrow", "revolution", "uprising", "military takeover"],
+  sanctions: ["sanctions", "embargo", "tariff", "trade war"],
+  nuclear: ["nuclear", "atomic", "uranium", "missile"],
+};
+
+// Find matching keywords between news and market
+function findMatchingKeywords(text1: string, text2: string): string[] {
+  const lower1 = text1.toLowerCase();
+  const lower2 = text2.toLowerCase();
+  const matches: string[] = [];
+
+  for (const [topic, keywords] of Object.entries(NEWS_MARKET_KEYWORDS)) {
+    for (const keyword of keywords) {
+      if (lower1.includes(keyword) && lower2.includes(keyword)) {
+        matches.push(topic);
+        break;
+      }
+    }
+  }
+
+  return matches;
+}
+
+// Topic to location mapping for markets
+const TOPIC_LOCATION_MAP: Record<string, [number, number]> = {
+  ukraine: [30.5234, 50.4501], // Kyiv
+  russia: [37.6173, 55.7558], // Moscow
+  china: [116.4074, 39.9042], // Beijing
+  taiwan: [121.5654, 25.033], // Taipei
+  israel: [35.2137, 31.7683], // Jerusalem
+  iran: [51.389, 35.6892], // Tehran
+  trump: [-80.0364, 26.6774], // Mar-a-Lago
+  biden: [-77.0369, 38.9072], // Washington DC
+  election: [-77.0369, 38.9072], // Washington DC
+  crypto: [103.8198, 1.3521], // Singapore
+  nato: [4.3517, 50.8503], // Brussels
+};
+
+// Get location for market based on its content
+// function getMarketLocation(title: string): [number, number] | null {
+//   const lowerTitle = title.toLowerCase();
+
+//   // === STEP 1: Check KEYWORD_CITY_MAP FIRST (specific countries/regions) ===
+//   // This ensures "US strikes Iran" goes to IRAN, not somewhere else
+//   for (const { keyword, city } of KEYWORD_CITY_MAP) {
+//     if (lowerTitle.includes(keyword)) {
+//       return city.coordinates;
+//     }
+//   }
+
+//   // === STEP 2: Special conflict logic (only if no specific country found) ===
+
+//   // Ukraine war/conflict - only if explicitly about Ukraine
+//   const isAboutUkraine =
+//     lowerTitle.includes("ukraine") ||
+//     lowerTitle.includes("ukrainian") ||
+//     lowerTitle.includes("kyiv") ||
+//     lowerTitle.includes("kiev") ||
+//     lowerTitle.includes("zelensky");
+
+//   if (isAboutUkraine) {
+//     const ukraineCities: [number, number][] = [
+//       [30.5234, 50.4501], // Kyiv
+//       [36.2304, 49.9935], // Kharkiv
+//       [30.7233, 46.4825], // Odessa
+//       [24.0297, 49.8397], // Lviv
+//       [35.1396, 47.8388], // Zaporizhzhia
+//     ];
+//     return ukraineCities[Math.floor(Math.random() * ukraineCities.length)];
+//   }
+
+//   // === STEP 3: Check topic keywords ===
+//   for (const [topic, keywords] of Object.entries(NEWS_MARKET_KEYWORDS)) {
+//     for (const keyword of keywords) {
+//       if (lowerTitle.includes(keyword) && TOPIC_LOCATION_MAP[topic]) {
+//         return TOPIC_LOCATION_MAP[topic];
+//       }
+//     }
+//   }
+
+//   return null;
+// }
+
+// Link markets to nearby news and adjust their positions
+export function linkMarketsToNews(
+  marketMarkers: MapMarker[],
+  newsMarkers: MapMarker[],
+): MapMarker[] {
+  // Simply return markets as-is - they already have correct coordinates
+  // from convertEventsWithMarketsToMapMarkers based on their content.
+  // We don't want to move markets to news locations anymore.
+  // This preserves the geographic accuracy of markets.
+
+  // Just add reference to related news if found, but DON'T change coordinates
+  return marketMarkers.map((market) => {
+    // Find related news by content matching
+    const relatedNews = newsMarkers.find((news) => {
+      const matchingTopics = findMatchingKeywords(news.title, market.title);
+      return matchingTopics.length > 0;
+    });
+
+    if (relatedNews) {
+      return {
+        ...market,
+        relatedNewsId: relatedNews.id,
+        // Keep original coordinates!
+      };
+    }
+
+    return market;
   });
 }
 

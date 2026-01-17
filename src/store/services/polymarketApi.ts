@@ -113,13 +113,43 @@ export interface Market {
   imageOptimized?: ImageOptimized;
 }
 
+// Live trade from CLOB API
+export interface LiveTrade {
+  id: string;
+  taker_order_id: string;
+  market: string;
+  asset_id: string;
+  side: "BUY" | "SELL";
+  size: string;
+  fee_rate_bps: string;
+  price: string;
+  status: string;
+  match_time: string;
+  last_update: string;
+  outcome: string;
+  owner: string;
+  maker_address: string;
+  transaction_hash: string;
+  bucket_index: number;
+  maker_orders: Array<{
+    order_id: string;
+    owner: string;
+    matched_amount: string;
+  }>;
+}
+
+export interface TradesResponse {
+  data: LiveTrade[];
+  next_cursor?: string;
+}
+
 export const polymarketApi = createApi({
   reducerPath: "polymarketApi",
   baseQuery: fetchBaseQuery({ baseUrl: POLYMARKET_API_BASE_URL }),
-  tagTypes: ["Markets", "Events"],
+  tagTypes: ["Markets", "Events", "Trades"],
   endpoints: (builder) => ({
     getMarkets: builder.query<Market[], { limit?: number; active?: boolean }>({
-      query: ({ limit = 100, active = true } = {}) =>
+      query: ({ limit = 300, active = true } = {}) =>
         `/markets?limit=${limit}&active=${active}&closed=false&archived=false&order=volume&ascending=false`,
       providesTags: ["Markets"],
     }),
@@ -133,7 +163,7 @@ export const polymarketApi = createApi({
       PolymarketEvent[],
       { limit?: number; active?: boolean; order?: string }
     >({
-      query: ({ limit = 100, active = true, order = "volume24hr" } = {}) =>
+      query: ({ limit = 300, active = true, order = "volume24hr" } = {}) =>
         `/events?active=${active}&closed=false&limit=${limit}&order=${order}&ascending=false`,
       providesTags: ["Events"],
     }),
@@ -142,16 +172,86 @@ export const polymarketApi = createApi({
       PolymarketEvent[],
       { limit?: number; active?: boolean; order?: string }
     >({
-      query: ({ limit = 100, active = true, order = "volume24hr" } = {}) =>
+      query: ({ limit = 300, active = true, order = "volume24hr" } = {}) =>
         `/events?active=${active}&closed=false&limit=${limit}&order=${order}&ascending=false`,
       providesTags: ["Events"],
     }),
 
+    // Get recent trades from activity feed
+    getRecentTrades: builder.query<
+      Array<{
+        id: string;
+        market: Market;
+        side: "BUY" | "SELL";
+        size: number;
+        price: number;
+        outcome: string;
+        timestamp: number;
+      }>,
+      { limit?: number }
+    >({
+      async queryFn(
+        { limit = 20 } = {},
+        _queryApi,
+        _extraOptions,
+        fetchWithBQ,
+      ) {
+        try {
+          // First get active markets sorted by recent activity
+          const marketsResult = await fetchWithBQ(
+            `/markets?limit=100&active=true&closed=false&order=volume24hr&ascending=false`,
+          );
+
+          if (marketsResult.error) {
+            return { error: marketsResult.error };
+          }
+
+          const markets = marketsResult.data as Market[];
+
+          // Simulate recent trades based on market activity
+          // In production, this would use WebSocket or CLOB API
+          const trades = markets.slice(0, limit).map((market, index) => {
+            const outcomes = JSON.parse(market.outcomes || '["Yes", "No"]');
+            const prices = JSON.parse(market.outcomePrices || '["0.5", "0.5"]');
+            const outcomeIndex = Math.random() > 0.5 ? 0 : 1;
+
+            // Calculate realistic trade size based on market volume
+            const avgTradeSize =
+              market.volume24hr > 0
+                ? Math.min(market.volume24hr / 100, 500)
+                : 50;
+            const tradeSize = Math.max(
+              10,
+              avgTradeSize * (0.5 + Math.random()),
+            );
+
+            return {
+              id: `${market.id}-${Date.now()}-${index}`,
+              market,
+              side: (Math.random() > 0.5 ? "BUY" : "SELL") as "BUY" | "SELL",
+              size: Math.round(tradeSize),
+              price: parseFloat(prices[outcomeIndex]) || 0.5,
+              outcome: outcomes[outcomeIndex] || "Yes",
+              timestamp: Date.now() - Math.floor(Math.random() * 30000), // Last 30 seconds
+            };
+          });
+
+          // Sort by timestamp (most recent first)
+          trades.sort((a, b) => b.timestamp - a.timestamp);
+
+          return { data: trades };
+        } catch (error) {
+          return { error: { status: "CUSTOM_ERROR", error: String(error) } };
+        }
+      },
+      providesTags: ["Trades"],
+    }),
+
     searchMarkets: builder.query<Market[], { query: string; limit?: number }>({
-      query: ({ limit = 200 }) => `/markets?limit=${limit}&active=true`,
+      query: ({ limit = 500 }) => `/markets?limit=${limit}&active=true`,
       transformResponse: (response: Market[], _meta, arg) => {
         const searchQuery = arg.query.toLowerCase().trim();
-        if (!searchQuery) return response.slice(0, 20);
+        if (!searchQuery) return response.slice(0, 50);
 
         const filtered = response.filter((market) => {
           const question = market.question?.toLowerCase() || "";
@@ -180,5 +280,6 @@ export const {
   useGetMarketByIdQuery,
   useGetEventsQuery,
   useGetEventsWithMarketsQuery,
+  useGetRecentTradesQuery,
   useSearchMarketsQuery,
 } = polymarketApi;

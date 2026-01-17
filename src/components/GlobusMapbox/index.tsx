@@ -6,6 +6,7 @@ import { useGetNewsQuery } from "../../store/services/gdeltApi";
 import {
   convertEventsWithMarketsToMapMarkers,
   convertGdeltArticlesToMapMarkers,
+  linkMarketsToNews,
   MapMarker,
 } from "./utils/marketMappers";
 import { TimeFilter } from "../../App";
@@ -49,12 +50,14 @@ const GlobusMapbox = ({
     order: "volume24hr",
   });
 
-  // GDELT News data
+  // GDELT News data - crypto-relevant global events
   const {
     data: newsArticles,
     isLoading: isLoadingNews,
     error: newsError,
   } = useGetNewsQuery({
+    query:
+      "(war OR conflict OR earthquake OR election OR sanctions OR bitcoin OR crisis OR Ukraine OR Israel OR China)",
     maxrecords: 200,
     timespan: "1d",
   });
@@ -91,12 +94,18 @@ const GlobusMapbox = ({
         ? convertGdeltArticlesToMapMarkers(newsArticles)
         : [];
 
+    // Link markets to nearby news based on content matching
+    const linkedMarketMarkers =
+      showNews && newsMarkers.length > 0
+        ? linkMarketsToNews(marketMarkers, newsMarkers)
+        : marketMarkers;
+
     let filteredMarkers: MapMarker[];
 
     switch (timeFilter) {
       case "1h":
         filteredMarkers = [
-          ...marketMarkers
+          ...linkedMarketMarkers
             .sort((a, b) => b.volume24hr - a.volume24hr)
             .slice(0, 30),
           ...newsMarkers.slice(0, 20),
@@ -104,7 +113,7 @@ const GlobusMapbox = ({
         break;
       case "6h":
         filteredMarkers = [
-          ...marketMarkers
+          ...linkedMarketMarkers
             .sort((a, b) => b.volume1wk - a.volume1wk)
             .slice(0, 60),
           ...newsMarkers.slice(0, 40),
@@ -113,7 +122,7 @@ const GlobusMapbox = ({
       case "24h":
       default:
         filteredMarkers = [
-          ...marketMarkers.sort((a, b) => b.volume1mo - a.volume1mo),
+          ...linkedMarketMarkers.sort((a, b) => b.volume1mo - a.volume1mo),
           ...newsMarkers,
         ];
         break;
@@ -122,7 +131,7 @@ const GlobusMapbox = ({
     console.log(
       `🎯 Filtered markers (${timeFilter}):`,
       filteredMarkers.length,
-      `(markets: ${marketMarkers.length}, news: ${newsMarkers.length})`,
+      `(markets: ${linkedMarketMarkers.length}, news: ${newsMarkers.length})`,
     );
     return filteredMarkers;
   }, [events, newsArticles, timeFilter, showNews]);
