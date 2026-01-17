@@ -1,10 +1,10 @@
 import { useState } from "react";
 import logo from "../../assets/images/navbar/logo.png";
-import userIcon from "../../assets/svgs/navbar/user.svg";
 import { Button } from "../ui";
 import { Search } from "../Search";
 import { Theme } from "../GlobusMapbox/constants/mapConfig";
 import { TimeFilter } from "../../App";
+import { ConnectWallet } from "../ConnectWallet";
 
 // Icons
 import sunIcon from "../../assets/svgs/mainNavigation/sun.svg";
@@ -52,13 +52,7 @@ function Navbar({
         </div>
         <div className="flex items-center gap-2">
           <Button variant="secondary">$PULSE</Button>
-          <Button
-            variant="primary"
-            className="py-4 flex justify-between items-center gap-5"
-          >
-            <span>$0x2F3...ssd</span>
-            <img src={userIcon} alt="User Icon" />
-          </Button>
+          <ConnectWallet />
         </div>
       </nav>
 

@@ -11,6 +11,7 @@ interface TradeItem {
   outcome: string;
   timeAgo: string;
   slug: string;
+  eventSlug?: string;
 }
 
 const formatPrice = (price: number): string => {
@@ -32,6 +33,8 @@ const convertMarketToTrade = (market: Market): TradeItem => {
   const randomOutcomeIndex = Math.floor(Math.random() * outcomes.length);
   const price = prices[randomOutcomeIndex] || 0.5;
 
+  const eventSlug = market.events?.[0]?.slug;
+
   return {
     id: market.id,
     image: market.imageOptimized?.imageUrlOptimized || market.image || "",
@@ -42,6 +45,7 @@ const convertMarketToTrade = (market: Market): TradeItem => {
     outcome: outcomes[randomOutcomeIndex] || "Yes",
     timeAgo: getRandomTimeAgo(),
     slug: market.slug,
+    eventSlug: eventSlug,
   };
 };
 
@@ -213,7 +217,11 @@ const TradeRow = ({ trade }: { trade: TradeItem }) => {
 
         {/* View market button */}
         <a
-          href={`https://polymarket.com/event/${trade.slug}`}
+          href={
+            trade.eventSlug && trade.eventSlug !== trade.slug
+              ? `https://polymarket.com/event/${trade.eventSlug}/${trade.slug}`
+              : `https://polymarket.com/event/${trade.slug}`
+          }
           target="_blank"
           rel="noopener noreferrer"
           className="flex items-center gap-1.5 px-3 py-1 bg-[#f5f5f5] rounded-full text-[#808080] text-[14px] font-medium tracking-[-0.28px] hover:bg-[#e9e9e9] transition-colors"
