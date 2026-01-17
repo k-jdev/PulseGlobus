@@ -1,11 +1,6 @@
-import { useAccount, useConnect, useDisconnect } from "wagmi";
+import { useAccount, useDisconnect } from "wagmi";
+import { useWeb3Modal } from "@web3modal/wagmi/react";
 import userIcon from "../../assets/svgs/navbar/user.svg";
-
-declare global {
-  interface Window {
-    ethereum?: unknown;
-  }
-}
 
 interface ConnectWalletProps {
   className?: string;
@@ -18,29 +13,15 @@ const formatAddress = (address: string): string => {
 
 export const ConnectWallet = ({ className, isMobile }: ConnectWalletProps) => {
   const { address, isConnected } = useAccount();
-  const { connect, connectors } = useConnect();
+  const { open } = useWeb3Modal();
   const { disconnect } = useDisconnect();
 
   const handleConnect = () => {
-    console.log("Connect clicked, connectors:", connectors);
+    open();
+  };
 
-    // Check if MetaMask is installed
-    if (typeof window.ethereum === "undefined") {
-      window.open("https://metamask.io/download/", "_blank");
-      return;
-    }
-
-    // Find MetaMask connector specifically
-    const metaMaskConnector = connectors.find((c) => c.id === "io.metamask");
-
-    if (metaMaskConnector) {
-      console.log("Using MetaMask connector:", metaMaskConnector);
-      connect({ connector: metaMaskConnector });
-    } else if (connectors.length > 0) {
-      // Fallback to first available connector
-      console.log("Using fallback connector:", connectors[0]);
-      connect({ connector: connectors[0] });
-    }
+  const handleDisconnect = () => {
+    disconnect();
   };
 
   const buttonClasses = `px-6 py-4 rounded-full font-semibold text-[16px] bg-[#1452F0] text-white hover:bg-[#0d3cb8] flex justify-between items-center gap-5 cursor-pointer ${
@@ -52,7 +33,7 @@ export const ConnectWallet = ({ className, isMobile }: ConnectWalletProps) => {
       <button
         type="button"
         className={buttonClasses}
-        onClick={() => disconnect()}
+        onClick={handleDisconnect}
       >
         <span>{formatAddress(address)}</span>
         <img src={userIcon} alt="User Icon" />
