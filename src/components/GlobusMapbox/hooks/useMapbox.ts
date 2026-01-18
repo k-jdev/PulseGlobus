@@ -14,7 +14,7 @@ import { MapMarker, createGeoJSONFromMarkers } from "../utils/marketMappers";
 function drawConnectionLines(
   map: mapboxgl.Map,
   clickedFeature: MapboxGeoJSONFeature,
-  allMarkers: MapMarker[]
+  allMarkers: MapMarker[],
 ) {
   const properties = clickedFeature.properties;
   if (!properties) return;
@@ -71,9 +71,8 @@ function drawConnectionLines(
     }
   }
 
-  // Обновляем источник данных для линий
   const connectionsSource = map.getSource(
-    "connections"
+    "connections",
   ) as mapboxgl.GeoJSONSource;
   if (connectionsSource) {
     connectionsSource.setData({
@@ -83,14 +82,14 @@ function drawConnectionLines(
   }
 
   console.log(
-    `🔗 Drawing ${lines.length} connection lines from ${clickedType} ${clickedId}`
+    `🔗 Drawing ${lines.length} connection lines from ${clickedType} ${clickedId}`,
   );
 }
 
 // Функция для очистки линий связей
 function clearConnectionLines(map: mapboxgl.Map) {
   const connectionsSource = map.getSource(
-    "connections"
+    "connections",
   ) as mapboxgl.GeoJSONSource;
   if (connectionsSource) {
     connectionsSource.setData({
@@ -104,7 +103,7 @@ export const useMapbox = (
   containerRef: React.RefObject<HTMLDivElement>,
   onThemeChange?: (theme: Theme) => void,
   markers?: MapMarker[],
-  onMarkerClick?: (marker: MapMarker) => void
+  onMarkerClick?: (marker: MapMarker) => void,
 ) => {
   const mapRef = useRef<mapboxgl.Map | null>(null);
   const popupRef = useRef<mapboxgl.Popup | null>(null);
@@ -114,7 +113,7 @@ export const useMapbox = (
   const markersRef = useRef<MapMarker[]>([]);
   const isPopupPinnedRef = useRef(false); // Флаг закреплённого попапа
   const onMarkerClickRef = useRef<((marker: MapMarker) => void) | undefined>(
-    undefined
+    undefined,
   );
 
   // Обновляем refs при изменении props
@@ -147,7 +146,7 @@ export const useMapbox = (
         "📍 Updating markers:",
         markers.length,
         "source exists:",
-        !!source
+        !!source,
       );
 
       if (source) {
@@ -283,7 +282,7 @@ export const useMapbox = (
               map.setPaintProperty(
                 layer.id,
                 "line-color",
-                (themeConfig as any).roadColor
+                (themeConfig as any).roadColor,
               );
             } else if (
               layer.id.includes("admin") ||
@@ -292,14 +291,14 @@ export const useMapbox = (
               map.setPaintProperty(
                 layer.id,
                 "line-color",
-                (themeConfig as any).borderColor
+                (themeConfig as any).borderColor,
               );
               map.setPaintProperty(layer.id, "line-width", 0.5);
             } else if (layer.id.includes("building-outline")) {
               map.setPaintProperty(
                 layer.id,
                 "line-color",
-                (themeConfig as any).lineColor
+                (themeConfig as any).lineColor,
               );
             }
           }
@@ -415,12 +414,12 @@ export const useMapbox = (
           layers: ["markets"],
         });
 
-        // Клик вне маркера - закрываем закреплённый попап и линии связей
+        // Клик вне маркера - закрываем попап и очищаем линии связей
         if (features.length === 0) {
           if (isPopupPinnedRef.current) {
             isPopupPinnedRef.current = false;
             handleMarketMouseLeave(map);
-            clearConnectionLines(map); // Очищаем линии связей
+            clearConnectionLines(map); // Очищаем линии связей при клике вне маркера
           }
           handleMapClick(map);
           userInteractingRef.current = false;
@@ -583,7 +582,7 @@ export const useMapbox = (
     ) {
       map.setFeatureState(
         { source: "markets", id: selectedFeatureRef.current.id } as any,
-        { selected: false }
+        { selected: false },
       );
       setSelectedFeature(null);
     }
@@ -595,7 +594,7 @@ export const useMapbox = (
 
   const handleMarketMouseEnter = (
     map: mapboxgl.Map,
-    feature: MapboxGeoJSONFeature | undefined
+    feature: MapboxGeoJSONFeature | undefined,
   ) => {
     if (feature) {
       map.getCanvas().style.cursor = "pointer";
@@ -606,7 +605,7 @@ export const useMapbox = (
       ) {
         map.setFeatureState(
           { source: "markets", id: selectedFeatureRef.current.id } as any,
-          { selected: false }
+          { selected: false },
         );
       }
 
@@ -651,7 +650,7 @@ export const useMapbox = (
     ) {
       map.setFeatureState(
         { source: "markets", id: selectedFeatureRef.current.id } as any,
-        { selected: false }
+        { selected: false },
       );
       setSelectedFeature(null);
     }
@@ -662,6 +661,25 @@ export const useMapbox = (
     }
   };
 
+  // Функция для очистки линий связей извне (вызывается при закрытии попапа)
+  const clearConnections = () => {
+    if (mapRef.current) {
+      clearConnectionLines(mapRef.current);
+    }
+  };
+
+  // Функция для перелёта к определённым координатам
+  const flyToLocation = (coordinates: [number, number], zoom: number = 4) => {
+    if (mapRef.current) {
+      mapRef.current.flyTo({
+        center: coordinates,
+        zoom: zoom,
+        duration: 1500,
+        essential: true,
+      });
+    }
+  };
+
   return {
     mapRef,
     selectedFeature,
@@ -669,5 +687,7 @@ export const useMapbox = (
     changeTheme,
     isPaused,
     toggleSpin,
+    clearConnections,
+    flyToLocation,
   };
 };

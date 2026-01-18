@@ -138,24 +138,59 @@ const GlobusMapbox = ({
     console.log(
       `🎯 Filtered markers (${timeFilter}):`,
       filteredMarkers.length,
-      `(markets: ${linkedMarketMarkers.length}, news: ${linkedNewsMarkers.length})`
+      `(markets: ${linkedMarketMarkers.length}, news: ${linkedNewsMarkers.length})`,
     );
     return filteredMarkers;
   }, [events, newsArticles, timeFilter, showNews]);
 
-  const { theme, changeTheme, isPaused, toggleSpin } = useMapbox(
-    mapContainerRef,
-    undefined,
-    mapMarkers,
-    (marker) => {
-      console.log("🔍 Marker clicked:", marker.id, "type:", marker.type);
-      setSelectedMarket(marker);
-    }
-  );
+  const {
+    theme,
+    changeTheme,
+    isPaused,
+    toggleSpin,
+    clearConnections,
+    flyToLocation,
+  } = useMapbox(mapContainerRef, undefined, mapMarkers, (marker) => {
+    console.log("🔍 Marker clicked:", marker.id, "type:", marker.type);
+    setSelectedMarket(marker);
+  });
 
   const handleClosePopup = () => {
     setSelectedMarket(null);
+    clearConnections(); // Очищаем линии связей при закрытии попапа
   };
+
+  // Обработчик клика на новость во вкладке News - перелёт к месту на карте
+  const handleNewsClick = (newsId: string, coordinates: [number, number]) => {
+    console.log("📍 Flying to news location:", newsId, coordinates);
+    flyToLocation(coordinates, 4);
+  };
+
+  // Get related news for selected market
+  const relatedNews = useMemo(() => {
+    if (
+      !selectedMarket ||
+      selectedMarket.type !== "market" ||
+      !selectedMarket.relatedNewsIds
+    ) {
+      return [];
+    }
+    return selectedMarket.relatedNewsIds
+      .map((newsId) => mapMarkers.find((m) => m.id === newsId))
+      .filter(
+        (news): news is MapMarker => news !== undefined && news.type === "news",
+      )
+      .map((news) => ({
+        id: news.id,
+        title: news.title,
+        image: news.image,
+        url: news.url,
+        domain: news.domain,
+        sourcecountry: news.sourcecountry,
+        seendate: news.seendate,
+        coordinates: news.coordinates,
+      }));
+  }, [selectedMarket, mapMarkers]);
 
   if (onThemeChange) {
     onThemeChange(theme, changeTheme);
@@ -206,6 +241,8 @@ const GlobusMapbox = ({
                 slug={selectedMarket.slug}
                 eventSlug={selectedMarket.eventSlug}
                 onClose={handleClosePopup}
+                relatedNews={relatedNews}
+                onNewsClick={handleNewsClick}
               />
             )}
           </div>
@@ -245,6 +282,8 @@ const GlobusMapbox = ({
                   eventSlug={selectedMarket.eventSlug}
                   onClose={handleClosePopup}
                   isMobile={true}
+                  relatedNews={relatedNews}
+                  onNewsClick={handleNewsClick}
                 />
               )}
             </div>

@@ -1,11 +1,22 @@
 import { FC, useState } from "react";
 import { motion } from "framer-motion";
 
-type TabType = "price" | "stats" | "rules";
+type TabType = "price" | "stats" | "rules" | "news";
 
 interface OutcomeData {
   name: string;
   price: number;
+}
+
+interface RelatedNewsItem {
+  id: string;
+  title: string;
+  image?: string;
+  url?: string;
+  domain?: string;
+  sourcecountry?: string;
+  seendate?: string;
+  coordinates?: [number, number];
 }
 
 interface MarketStatsPopupProps {
@@ -23,6 +34,8 @@ interface MarketStatsPopupProps {
   eventSlug?: string;
   onClose?: () => void;
   isMobile?: boolean;
+  relatedNews?: RelatedNewsItem[];
+  onNewsClick?: (newsId: string, coordinates: [number, number]) => void;
 }
 
 const formatCurrency = (num: number): string => {
@@ -74,6 +87,8 @@ export const MarketStatsPopup: FC<MarketStatsPopupProps> = ({
   eventSlug,
   onClose,
   isMobile = false,
+  relatedNews = [],
+  onNewsClick,
 }) => {
   const [activeTab, setActiveTab] = useState<TabType>("price");
 
@@ -82,6 +97,10 @@ export const MarketStatsPopup: FC<MarketStatsPopupProps> = ({
   const tabs: { id: TabType; label: string }[] = [
     { id: "price", label: "Price" },
     { id: "stats", label: "Stats" },
+    {
+      id: "news",
+      label: `News${relatedNews.length > 0 ? ` (${relatedNews.length})` : ""}`,
+    },
     { id: "rules", label: "Rules" },
   ];
 
@@ -89,7 +108,7 @@ export const MarketStatsPopup: FC<MarketStatsPopupProps> = ({
     outcomes.length > 0
       ? outcomes.reduce(
           (max, o) => (o.price > max.price ? o : max),
-          outcomes[0]
+          outcomes[0],
         )
       : null;
 
@@ -390,6 +409,82 @@ export const MarketStatsPopup: FC<MarketStatsPopupProps> = ({
                 />
               </svg>
             </a>
+          </div>
+        )}
+
+        {/* News Tab */}
+        {activeTab === "news" && (
+          <div className="flex flex-col gap-3">
+            {relatedNews.length > 0 ? (
+              <div className="flex flex-col gap-3 max-h-[320px] overflow-y-auto">
+                {relatedNews.map((news) => (
+                  <button
+                    key={news.id}
+                    onClick={() => {
+                      if (news.coordinates && onNewsClick) {
+                        onNewsClick(news.id, news.coordinates);
+                      }
+                    }}
+                    className="flex gap-3 p-3 bg-[#f8f9fb] rounded-[10px] hover:bg-[#f0f2f5] transition-colors group text-left w-full"
+                  >
+                    {news.image && (
+                      <div className="w-[48px] h-[48px] rounded-[6px] overflow-hidden flex-shrink-0">
+                        <img
+                          src={news.image}
+                          alt=""
+                          className="w-full h-full object-cover"
+                          onError={(e) => {
+                            (e.target as HTMLImageElement).style.display =
+                              "none";
+                          }}
+                        />
+                      </div>
+                    )}
+                    <div className="flex-1 min-w-0">
+                      <h4 className="text-[14px] font-medium text-[#1b2430] leading-[18px] tracking-[-0.28px] line-clamp-2 group-hover:text-[#1452f0] transition-colors">
+                        {news.title}
+                      </h4>
+                      <div className="flex items-center gap-2 mt-1">
+                        {news.domain && (
+                          <span className="text-[12px] text-[#808080] tracking-[-0.24px]">
+                            {news.domain}
+                          </span>
+                        )}
+                        {news.sourcecountry && (
+                          <span className="text-[12px] text-[#808080] tracking-[-0.24px]">
+                            • {news.sourcecountry}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  </button>
+                ))}
+              </div>
+            ) : (
+              <div className="flex flex-col items-center justify-center py-8 text-center">
+                <svg
+                  width="48"
+                  height="48"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  className="text-[#e4e4e4] mb-3"
+                >
+                  <path
+                    d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V9a2 2 0 012-2h2a2 2 0 012 2v9a2 2 0 01-2 2h-2zm-6-7h.01M12 15h.01M12 11h.01M8 15h.01M8 11h.01"
+                    stroke="currentColor"
+                    strokeWidth="1.5"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                </svg>
+                <span className="text-[14px] font-medium text-[#808080] tracking-[-0.28px]">
+                  No related news found
+                </span>
+                <span className="text-[12px] text-[#bbbdc1] tracking-[-0.24px] mt-1">
+                  News articles related to this market will appear here
+                </span>
+              </div>
+            )}
           </div>
         )}
 
