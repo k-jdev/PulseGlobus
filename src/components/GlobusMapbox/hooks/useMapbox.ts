@@ -241,7 +241,7 @@ export const useMapbox = (
             "case",
             ["boolean", ["feature-state", "selected"], false],
             "#f59e0b",
-            ["match", ["get", "type"], "news", "#ff6b35", "#2563eb"],
+            ["match", ["get", "type"], "news", "#EE1616", "#2563eb"],
           ],
           "circle-radius": 6,
           "circle-stroke-width": 2,
