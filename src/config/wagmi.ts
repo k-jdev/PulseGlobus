@@ -3,8 +3,6 @@ import { mainnet, polygon } from "wagmi/chains";
 import { injected, walletConnect } from "wagmi/connectors";
 import { createWeb3Modal } from "@web3modal/wagmi/react";
 
-// Get a project ID at https://cloud.walletconnect.com
-// You MUST replace this with your own project ID from WalletConnect Cloud
 const projectId = "6a7837ef8f40420a04bb9623be16f62f";
 
 const metadata = {
