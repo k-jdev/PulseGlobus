@@ -43,8 +43,10 @@ export interface MapMarker {
   sourcecountry?: string;
   seendate?: string;
 
-  // Linked news reference (for markets placed near news)
   relatedNewsId?: string;
+  relatedNewsIds?: string[];
+  relatedMarketIds?: string[];
+  relationScore?: number;
 }
 
 function hashCode(str: string): number {
@@ -57,12 +59,151 @@ function hashCode(str: string): number {
   return Math.abs(hash);
 }
 
-function getOffset(id: string, index: number): [number, number] {
+interface RegionBounds {
+  minLng: number;
+  maxLng: number;
+  minLat: number;
+  maxLat: number;
+}
+
+const CITY_BOUNDS: Record<string, RegionBounds> = {
+  // США - восточное побережье (расширенные границы, строго на суше)
+  "Washington DC": { minLng: -80.0, maxLng: -75.5, minLat: 36.5, maxLat: 41.0 },
+  "New York": { minLng: -77.0, maxLng: -73.5, minLat: 39.5, maxLat: 43.0 },
+  Boston: { minLng: -74.0, maxLng: -70.5, minLat: 41.0, maxLat: 44.0 },
+  Miami: { minLng: -82.5, maxLng: -80.2, minLat: 25.0, maxLat: 27.0 },
+  // Mar-a-Lago (West Palm Beach area) - расширенная зона Флориды
+  "Mar-a-Lago": { minLng: -82.5, maxLng: -80.2, minLat: 25.5, maxLat: 28.5 },
+
+  // США - центр и запад (расширенные границы)
+  Chicago: { minLng: -91.0, maxLng: -85.0, minLat: 40.0, maxLat: 44.0 },
+  Houston: { minLng: -98.0, maxLng: -93.5, minLat: 28.0, maxLat: 32.0 },
+  "Los Angeles": { minLng: -120.5, maxLng: -116.5, minLat: 32.5, maxLat: 36.0 },
+  "San Francisco": {
+    minLng: -124.0,
+    maxLng: -120.0,
+    minLat: 36.0,
+    maxLat: 40.0,
+  },
+  "Las Vegas": { minLng: -118.0, maxLng: -113.0, minLat: 34.5, maxLat: 38.5 },
+  Nashville: { minLng: -90.0, maxLng: -84.0, minLat: 34.5, maxLat: 38.0 },
+  Tallahassee: { minLng: -87.0, maxLng: -82.5, minLat: 28.5, maxLat: 32.5 },
+  Sacramento: { minLng: -124.0, maxLng: -119.0, minLat: 37.0, maxLat: 41.0 },
+
+  // Европа (расширенные границы)
+  London: { minLng: -3.5, maxLng: 2.5, minLat: 50.0, maxLat: 54.0 },
+  Paris: { minLng: -1.0, maxLng: 6.0, minLat: 46.0, maxLat: 50.5 },
+  Brussels: { minLng: 2.0, maxLng: 8.0, minLat: 49.0, maxLat: 53.0 },
+  Madrid: { minLng: -7.0, maxLng: -1.0, minLat: 37.5, maxLat: 43.0 },
+  Geneva: { minLng: 4.0, maxLng: 9.5, minLat: 44.5, maxLat: 48.5 },
+  Copenhagen: { minLng: 9.0, maxLng: 16.0, minLat: 53.5, maxLat: 58.0 },
+  Berlin: { minLng: 10.0, maxLng: 16.0, minLat: 50.5, maxLat: 54.5 },
+  Rome: { minLng: 10.5, maxLng: 15.5, minLat: 40.0, maxLat: 44.0 },
+  Vienna: { minLng: 13.5, maxLng: 18.5, minLat: 46.0, maxLat: 50.0 },
+  Amsterdam: { minLng: 3.5, maxLng: 7.5, minLat: 51.0, maxLat: 54.0 },
+  Warsaw: { minLng: 18.5, maxLng: 23.0, minLat: 50.5, maxLat: 54.0 },
+  Kyiv: { minLng: 28.0, maxLng: 34.0, minLat: 48.5, maxLat: 52.5 },
+  Moscow: { minLng: 34.0, maxLng: 41.0, minLat: 53.5, maxLat: 58.0 },
+
+  // Ближний Восток - расширенные границы, строго на суше
+  "Tel Aviv": { minLng: 34.3, maxLng: 36.0, minLat: 31.0, maxLat: 33.5 },
+  Jerusalem: { minLng: 34.5, maxLng: 36.5, minLat: 30.5, maxLat: 33.0 },
+  Gaza: { minLng: 34.0, maxLng: 35.5, minLat: 30.5, maxLat: 32.5 },
+  Beirut: { minLng: 35.0, maxLng: 37.0, minLat: 33.0, maxLat: 35.0 },
+  Damascus: { minLng: 35.5, maxLng: 38.0, minLat: 32.5, maxLat: 35.0 },
+  Amman: { minLng: 35.0, maxLng: 38.0, minLat: 30.5, maxLat: 33.5 },
+  Baghdad: { minLng: 42.5, maxLng: 46.0, minLat: 31.5, maxLat: 35.0 },
+  Tehran: { minLng: 49.5, maxLng: 54.0, minLat: 34.0, maxLat: 37.5 },
+  Riyadh: { minLng: 44.0, maxLng: 50.0, minLat: 22.0, maxLat: 27.0 },
+  Dubai: { minLng: 53.5, maxLng: 57.0, minLat: 23.5, maxLat: 27.0 },
+  Cairo: { minLng: 29.5, maxLng: 33.0, minLat: 28.5, maxLat: 32.0 },
+  Ankara: { minLng: 30.5, maxLng: 35.0, minLat: 38.0, maxLat: 42.0 },
+  Istanbul: { minLng: 27.0, maxLng: 31.0, minLat: 39.5, maxLat: 43.0 },
+
+  // Азия (расширенные границы)
+  Tokyo: { minLng: 137.5, maxLng: 141.5, minLat: 34.0, maxLat: 37.5 },
+  Singapore: { minLng: 103.0, maxLng: 104.5, minLat: 1.0, maxLat: 2.0 },
+  "Hong Kong": { minLng: 113.5, maxLng: 115.0, minLat: 21.8, maxLat: 23.0 },
+  Beijing: { minLng: 114.5, maxLng: 118.5, minLat: 38.5, maxLat: 42.0 },
+  Shanghai: { minLng: 119.5, maxLng: 123.0, minLat: 29.5, maxLat: 33.0 },
+  Seoul: { minLng: 125.5, maxLng: 128.5, minLat: 36.0, maxLat: 39.0 },
+  Mumbai: { minLng: 72.0, maxLng: 74.5, minLat: 17.5, maxLat: 21.0 },
+  Delhi: { minLng: 75.5, maxLng: 79.0, minLat: 27.0, maxLat: 30.5 },
+  Bangkok: { minLng: 99.0, maxLng: 102.0, minLat: 12.5, maxLat: 15.5 },
+
+  // Австралия (расширенные границы)
+  Sydney: { minLng: 149.5, maxLng: 152.5, minLat: -35.5, maxLat: -32.0 },
+  Melbourne: { minLng: 143.5, maxLng: 147.0, minLat: -39.5, maxLat: -36.0 },
+
+  // Южная Америка (расширенные границы)
+  "São Paulo": { minLng: -48.5, maxLng: -44.5, minLat: -25.5, maxLat: -21.5 },
+  "Buenos Aires": {
+    minLng: -60.0,
+    maxLng: -56.5,
+    minLat: -36.5,
+    maxLat: -33.0,
+  },
+  "Mexico City": { minLng: -101.0, maxLng: -97.5, minLat: 18.0, maxLat: 21.5 },
+
+  // Африка (расширенные границы)
+  Lagos: { minLng: 2.5, maxLng: 5.0, minLat: 5.5, maxLat: 8.0 },
+  Johannesburg: { minLng: 26.5, maxLng: 30.0, minLat: -28.0, maxLat: -24.5 },
+  Nairobi: { minLng: 35.5, maxLng: 38.5, minLat: -2.5, maxLat: 0.0 },
+};
+
+function getOffsetWithBounds(
+  id: string,
+  index: number,
+  centerCoords: [number, number],
+  cityName: string
+): [number, number] {
   const hash = hashCode(id + index.toString());
-  const angle = (hash % 360) * (Math.PI / 180);
-  // Маленькое смещение - около 0.05-0.1 градуса (5-10 км), чтобы точки не выходили в воду
-  const distance = 0.02 + (hash % 100) / 1500;
-  return [Math.cos(angle) * distance, Math.sin(angle) * distance];
+  const hash2 = hashCode(id + index.toString() + "salt");
+
+  const bounds = CITY_BOUNDS[cityName];
+
+  if (!bounds) {
+    // Если нет границ для города, используем средний разброс вокруг центра
+    const lngOffset = ((hash % 100) - 50) / 50; // -1.0 до +1.0 градуса
+    const latOffset = ((hash2 % 100) - 50) / 50; // -1.0 до +1.0 градуса
+    return [lngOffset, latOffset];
+  }
+
+  // Генерируем случайную точку ВНУТРИ границ с отступом от краёв
+  const lngRange = bounds.maxLng - bounds.minLng;
+  const latRange = bounds.maxLat - bounds.minLat;
+
+  // Используем hash для равномерного распределения внутри границ
+  // Добавляем отступ 5% от краёв чтобы точки не были прямо на границе
+  const lngPercent = 0.05 + (hash % 90) / 100; // 5-95%
+  const latPercent = 0.05 + (hash2 % 90) / 100; // 5-95%
+
+  // Вычисляем абсолютные координаты внутри границ
+  const targetLng = bounds.minLng + lngRange * lngPercent;
+  const targetLat = bounds.minLat + latRange * latPercent;
+
+  // Возвращаем смещение от центра до целевой точки
+  return [targetLng - centerCoords[0], targetLat - centerCoords[1]];
+}
+
+// Функция для получения смещения с учётом города (если известен)
+function getOffset(
+  id: string,
+  index: number,
+  centerCoords?: [number, number],
+  cityName?: string
+): [number, number] {
+  // Если есть координаты и название города - используем bounds
+  if (centerCoords && cityName) {
+    return getOffsetWithBounds(id, index, centerCoords, cityName);
+  }
+
+  // Иначе используем средний разброс вокруг центра
+  const hash = hashCode(id + index.toString());
+  const hash2 = hashCode(id + index.toString() + "salt");
+  const lngOffset = ((hash % 100) - 50) / 50; // -1.0 до +1.0 градуса
+  const latOffset = ((hash2 % 100) - 50) / 50; // -1.0 до +1.0 градуса
+  return [lngOffset, latOffset];
 }
 
 const CATEGORY_CITY_MAP: Record<
@@ -1778,7 +1919,12 @@ function getCoordinatesForMarket(
   }
 
   if (bestMatch) {
-    const offset = getOffset(market.id, index);
+    const offset = getOffset(
+      market.id,
+      index,
+      bestMatch.city.coordinates,
+      bestMatch.city.name
+    );
     return [
       bestMatch.city.coordinates[0] + offset[0],
       bestMatch.city.coordinates[1] + offset[1],
@@ -1786,7 +1932,12 @@ function getCoordinatesForMarket(
   }
 
   const cityData = CATEGORY_CITY_MAP[category] || CATEGORY_CITY_MAP["default"];
-  const offset = getOffset(market.id, index);
+  const offset = getOffset(
+    market.id,
+    index,
+    cityData.coordinates,
+    cityData.name
+  );
 
   return [
     cityData.coordinates[0] + offset[0],
@@ -1902,7 +2053,12 @@ export function convertEventsToMapMarkers(
       }
 
       if (bestMatch) {
-        const offset = getOffset(event.id, index);
+        const offset = getOffset(
+          event.id,
+          index,
+          bestMatch.city.coordinates,
+          bestMatch.city.name
+        );
         coordinates = [
           bestMatch.city.coordinates[0] + offset[0],
           bestMatch.city.coordinates[1] + offset[1],
@@ -1912,7 +2068,12 @@ export function convertEventsToMapMarkers(
       if (!coordinates) {
         const cityData =
           CATEGORY_CITY_MAP[category] || CATEGORY_CITY_MAP["default"];
-        const offset = getOffset(event.id, index);
+        const offset = getOffset(
+          event.id,
+          index,
+          cityData.coordinates,
+          cityData.name
+        );
         coordinates = [
           cityData.coordinates[0] + offset[0],
           cityData.coordinates[1] + offset[1],
@@ -2018,7 +2179,12 @@ export function convertEventsWithMarketsToMapMarkers(
       }
 
       if (bestMatch) {
-        const offset = getOffset(event.id, index);
+        const offset = getOffset(
+          event.id,
+          index,
+          bestMatch.city.coordinates,
+          bestMatch.city.name
+        );
         coordinates = [
           bestMatch.city.coordinates[0] + offset[0],
           bestMatch.city.coordinates[1] + offset[1],
@@ -2028,7 +2194,12 @@ export function convertEventsWithMarketsToMapMarkers(
       if (!coordinates) {
         const cityData =
           CATEGORY_CITY_MAP[category] || CATEGORY_CITY_MAP["default"];
-        const offset = getOffset(event.id, index);
+        const offset = getOffset(
+          event.id,
+          index,
+          cityData.coordinates,
+          cityData.name
+        );
         coordinates = [
           cityData.coordinates[0] + offset[0],
           cityData.coordinates[1] + offset[1],
@@ -2637,6 +2808,169 @@ function findMatchingKeywords(text1: string, text2: string): string[] {
   return matches;
 }
 
+// Извлечь значимые слова из текста (убираем стоп-слова)
+function extractSignificantWords(text: string): string[] {
+  const stopWords = new Set([
+    "the",
+    "a",
+    "an",
+    "is",
+    "are",
+    "was",
+    "were",
+    "be",
+    "been",
+    "being",
+    "have",
+    "has",
+    "had",
+    "do",
+    "does",
+    "did",
+    "will",
+    "would",
+    "could",
+    "should",
+    "may",
+    "might",
+    "must",
+    "shall",
+    "can",
+    "need",
+    "dare",
+    "ought",
+    "used",
+    "to",
+    "of",
+    "in",
+    "for",
+    "on",
+    "with",
+    "at",
+    "by",
+    "from",
+    "as",
+    "into",
+    "through",
+    "during",
+    "before",
+    "after",
+    "above",
+    "below",
+    "between",
+    "and",
+    "but",
+    "or",
+    "nor",
+    "so",
+    "yet",
+    "both",
+    "either",
+    "neither",
+    "not",
+    "only",
+    "own",
+    "same",
+    "than",
+    "too",
+    "very",
+    "just",
+    "also",
+    "now",
+    "here",
+    "there",
+    "when",
+    "where",
+    "why",
+    "how",
+    "all",
+    "each",
+    "every",
+    "both",
+    "few",
+    "more",
+    "most",
+    "other",
+    "some",
+    "such",
+    "any",
+    "no",
+    "this",
+    "that",
+    "these",
+    "those",
+    "what",
+    "which",
+    "who",
+    "whom",
+    "it",
+    "its",
+    "he",
+    "she",
+    "they",
+    "them",
+    "his",
+    "her",
+    "their",
+    "my",
+    "your",
+    "our",
+    "we",
+    "you",
+    "i",
+    "me",
+    "us",
+    "him",
+    "up",
+    "out",
+    "if",
+    "about",
+    "over",
+    "under",
+    "again",
+    "then",
+    "once",
+    "says",
+    "said",
+    "new",
+  ]);
+
+  return text
+    .toLowerCase()
+    .replace(/[^a-z0-9\s]/g, " ")
+    .split(/\s+/)
+    .filter((word) => word.length > 2 && !stopWords.has(word));
+}
+
+// Вычислить score связи между двумя текстами
+function calculateRelationScore(text1: string, text2: string): number {
+  const words1 = extractSignificantWords(text1);
+  const words2 = extractSignificantWords(text2);
+
+  if (words1.length === 0 || words2.length === 0) return 0;
+
+  const set1 = new Set(words1);
+  const set2 = new Set(words2);
+
+  // Считаем совпадающие слова
+  let matchCount = 0;
+  for (const word of set1) {
+    if (set2.has(word)) {
+      matchCount++;
+    }
+  }
+
+  // Бонус за совпадение по ключевым темам
+  const keywordMatches = findMatchingKeywords(text1, text2);
+  const keywordBonus = keywordMatches.length * 15;
+
+  // Нормализуем score (0-100)
+  const baseScore = (matchCount / Math.min(set1.size, set2.size)) * 60;
+  const totalScore = Math.min(100, baseScore + keywordBonus);
+
+  return Math.round(totalScore);
+}
+
 // Topic to location mapping for markets
 // const TOPIC_LOCATION_MAP: Record<string, [number, number]> = {
 //   ukraine: [30.5234, 50.4501], // Kyiv
@@ -2701,30 +3035,66 @@ function findMatchingKeywords(text1: string, text2: string): string[] {
 export function linkMarketsToNews(
   marketMarkers: MapMarker[],
   newsMarkers: MapMarker[]
-): MapMarker[] {
-  // Simply return markets as-is - they already have correct coordinates
-  // from convertEventsWithMarketsToMapMarkers based on their content.
-  // We don't want to move markets to news locations anymore.
-  // This preserves the geographic accuracy of markets.
+): { markets: MapMarker[]; news: MapMarker[] } {
+  // Минимальный score для установления связи
+  const MIN_RELATION_SCORE = 20;
 
-  // Just add reference to related news if found, but DON'T change coordinates
-  return marketMarkers.map((market) => {
-    // Find related news by content matching
-    const relatedNews = newsMarkers.find((news) => {
-      const matchingTopics = findMatchingKeywords(news.title, market.title);
-      return matchingTopics.length > 0;
-    });
+  // Создаём копии для модификации
+  const linkedMarkets = marketMarkers.map((market) => ({ ...market }));
+  const linkedNews = newsMarkers.map((news) => ({
+    ...news,
+    relatedMarketIds: [] as string[],
+  }));
 
-    if (relatedNews) {
-      return {
-        ...market,
-        relatedNewsId: relatedNews.id,
-        // Keep original coordinates!
-      };
+  // Для каждого маркета находим связанные новости
+  for (const market of linkedMarkets) {
+    const relatedNews: { newsId: string; score: number }[] = [];
+
+    for (const news of linkedNews) {
+      const score = calculateRelationScore(
+        `${market.title} ${market.description || ""}`,
+        `${news.title} ${news.description || ""}`
+      );
+
+      if (score >= MIN_RELATION_SCORE) {
+        relatedNews.push({ newsId: news.id, score });
+      }
     }
 
-    return market;
-  });
+    // Сортируем по score и берём топ-5
+    relatedNews.sort((a, b) => b.score - a.score);
+    const topRelated = relatedNews.slice(0, 5);
+
+    if (topRelated.length > 0) {
+      market.relatedNewsId = topRelated[0].newsId;
+      market.relatedNewsIds = topRelated.map((r) => r.newsId);
+      market.relationScore = topRelated[0].score;
+
+      // Добавляем обратную связь к новостям
+      for (const related of topRelated) {
+        const newsItem = linkedNews.find((n) => n.id === related.newsId);
+        if (newsItem && !newsItem.relatedMarketIds?.includes(market.id)) {
+          newsItem.relatedMarketIds = newsItem.relatedMarketIds || [];
+          newsItem.relatedMarketIds.push(market.id);
+        }
+      }
+    }
+  }
+
+  // Устанавливаем максимальный score для каждой новости
+  for (const news of linkedNews) {
+    if (news.relatedMarketIds && news.relatedMarketIds.length > 0) {
+      const maxScore = Math.max(
+        ...news.relatedMarketIds.map((marketId) => {
+          const market = linkedMarkets.find((m) => m.id === marketId);
+          return market?.relationScore || 0;
+        })
+      );
+      news.relationScore = maxScore;
+    }
+  }
+
+  return { markets: linkedMarkets, news: linkedNews };
 }
 
 export function createGeoJSONFromMarkers(
@@ -2762,6 +3132,15 @@ export function createGeoJSONFromMarkers(
         language: marker.language,
         sourcecountry: marker.sourcecountry,
         seendate: marker.seendate,
+        // Связи между маркетами и новостями
+        relatedNewsId: marker.relatedNewsId,
+        relatedNewsIds: marker.relatedNewsIds
+          ? JSON.stringify(marker.relatedNewsIds)
+          : undefined,
+        relatedMarketIds: marker.relatedMarketIds
+          ? JSON.stringify(marker.relatedMarketIds)
+          : undefined,
+        relationScore: marker.relationScore,
       },
       geometry: {
         type: "Point" as const,

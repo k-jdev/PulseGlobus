@@ -28,7 +28,7 @@ export interface GdeltQueryParams {
 
 function diversifyArticlesByCountry(
   articles: GdeltArticle[],
-  maxPerCountry: number = 20,
+  maxPerCountry: number = 20
 ): GdeltArticle[] {
   const countryCount: Record<string, number> = {};
   const diversified: GdeltArticle[] = [];
@@ -83,7 +83,7 @@ export const gdeltApi = createApi({
 
         params.set(
           "query",
-          queryParts.join(" ") || "(politics OR economy OR technology)",
+          queryParts.join(" ") || "(politics OR economy OR technology)"
         );
 
         return `/doc?${params.toString()}`;
@@ -99,17 +99,20 @@ export const gdeltApi = createApi({
     getNewsByQuery: builder.query<GdeltArticle[], string>({
       query: (searchQuery) => {
         const params = new URLSearchParams({
-          query: `${searchQuery || "(politics OR economy OR technology)"} sourcelang:english`,
+          query: `${
+            searchQuery || "(politics OR economy OR technology)"
+          } sourcelang:english`,
           mode: "ArtList",
           format: "json",
-          maxrecords: "500",
-          timespan: "2d",
+          maxrecords: "250",
+          timespan: "7d",
         });
         return `/doc?${params.toString()}`;
       },
       transformResponse: (response: GdeltResponse) => {
         const articles = response.articles || [];
-        return diversifyArticlesByCountry(articles, 12);
+        // Для поиска возвращаем больше результатов без сильной диверсификации
+        return articles.slice(0, 100);
       },
       providesTags: ["News"],
     }),

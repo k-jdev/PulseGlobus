@@ -1,4 +1,5 @@
 import { FC, useState } from "react";
+import { motion } from "framer-motion";
 
 type TabType = "price" | "stats" | "rules";
 
@@ -102,7 +103,11 @@ export const MarketStatsPopup: FC<MarketStatsPopupProps> = ({
   const noOutcome = outcomes.find((o) => o.name.toLowerCase() === "no");
 
   return (
-    <div
+    <motion.div
+      initial={{ opacity: 0, scale: 0.95, y: 10 }}
+      animate={{ opacity: 1, scale: 1, y: 0 }}
+      exit={{ opacity: 0, scale: 0.95, y: 10 }}
+      transition={{ duration: 0.2, ease: "easeOut" }}
       className={`bg-white rounded-[14px] shadow-[0px_22px_32px_0px_rgba(20,82,240,0.25)] overflow-hidden ${
         isMobile ? "w-[calc(100vw-32px)] max-w-[372px]" : "w-[465px]"
       }`}
@@ -397,7 +402,7 @@ export const MarketStatsPopup: FC<MarketStatsPopupProps> = ({
           </div>
         )}
       </div>
-    </div>
+    </motion.div>
   );
 };
 

@@ -10,6 +10,96 @@ import {
 import { createPopupContent } from "../utils/popupContent";
 import { MapMarker, createGeoJSONFromMarkers } from "../utils/marketMappers";
 
+// Функция для отрисовки линий связей между маркером и связанными элементами
+function drawConnectionLines(
+  map: mapboxgl.Map,
+  clickedFeature: MapboxGeoJSONFeature,
+  allMarkers: MapMarker[]
+) {
+  const properties = clickedFeature.properties;
+  if (!properties) return;
+
+  const clickedId = properties.id;
+  const clickedType = properties.type;
+  const geometry = clickedFeature.geometry as GeoJSON.Point;
+  const clickedCoords = geometry.coordinates as [number, number];
+
+  const lines: GeoJSON.Feature<GeoJSON.LineString>[] = [];
+
+  // Получаем связанные ID
+  let relatedIds: string[] = [];
+
+  if (clickedType === "market") {
+    // Маркет -> связанные новости
+    const relatedNewsIds = properties.relatedNewsIds;
+    if (relatedNewsIds) {
+      try {
+        relatedIds = JSON.parse(relatedNewsIds);
+      } catch {
+        relatedIds = [];
+      }
+    } else if (properties.relatedNewsId) {
+      relatedIds = [properties.relatedNewsId];
+    }
+  } else if (clickedType === "news") {
+    // Новость -> связанные маркеты
+    const relatedMarketIds = properties.relatedMarketIds;
+    if (relatedMarketIds) {
+      try {
+        relatedIds = JSON.parse(relatedMarketIds);
+      } catch {
+        relatedIds = [];
+      }
+    }
+  }
+
+  // Создаём линии к связанным маркерам
+  for (const relatedId of relatedIds) {
+    const relatedMarker = allMarkers.find((m) => m.id === relatedId);
+    if (relatedMarker) {
+      lines.push({
+        type: "Feature",
+        properties: {
+          sourceId: clickedId,
+          targetId: relatedId,
+        },
+        geometry: {
+          type: "LineString",
+          coordinates: [clickedCoords, relatedMarker.coordinates],
+        },
+      });
+    }
+  }
+
+  // Обновляем источник данных для линий
+  const connectionsSource = map.getSource(
+    "connections"
+  ) as mapboxgl.GeoJSONSource;
+  if (connectionsSource) {
+    connectionsSource.setData({
+      type: "FeatureCollection",
+      features: lines,
+    });
+  }
+
+  console.log(
+    `🔗 Drawing ${lines.length} connection lines from ${clickedType} ${clickedId}`
+  );
+}
+
+// Функция для очистки линий связей
+function clearConnectionLines(map: mapboxgl.Map) {
+  const connectionsSource = map.getSource(
+    "connections"
+  ) as mapboxgl.GeoJSONSource;
+  if (connectionsSource) {
+    connectionsSource.setData({
+      type: "FeatureCollection",
+      features: [],
+    });
+  }
+}
+
 export const useMapbox = (
   containerRef: React.RefObject<HTMLDivElement>,
   onThemeChange?: (theme: Theme) => void,
@@ -232,6 +322,28 @@ export const useMapbox = (
         },
       });
 
+      // Источник для линий связей между маркетами и новостями
+      map.addSource("connections", {
+        type: "geojson",
+        data: {
+          type: "FeatureCollection",
+          features: [],
+        },
+      });
+
+      // Слой линий связей (рисуется под маркерами)
+      map.addLayer({
+        id: "connections",
+        source: "connections",
+        type: "line",
+        paint: {
+          "line-color": "#2563eb", // Синий цвет для связей
+          "line-width": 2,
+          "line-opacity": 0.6,
+          "line-dasharray": [2, 2], // Пунктирная линия
+        },
+      });
+
       map.addLayer({
         id: "markets",
         source: "markets",
@@ -284,6 +396,9 @@ export const useMapbox = (
           // Открываем попап для нового маркера
           handleMarketMouseEnter(map, feature);
 
+          // Рисуем линии связей
+          drawConnectionLines(map, feature, markersRef.current);
+
           // Вызываем callback если есть
           if (onMarkerClickRef.current && markersRef.current.length > 0) {
             const marketId = feature.properties?.id;
@@ -300,11 +415,12 @@ export const useMapbox = (
           layers: ["markets"],
         });
 
-        // Клик вне маркера - закрываем закреплённый попап
+        // Клик вне маркера - закрываем закреплённый попап и линии связей
         if (features.length === 0) {
           if (isPopupPinnedRef.current) {
             isPopupPinnedRef.current = false;
             handleMarketMouseLeave(map);
+            clearConnectionLines(map); // Очищаем линии связей
           }
           handleMapClick(map);
           userInteractingRef.current = false;

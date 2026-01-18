@@ -1,4 +1,5 @@
 import { FC } from "react";
+import { motion } from "framer-motion";
 
 interface NewsMarkerProps {
   title: string;
@@ -53,7 +54,13 @@ export const NewsMarker: FC<NewsMarkerProps> = ({
   onClose,
 }) => {
   return (
-    <div className="bg-white border border-[#e9edf8] rounded-[14px] px-6 py-5 min-w-[360px] max-w-[420px] relative">
+    <motion.div
+      initial={{ opacity: 0, scale: 0.95, y: 10 }}
+      animate={{ opacity: 1, scale: 1, y: 0 }}
+      exit={{ opacity: 0, scale: 0.95, y: 10 }}
+      transition={{ duration: 0.2, ease: "easeOut" }}
+      className="bg-white border border-[#e9edf8] rounded-[14px] px-6 py-5 min-w-[360px] max-w-[420px] relative"
+    >
       {/* Close button */}
       {onClose && (
         <button
@@ -166,6 +173,6 @@ export const NewsMarker: FC<NewsMarkerProps> = ({
           />
         </svg>
       </a>
-    </div>
+    </motion.div>
   );
 };

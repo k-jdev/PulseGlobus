@@ -1,4 +1,5 @@
 import { FC } from "react";
+import { motion } from "framer-motion";
 
 interface NewsPopupProps {
   title: string;
@@ -55,7 +56,11 @@ export const NewsPopup: FC<NewsPopupProps> = ({
   isMobile = false,
 }) => {
   return (
-    <div
+    <motion.div
+      initial={{ opacity: 0, scale: 0.95, y: 10 }}
+      animate={{ opacity: 1, scale: 1, y: 0 }}
+      exit={{ opacity: 0, scale: 0.95, y: 10 }}
+      transition={{ duration: 0.2, ease: "easeOut" }}
       className={`bg-white border border-[#e9edf8] rounded-[14px] overflow-hidden shadow-xl ${
         isMobile ? "w-[90vw] max-w-[360px]" : "min-w-[360px] max-w-[420px]"
       }`}
@@ -174,6 +179,6 @@ export const NewsPopup: FC<NewsPopupProps> = ({
           </svg>
         </a>
       </div>
-    </div>
+    </motion.div>
   );
 };

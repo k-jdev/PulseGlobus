@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import { useGetNewsQuery, GdeltArticle } from "../../store/services/gdeltApi";
 import notImg from "../../assets/images/not-img.png";
 type TimeFilter = "1h" | "6h" | "24h";
@@ -112,67 +113,80 @@ export const BreakingNews = ({ isOpen }: BreakingNewsProps) => {
   if (!isOpen) return null;
 
   return (
-    <div className="absolute top-[144px] md:top-[160px] left-4 md:left-8 bg-white border-t-[6px] border-[#EE1616] rounded-[14px] w-[calc(100vw-32px)] md:w-[502px] max-h-[calc(100vh-180px)] md:max-h-[70vh] overflow-hidden z-50 shadow-[0px_22px_32px_0px_rgba(20,82,240,0.25)]">
-      {/* Header */}
-      <div className="px-6 pt-7 pb-4">
-        <div className="flex flex-col gap-2 mb-4">
-          <h2 className="text-[32px] font-bold text-black tracking-[-0.56px] leading-8">
-            Breaking News
-          </h2>
-          <p className="text-[#808080] text-[16px] font-medium tracking-[-0.32px]">
-            Global events affecting markets. Click on globe markers to see
-            related predictions.
-          </p>
-        </div>
-
-        {/* Time filters */}
-        <div className="flex gap-2">
-          {(["1h", "6h", "24h"] as const).map((filter) => (
-            <button
-              key={filter}
-              onClick={() => setTimeFilter(filter)}
-              className={`h-12 px-6 py-3 rounded-full text-[15px] font-medium transition-colors border border-[rgba(0,0,0,0.12)] ${
-                timeFilter === filter
-                  ? "bg-[rgba(20,82,240,0.1)] text-[#1452F0]"
-                  : "bg-white text-[#BBBDC1] hover:bg-gray-50"
-              }`}
-            >
-              {filter}
-            </button>
-          ))}
-        </div>
-      </div>
-
-      {/* Divider */}
-      <div className="mx-6 h-px bg-[#e4e4e4]" />
-
-      {/* News List */}
-      <div className="px-6 py-4 overflow-y-auto max-h-[calc(100vh-380px)] md:max-h-[calc(70vh-200px)]">
-        {showLoading ? (
-          <div className="flex flex-col items-center justify-center py-8 gap-3">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#1452F0]"></div>
-            <span className="text-[14px] text-[#808080] font-medium">
-              Loading news...
-            </span>
+    <AnimatePresence>
+      <motion.div
+        initial={{ opacity: 0, y: 30, scale: 0.9 }}
+        animate={{ opacity: 1, y: 0, scale: 1 }}
+        exit={{ opacity: 0, y: 20, scale: 0.95 }}
+        transition={{
+          type: "spring",
+          stiffness: 400,
+          damping: 25,
+          mass: 0.8,
+        }}
+        className="absolute top-[144px] md:top-[160px] left-4 md:left-8 bg-white border-t-[6px] border-[#EE1616] rounded-[14px] w-[calc(100vw-32px)] md:w-[502px] max-h-[calc(100vh-180px)] md:max-h-[70vh] overflow-hidden z-50 shadow-[0px_22px_32px_0px_rgba(20,82,240,0.25)]"
+      >
+        {/* Header */}
+        <div className="px-6 pt-7 pb-4">
+          <div className="flex flex-col gap-2 mb-4">
+            <h2 className="text-[32px] font-bold text-black tracking-[-0.56px] leading-8">
+              Breaking News
+            </h2>
+            <p className="text-[#808080] text-[16px] font-medium tracking-[-0.32px]">
+              Global events affecting markets. Click on globe markers to see
+              related predictions.
+            </p>
           </div>
-        ) : news.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-8 gap-2">
-            <span className="text-[16px] text-[#808080] font-medium">
-              No news found
-            </span>
-            <span className="text-[14px] text-[#BBBDC1]">
-              Try a different time filter
-            </span>
-          </div>
-        ) : (
-          <div className="flex flex-col">
-            {news.map((item) => (
-              <NewsRow key={item.id} item={item} />
+
+          {/* Time filters */}
+          <div className="flex gap-2">
+            {(["1h", "6h", "24h"] as const).map((filter) => (
+              <button
+                key={filter}
+                onClick={() => setTimeFilter(filter)}
+                className={`h-12 px-6 py-3 rounded-full text-[15px] font-medium transition-colors border border-[rgba(0,0,0,0.12)] ${
+                  timeFilter === filter
+                    ? "bg-[rgba(20,82,240,0.1)] text-[#1452F0]"
+                    : "bg-white text-[#BBBDC1] hover:bg-gray-50"
+                }`}
+              >
+                {filter}
+              </button>
             ))}
           </div>
-        )}
-      </div>
-    </div>
+        </div>
+
+        {/* Divider */}
+        <div className="mx-6 h-px bg-[#e4e4e4]" />
+
+        {/* News List */}
+        <div className="px-6 py-4 overflow-y-auto max-h-[calc(100vh-380px)] md:max-h-[calc(70vh-200px)]">
+          {showLoading ? (
+            <div className="flex flex-col items-center justify-center py-8 gap-3">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#1452F0]"></div>
+              <span className="text-[14px] text-[#808080] font-medium">
+                Loading news...
+              </span>
+            </div>
+          ) : news.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-8 gap-2">
+              <span className="text-[16px] text-[#808080] font-medium">
+                No news found
+              </span>
+              <span className="text-[14px] text-[#BBBDC1]">
+                Try a different time filter
+              </span>
+            </div>
+          ) : (
+            <div className="flex flex-col">
+              {news.map((item) => (
+                <NewsRow key={item.id} item={item} />
+              ))}
+            </div>
+          )}
+        </div>
+      </motion.div>
+    </AnimatePresence>
   );
 };
 

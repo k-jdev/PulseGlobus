@@ -1,4 +1,5 @@
 import { useEffect, useState, useCallback } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import {
   polymarketWS,
   LiveTradeMessage,
@@ -126,26 +127,38 @@ export const LiveTrades = ({ isOpen }: LiveTradesProps) => {
   if (!isOpen) return null;
 
   return (
-    <div className="absolute top-[144px] md:top-[160px] left-4 md:left-8 bg-white rounded-[14px] w-[calc(100vw-32px)] md:w-[502px] max-h-[calc(100vh-180px)] md:max-h-[70vh] border-t-[6px] border-[#53BB33] overflow-hidden z-50 animate-in slide-in-from-left duration-300 shadow-[0px_22px_32px_0px_rgba(20,82,240,0.25)]">
-      {/* Header */}
-      <div className="px-6 pt-7 pb-4">
-        <div className="flex flex-col gap-3">
-          <div className="flex items-start justify-between gap-4">
-            <div className="flex flex-col gap-2">
-              <h2 className="text-[28px] md:text-[32px] font-bold text-black tracking-[-0.56px] leading-8">
-                Live Trades <span className="text-[#4EB12F]">•</span>
-              </h2>
-              <p className="text-[#808080] text-[14px] md:text-[16px] font-medium tracking-[-0.32px]">
-                Streaming Pulse globe markets.
-              </p>
-            </div>
-            {/* Desktop controls */}
-            <div className="hidden md:flex items-center gap-1.5">
-              {/* <div className="px-3 py-1 bg-[#f5f5f5] rounded-full text-[#808080] text-[14px] font-medium tracking-[-0.28px]">
+    <AnimatePresence>
+      <motion.div
+        initial={{ opacity: 0, y: 30, scale: 0.9 }}
+        animate={{ opacity: 1, y: 0, scale: 1 }}
+        exit={{ opacity: 0, y: 20, scale: 0.95 }}
+        transition={{
+          type: "spring",
+          stiffness: 400,
+          damping: 25,
+          mass: 0.8,
+        }}
+        className="absolute top-[144px] md:top-[160px] left-4 md:left-8 bg-white rounded-[14px] w-[calc(100vw-32px)] md:w-[502px] max-h-[calc(100vh-180px)] md:max-h-[70vh] border-t-[6px] border-[#53BB33] overflow-hidden z-50 shadow-[0px_22px_32px_0px_rgba(20,82,240,0.25)]"
+      >
+        {/* Header */}
+        <div className="px-6 pt-7 pb-4">
+          <div className="flex flex-col gap-3">
+            <div className="flex items-start justify-between gap-4">
+              <div className="flex flex-col gap-2">
+                <h2 className="text-[28px] md:text-[32px] font-bold text-black tracking-[-0.56px] leading-8">
+                  Live Trades <span className="text-[#4EB12F]">•</span>
+                </h2>
+                <p className="text-[#808080] text-[14px] md:text-[16px] font-medium tracking-[-0.32px]">
+                  Streaming Pulse globe markets.
+                </p>
+              </div>
+              {/* Desktop controls */}
+              <div className="hidden md:flex items-center gap-1.5">
+                {/* <div className="px-3 py-1 bg-[#f5f5f5] rounded-full text-[#808080] text-[14px] font-medium tracking-[-0.28px]">
                 {tradesCount} Trades
               </div> */}
-              {/* Chart icon */}
-              {/* <svg
+                {/* Chart icon */}
+                {/* <svg
                 width="16"
                 height="16"
                 viewBox="0 0 16 16"
@@ -167,10 +180,10 @@ export const LiveTrades = ({ isOpen }: LiveTradesProps) => {
                   strokeLinejoin="round"
                 />
               </svg> */}
+              </div>
             </div>
-          </div>
-          {/* Mobile controls */}
-          {/* <div className="flex md:hidden items-center gap-1.5">
+            {/* Mobile controls */}
+            {/* <div className="flex md:hidden items-center gap-1.5">
             <div className="px-3 py-1 bg-[#f5f5f5] rounded-full text-[#808080] text-[13px] font-medium tracking-[-0.28px]">
               {tradesCount} Trades
             </div>
@@ -197,73 +210,74 @@ export const LiveTrades = ({ isOpen }: LiveTradesProps) => {
               />
             </svg>
           </div> */}
-        </div>
-      </div>
-
-      {/* Divider */}
-      <div className="mx-6 h-px bg-[#e4e4e4]" />
-
-      {/* Coming Soon Overlay */}
-      <div className="px-6 py-4 overflow-y-auto max-h-[calc(100vh-380px)] md:max-h-[calc(70vh-140px)]">
-        <div className="flex flex-col items-center justify-center py-12 gap-4">
-          <div className="w-16 h-16 bg-[#f5f5f5] rounded-full flex items-center justify-center">
-            <svg
-              width="32"
-              height="32"
-              viewBox="0 0 24 24"
-              fill="none"
-              xmlns="http://www.w3.org/2000/svg"
-            >
-              <path
-                d="M12 2V6M12 18V22M6 12H2M22 12H18M19.07 4.93L16.24 7.76M7.76 16.24L4.93 19.07M19.07 19.07L16.24 16.24M7.76 7.76L4.93 4.93"
-                stroke="#808080"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-            </svg>
-          </div>
-          <div className="text-center">
-            <h3 className="text-[20px] font-bold text-black tracking-[-0.4px] mb-2">
-              Coming Soon
-            </h3>
-            <p className="text-[14px] text-[#808080] font-medium tracking-[-0.28px]">
-              Live trades streaming will be available soon.
-            </p>
           </div>
         </div>
-      </div>
 
-      {/* Hidden: Original Trades List (logic preserved) */}
-      <div className="hidden">
-        {!isConnected && trades.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-8 gap-3">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#4EB12F]"></div>
-            <span className="text-[14px] text-[#808080] font-medium">
-              Connecting to live feed...
-            </span>
+        {/* Divider */}
+        <div className="mx-6 h-px bg-[#e4e4e4]" />
+
+        {/* Coming Soon Overlay */}
+        <div className="px-6 py-4 overflow-y-auto max-h-[calc(100vh-380px)] md:max-h-[calc(70vh-140px)]">
+          <div className="flex flex-col items-center justify-center py-12 gap-4">
+            <div className="w-16 h-16 bg-[#f5f5f5] rounded-full flex items-center justify-center">
+              <svg
+                width="32"
+                height="32"
+                viewBox="0 0 24 24"
+                fill="none"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  d="M12 2V6M12 18V22M6 12H2M22 12H18M19.07 4.93L16.24 7.76M7.76 16.24L4.93 19.07M19.07 19.07L16.24 16.24M7.76 7.76L4.93 4.93"
+                  stroke="#808080"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+              </svg>
+            </div>
+            <div className="text-center">
+              <h3 className="text-[20px] font-bold text-black tracking-[-0.4px] mb-2">
+                Coming Soon
+              </h3>
+              <p className="text-[14px] text-[#808080] font-medium tracking-[-0.28px]">
+                Live trades streaming will be available soon.
+              </p>
+            </div>
           </div>
-        ) : trades.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-8 gap-2">
-            <div className="flex items-center gap-2">
-              <span className="w-2 h-2 bg-[#4EB12F] rounded-full animate-pulse"></span>
-              <span className="text-[16px] text-[#808080] font-medium">
-                Connected
+        </div>
+
+        {/* Hidden: Original Trades List (logic preserved) */}
+        <div className="hidden">
+          {!isConnected && trades.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-8 gap-3">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#4EB12F]"></div>
+              <span className="text-[14px] text-[#808080] font-medium">
+                Connecting to live feed...
               </span>
             </div>
-            <span className="text-[14px] text-[#BBBDC1]">
-              Waiting for trades...
-            </span>
-          </div>
-        ) : (
-          <div className="flex flex-col gap-4">
-            {trades.map((trade) => (
-              <TradeRow key={trade.id} trade={trade} />
-            ))}
-          </div>
-        )}
-      </div>
-    </div>
+          ) : trades.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-8 gap-2">
+              <div className="flex items-center gap-2">
+                <span className="w-2 h-2 bg-[#4EB12F] rounded-full animate-pulse"></span>
+                <span className="text-[16px] text-[#808080] font-medium">
+                  Connected
+                </span>
+              </div>
+              <span className="text-[14px] text-[#BBBDC1]">
+                Waiting for trades...
+              </span>
+            </div>
+          ) : (
+            <div className="flex flex-col gap-4">
+              {trades.map((trade) => (
+                <TradeRow key={trade.id} trade={trade} />
+              ))}
+            </div>
+          )}
+        </div>
+      </motion.div>
+    </AnimatePresence>
   );
 };
 

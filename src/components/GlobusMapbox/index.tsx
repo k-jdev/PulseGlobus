@@ -95,10 +95,17 @@ const GlobusMapbox = ({
         : [];
 
     // Link markets to nearby news based on content matching
-    const linkedMarketMarkers =
-      showNews && newsMarkers.length > 0
-        ? linkMarketsToNews(marketMarkers, newsMarkers)
-        : marketMarkers;
+    let linkedMarketMarkers: MapMarker[];
+    let linkedNewsMarkers: MapMarker[];
+
+    if (showNews && newsMarkers.length > 0) {
+      const linked = linkMarketsToNews(marketMarkers, newsMarkers);
+      linkedMarketMarkers = linked.markets;
+      linkedNewsMarkers = linked.news;
+    } else {
+      linkedMarketMarkers = marketMarkers;
+      linkedNewsMarkers = newsMarkers;
+    }
 
     let filteredMarkers: MapMarker[];
 
@@ -108,7 +115,7 @@ const GlobusMapbox = ({
           ...linkedMarketMarkers
             .sort((a, b) => b.volume24hr - a.volume24hr)
             .slice(0, 30),
-          ...newsMarkers.slice(0, 20),
+          ...linkedNewsMarkers.slice(0, 20),
         ];
         break;
       case "6h":
@@ -116,14 +123,14 @@ const GlobusMapbox = ({
           ...linkedMarketMarkers
             .sort((a, b) => b.volume1wk - a.volume1wk)
             .slice(0, 60),
-          ...newsMarkers.slice(0, 40),
+          ...linkedNewsMarkers.slice(0, 40),
         ];
         break;
       case "24h":
       default:
         filteredMarkers = [
           ...linkedMarketMarkers.sort((a, b) => b.volume1mo - a.volume1mo),
-          ...newsMarkers,
+          ...linkedNewsMarkers,
         ];
         break;
     }
@@ -131,7 +138,7 @@ const GlobusMapbox = ({
     console.log(
       `🎯 Filtered markers (${timeFilter}):`,
       filteredMarkers.length,
-      `(markets: ${linkedMarketMarkers.length}, news: ${newsMarkers.length})`,
+      `(markets: ${linkedMarketMarkers.length}, news: ${linkedNewsMarkers.length})`
     );
     return filteredMarkers;
   }, [events, newsArticles, timeFilter, showNews]);
@@ -143,7 +150,7 @@ const GlobusMapbox = ({
     (marker) => {
       console.log("🔍 Marker clicked:", marker.id, "type:", marker.type);
       setSelectedMarket(marker);
-    },
+    }
   );
 
   const handleClosePopup = () => {
