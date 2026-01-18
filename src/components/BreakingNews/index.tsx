@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { useGetNewsQuery, GdeltArticle } from "../../store/services/gdeltApi";
-
+import notImg from "../../assets/images/not-img.png";
 type TimeFilter = "1h" | "6h" | "24h";
 
 interface NewsItem {
@@ -59,7 +59,7 @@ const formatCountry = (country: string): string => {
 
 const convertArticleToNews = (
   article: GdeltArticle,
-  index: number,
+  index: number
 ): NewsItem => {
   return {
     id: `${article.url}-${index}`,
@@ -187,31 +187,16 @@ const NewsRow = ({ item }: { item: NewsItem }) => {
       onClick={handleClick}
     >
       {/* Image */}
-      {item.image ? (
-        <div className="w-[72px] h-[72px] rounded-lg overflow-hidden flex-shrink-0 bg-gray-100">
-          <img
-            src={item.image}
-            alt=""
-            className="w-full h-full object-cover"
-            onError={(e) => {
-              (e.target as HTMLImageElement).style.display = "none";
-            }}
-          />
-        </div>
-      ) : (
-        <div className="w-[72px] h-[72px] rounded-lg flex-shrink-0 bg-gradient-to-br from-[#EE1616] to-[#cc1010] flex items-center justify-center">
-          <svg
-            width="24"
-            height="24"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="white"
-            strokeWidth="2"
-          >
-            <path d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 8h6v4H7V8z" />
-          </svg>
-        </div>
-      )}
+      <div className="w-[72px] h-[72px] rounded-lg overflow-hidden flex-shrink-0 bg-gray-100">
+        <img
+          src={item.image || notImg}
+          alt=""
+          className="w-full h-full object-cover"
+          onError={(e) => {
+            (e.target as HTMLImageElement).src = notImg;
+          }}
+        />
+      </div>
 
       {/* Content */}
       <div className="flex-1 min-w-0">
@@ -221,12 +206,14 @@ const NewsRow = ({ item }: { item: NewsItem }) => {
         </h3>
 
         {/* Meta info: Source • Date • Country */}
-        <div className="flex items-center gap-2 text-[14px] text-[#808080] font-medium">
-          <span className="truncate max-w-[120px]">{item.source}</span>
+        <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-[14px] text-[#808080] font-medium">
+          <span className="truncate max-w-[100px]">{item.source}</span>
           <span className="text-[#BBBDC1]">•</span>
-          <span>{item.date}</span>
-          <span className="w-1.5 h-1.5 rounded-full bg-[#1452F0]"></span>
-          <span className="text-[#1452F0]">{item.country}</span>
+          <span className="whitespace-nowrap">{item.date}</span>
+          <span className="w-1.5 h-1.5 rounded-full bg-[#1452F0] flex-shrink-0"></span>
+          <span className="text-[#1452F0] truncate max-w-[100px]">
+            {item.country}
+          </span>
         </div>
       </div>
 

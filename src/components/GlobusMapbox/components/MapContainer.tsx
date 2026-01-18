@@ -30,7 +30,7 @@ const dotsOverlayStyle: CSSProperties = {
   height: "100%",
   pointerEvents: "none",
   backgroundImage:
-    "radial-gradient(circle, rgba(255, 255, 255, 0.15) 1.5px, transparent 1.5px)",
+    "radial-gradient(circle, rgba(255, 255, 255, 0.10) 1.5px, transparent 1.5px)",
   backgroundSize: "20px 20px",
   zIndex: 1,
 };

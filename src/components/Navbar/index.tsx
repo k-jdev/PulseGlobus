@@ -17,6 +17,7 @@ interface NavbarProps {
   timeFilter?: TimeFilter;
   onTimeFilterChange?: (filter: TimeFilter) => void;
   onMobileMenuChange?: (isOpen: boolean) => void;
+  onSearchFocus?: () => void;
 }
 
 function Navbar({
@@ -25,6 +26,7 @@ function Navbar({
   timeFilter = "24h",
   onTimeFilterChange,
   onMobileMenuChange,
+  onSearchFocus,
 }: NavbarProps) {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isMobileSearchOpen, setIsMobileSearchOpen] = useState(false);
@@ -47,7 +49,7 @@ function Navbar({
         <div className="flex justify-between items-center">
           <img src={logo} alt="Logo" className="h-8 w-auto" />
           <div className="ml-6">
-            <Search />
+            <Search onFocus={onSearchFocus} />
           </div>
         </div>
         <div className="flex items-center gap-2">
@@ -233,11 +235,20 @@ function Navbar({
                   $PULSE
                 </h2>
               </a>
-            </div>
 
-            {/* Connect Wallet */}
-            <div className="mt-4">
-              <ConnectWallet isMobile={true} className="w-full" />
+              {/* Wallet Section */}
+              <div className="border-l border-t border-black/25 pl-5 pt-5">
+                <p className="text-[16px] font-medium text-black/55 tracking-[-0.64px] mb-5">
+                  0.005
+                </p>
+                <h2 className="text-[48px] font-bold text-black tracking-[-0.96px] uppercase leading-none mb-5">
+                  Wallet
+                </h2>
+                <ConnectWallet
+                  isMobile={true}
+                  className="bg-black/5 text-black hover:bg-black/10"
+                />
+              </div>
             </div>
 
             {/* Social Links */}

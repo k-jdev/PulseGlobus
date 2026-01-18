@@ -123,8 +123,6 @@ export const LiveTrades = ({ isOpen }: LiveTradesProps) => {
     };
   }, [isOpen, handleNewTrade]);
 
-  const tradesCount = trades.length;
-
   if (!isOpen) return null;
 
   return (
@@ -143,11 +141,11 @@ export const LiveTrades = ({ isOpen }: LiveTradesProps) => {
             </div>
             {/* Desktop controls */}
             <div className="hidden md:flex items-center gap-1.5">
-              <div className="px-3 py-1 bg-[#f5f5f5] rounded-full text-[#808080] text-[14px] font-medium tracking-[-0.28px]">
+              {/* <div className="px-3 py-1 bg-[#f5f5f5] rounded-full text-[#808080] text-[14px] font-medium tracking-[-0.28px]">
                 {tradesCount} Trades
-              </div>
+              </div> */}
               {/* Chart icon */}
-              <svg
+              {/* <svg
                 width="16"
                 height="16"
                 viewBox="0 0 16 16"
@@ -168,11 +166,11 @@ export const LiveTrades = ({ isOpen }: LiveTradesProps) => {
                   strokeLinecap="round"
                   strokeLinejoin="round"
                 />
-              </svg>
+              </svg> */}
             </div>
           </div>
           {/* Mobile controls */}
-          <div className="flex md:hidden items-center gap-1.5">
+          {/* <div className="flex md:hidden items-center gap-1.5">
             <div className="px-3 py-1 bg-[#f5f5f5] rounded-full text-[#808080] text-[13px] font-medium tracking-[-0.28px]">
               {tradesCount} Trades
             </div>
@@ -198,7 +196,7 @@ export const LiveTrades = ({ isOpen }: LiveTradesProps) => {
                 strokeLinejoin="round"
               />
             </svg>
-          </div>
+          </div> */}
         </div>
       </div>
 

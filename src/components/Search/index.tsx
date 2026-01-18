@@ -112,7 +112,7 @@ export function Search({ isMobile = false, onFocus, onClose }: SearchProps) {
           (cat) =>
             cat !== "news" &&
             cat !== "markets" &&
-            (category.includes(cat) || question.includes(cat)),
+            (category.includes(cat) || question.includes(cat))
         );
       })
       .slice(0, 10);
@@ -143,7 +143,7 @@ export function Search({ isMobile = false, onFocus, onClose }: SearchProps) {
         )
           return true;
         return selectedCategories.some(
-          (cat) => cat !== "news" && cat !== "markets" && title.includes(cat),
+          (cat) => cat !== "news" && cat !== "markets" && title.includes(cat)
         );
       })
       .slice(0, 10);
@@ -191,7 +191,7 @@ export function Search({ isMobile = false, onFocus, onClose }: SearchProps) {
         handleClose();
       }
     },
-    [handleClose],
+    [handleClose]
   );
 
   useEffect(() => {
@@ -208,7 +208,7 @@ export function Search({ isMobile = false, onFocus, onClose }: SearchProps) {
       setSelectedCategories((prev) =>
         prev.includes(value)
           ? prev.filter((c) => c !== value)
-          : [...prev, value],
+          : [...prev, value]
       );
     }
   };
@@ -235,7 +235,7 @@ export function Search({ isMobile = false, onFocus, onClose }: SearchProps) {
   };
 
   return (
-    <div ref={containerRef} className="relative">
+    <div ref={containerRef} className={`relative ${isOpen ? "z-[100]" : ""}`}>
       {/* Search Input */}
       <div
         className={`flex items-center gap-6 bg-[#f5f7f9] border border-[#ebebec] rounded-full px-6 py-3 ${
@@ -274,7 +274,7 @@ export function Search({ isMobile = false, onFocus, onClose }: SearchProps) {
       {/* Dropdown */}
       {isOpen && (
         <div
-          className={`absolute mt-2 bg-white rounded-[14px] border border-[#e9edf8] shadow-[0px_22px_32px_0px_rgba(20,82,240,0.25)] z-50 flex flex-col gap-4 ${
+          className={`absolute mt-2 bg-white rounded-[14px] border border-[#e9edf8] shadow-[0px_22px_32px_0px_rgba(20,82,240,0.25)] z-[100] flex flex-col gap-4 ${
             isMobile
               ? "left-0 right-0 px-5 py-4 max-w-[calc(100vw-32px)]"
               : "top-[70px] left-0 right-0 px-6 py-5"

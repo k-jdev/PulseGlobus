@@ -30,6 +30,13 @@ function App() {
     }
   };
 
+  // Close all popups when search is focused
+  const handleSearchFocus = () => {
+    if (closePopups) {
+      closePopups();
+    }
+  };
+
   return (
     <div className="relative w-full h-screen overflow-hidden">
       <NavbarComponent
@@ -38,6 +45,7 @@ function App() {
         timeFilter={timeFilter}
         onTimeFilterChange={setTimeFilter}
         onMobileMenuChange={handleMobileMenuChange}
+        onSearchFocus={handleSearchFocus}
       />
       <GlobusMapboxComponent
         timeFilter={timeFilter}
