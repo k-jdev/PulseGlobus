@@ -4,11 +4,29 @@ import { injected, walletConnect } from "wagmi/connectors";
 import { createWeb3Modal } from "@web3modal/wagmi/react";
 
 // Get a project ID at https://cloud.walletconnect.com
-const projectId = "b5c3ce6d1a4b1c3e9e7f5a2d8c4e6b0a";
+// You MUST replace this with your own project ID from WalletConnect Cloud
+const projectId = "6a7837ef8f40420a04bb9623be16f62f";
+
+const metadata = {
+  name: "PulseGlobus",
+  description: "PulseGlobus - Prediction Markets Visualization",
+  url:
+    typeof window !== "undefined"
+      ? window.location.origin
+      : "https://pulseglobus.com",
+  icons: ["https://pulseglobus.com/pulse.svg"],
+};
 
 export const config = createConfig({
   chains: [mainnet, polygon],
-  connectors: [injected(), walletConnect({ projectId })],
+  connectors: [
+    injected(),
+    walletConnect({
+      projectId,
+      metadata,
+      showQrModal: false, // Web3Modal will handle the modal
+    }),
+  ],
   transports: {
     [mainnet.id]: http(),
     [polygon.id]: http(),
@@ -19,4 +37,10 @@ export const config = createConfig({
 createWeb3Modal({
   wagmiConfig: config,
   projectId,
+  enableAnalytics: false,
+  enableOnramp: false,
+  themeMode: "light",
+  themeVariables: {
+    "--w3m-accent": "#1452F0",
+  },
 });
