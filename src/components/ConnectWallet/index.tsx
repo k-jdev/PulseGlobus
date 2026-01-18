@@ -26,7 +26,7 @@ export const ConnectWallet = ({ className, isMobile }: ConnectWalletProps) => {
 
   // Base classes that are always applied
   const baseClasses =
-    "px-6 py-4 rounded-full font-semibold text-[16px] flex items-center gap-5 cursor-pointer";
+    "px-5 py-3 rounded-full font-semibold text-[16px] flex items-center gap-3 cursor-pointer";
 
   // Default classes (can be overridden by className)
   const defaultClasses =

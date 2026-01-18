@@ -42,5 +42,6 @@ createWeb3Modal({
   themeMode: "light",
   themeVariables: {
     "--w3m-accent": "#1452F0",
+    "--w3m-z-index": 1000,
   },
 });

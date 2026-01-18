@@ -12,6 +12,7 @@ const containerStyle: CSSProperties = {
   width: "100%",
   height: "100vh",
   background: "radial-gradient(circle at center, #0048FF 0%, #001D68 100%)",
+  overflow: "hidden",
 };
 
 const mapStyle: CSSProperties = {
