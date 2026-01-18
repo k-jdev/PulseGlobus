@@ -16,7 +16,7 @@ const useWeb3ModalMobileFix = () => {
           style.textContent = `
             @media (max-width: 768px) {
               :host {
-                --w3m-modal-width: 90vw !important;
+                --w3m-modal-width: 92vw !important;
               }
               wui-card {
                 position: fixed !important;
@@ -24,8 +24,10 @@ const useWeb3ModalMobileFix = () => {
                 left: 50% !important;
                 bottom: auto !important;
                 transform: translate(-50%, -50%) !important;
-                max-height: 85vh !important;
+                max-height: 70vh !important;
+                max-width: 92vw !important;
                 margin: 0 !important;
+                border-radius: 24px !important;
               }
             }
           `;
