@@ -1,5 +1,5 @@
-import { useRef, useMemo, useEffect, useState } from "react";
-import { useMapbox } from "./hooks";
+import { useRef, useMemo, useEffect, useState, useCallback } from "react";
+import { useMapbox, MarkerClickEvent } from "./hooks";
 import { MapContainer, MarketStatsPopup, NewsMarker } from "./components";
 import { useGetEventsWithMarketsQuery } from "../../store/services/polymarketApi";
 import { useGetNewsQuery } from "../../store/services/gdeltApi";
@@ -31,6 +31,11 @@ const GlobusMapbox = ({
 }: GlobusMapboxProps) => {
   const mapContainerRef = useRef<HTMLDivElement>(null);
   const [selectedMarket, setSelectedMarket] = useState<MapMarker | null>(null);
+  const [popupPosition, setPopupPosition] = useState<{
+    left: number;
+    top: number;
+  } | null>(null);
+  const [isPopupVisible, setIsPopupVisible] = useState(true);
 
   // Close popup when mobile menu opens
   useEffect(() => {
@@ -143,6 +148,27 @@ const GlobusMapbox = ({
     return filteredMarkers;
   }, [events, newsArticles, timeFilter, showNews]);
 
+  const handleMarkerClick = useCallback(
+    ({ marker, screenPosition }: MarkerClickEvent) => {
+      console.log(
+        "🔍 Marker clicked:",
+        marker.id,
+        "type:",
+        marker.type,
+        "at:",
+        screenPosition,
+      );
+      setSelectedMarket(marker);
+      // Позиция попапа точно под маркером
+      const popupWidth = 360;
+      const left = screenPosition.x - popupWidth / 2;
+      const top = screenPosition.y + 20;
+      setPopupPosition({ left, top });
+      setIsPopupVisible(true);
+    },
+    [],
+  );
+
   const {
     theme,
     changeTheme,
@@ -150,15 +176,49 @@ const GlobusMapbox = ({
     toggleSpin,
     clearConnections,
     flyToLocation,
-  } = useMapbox(mapContainerRef, undefined, mapMarkers, (marker) => {
-    console.log("🔍 Marker clicked:", marker.id, "type:", marker.type);
-    setSelectedMarket(marker);
-  });
+    projectCoordinates,
+    mapRef,
+  } = useMapbox(mapContainerRef, undefined, mapMarkers, handleMarkerClick);
 
   const handleClosePopup = () => {
     setSelectedMarket(null);
+    setPopupPosition(null);
     clearConnections(); // Очищаем линии связей при закрытии попапа
   };
+
+  // Обновляем позицию попапа при движении карты (только на мобильных)
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || !selectedMarket) return;
+
+    const updatePopupPosition = () => {
+      const isMobile = window.innerWidth < 768;
+      if (!isMobile || !selectedMarket) return;
+
+      const screenPos = projectCoordinates(selectedMarket.coordinates);
+      if (screenPos) {
+        const popupWidth = 360;
+        const minTop = 120; // Минимальная позиция маркера (навбар + поиск)
+        const left = screenPos.x - popupWidth / 2;
+        const top = screenPos.y + 20;
+        setPopupPosition({ left, top });
+
+        // Проверяем видимость - скрываем если маркер вышел за границы экрана или под навбар
+        const isMarkerVisible =
+          screenPos.x > -popupWidth / 2 &&
+          screenPos.x < window.innerWidth + popupWidth / 2 &&
+          screenPos.y > minTop &&
+          screenPos.y < window.innerHeight - 50;
+
+        setIsPopupVisible(isMarkerVisible);
+      }
+    };
+
+    map.on("move", updatePopupPosition);
+    return () => {
+      map.off("move", updatePopupPosition);
+    };
+  }, [selectedMarket, projectCoordinates, mapRef]);
 
   // Обработчик клика на новость во вкладке News - перелёт к месту на карте
   const handleNewsClick = (newsId: string, coordinates: [number, number]) => {
@@ -246,10 +306,15 @@ const GlobusMapbox = ({
               />
             )}
           </div>
-          {/* Mobile popup - centered with backdrop */}
-          <div className="md:hidden fixed inset-0 z-50 flex items-center justify-center">
-            <div className="absolute inset-0 " onClick={handleClosePopup} />
-            <div className="relative z-10">
+          {/* Mobile popup - positioned near marker, doesn't block map interaction */}
+          <div
+            className={`md:hidden fixed z-50 pointer-events-none transition-opacity duration-150 ${isPopupVisible ? "opacity-100" : "opacity-0 pointer-events-none"}`}
+            style={{
+              left: popupPosition?.left ?? 16,
+              top: popupPosition?.top ?? 100,
+            }}
+          >
+            <div className="pointer-events-auto w-[360px] max-w-[calc(100vw-32px)]">
               {selectedMarket.type === "news" ? (
                 <NewsMarker
                   key={`mobile-${selectedMarket.id}`}

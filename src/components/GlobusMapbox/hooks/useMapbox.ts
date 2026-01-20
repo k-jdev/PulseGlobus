@@ -99,11 +99,16 @@ function clearConnectionLines(map: mapboxgl.Map) {
   }
 }
 
+export interface MarkerClickEvent {
+  marker: MapMarker;
+  screenPosition: { x: number; y: number };
+}
+
 export const useMapbox = (
   containerRef: React.RefObject<HTMLDivElement>,
   onThemeChange?: (theme: Theme) => void,
   markers?: MapMarker[],
-  onMarkerClick?: (marker: MapMarker) => void,
+  onMarkerClick?: (event: MarkerClickEvent) => void,
 ) => {
   const mapRef = useRef<mapboxgl.Map | null>(null);
   const popupRef = useRef<mapboxgl.Popup | null>(null);
@@ -112,9 +117,9 @@ export const useMapbox = (
   const isPausedRef = useRef(window.innerWidth < 768);
   const markersRef = useRef<MapMarker[]>([]);
   const isPopupPinnedRef = useRef(false); // Флаг закреплённого попапа
-  const onMarkerClickRef = useRef<((marker: MapMarker) => void) | undefined>(
-    undefined,
-  );
+  const onMarkerClickRef = useRef<
+    ((event: MarkerClickEvent) => void) | undefined
+  >(undefined);
 
   // Обновляем refs при изменении props
   useEffect(() => {
@@ -403,7 +408,10 @@ export const useMapbox = (
             const marketId = feature.properties?.id;
             const marker = markersRef.current.find((m) => m.id === marketId);
             if (marker) {
-              onMarkerClickRef.current(marker);
+              onMarkerClickRef.current({
+                marker,
+                screenPosition: { x: e.point.x, y: e.point.y },
+              });
             }
           }
         }
@@ -680,6 +688,17 @@ export const useMapbox = (
     }
   };
 
+  // Функция для преобразования географических координат в экранные
+  const projectCoordinates = (
+    coordinates: [number, number],
+  ): { x: number; y: number } | null => {
+    if (mapRef.current) {
+      const point = mapRef.current.project(coordinates);
+      return { x: point.x, y: point.y };
+    }
+    return null;
+  };
+
   return {
     mapRef,
     selectedFeature,
@@ -689,5 +708,6 @@ export const useMapbox = (
     toggleSpin,
     clearConnections,
     flyToLocation,
+    projectCoordinates,
   };
 };

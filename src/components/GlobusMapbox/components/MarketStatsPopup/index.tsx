@@ -128,13 +128,13 @@ export const MarketStatsPopup: FC<MarketStatsPopupProps> = ({
       exit={{ opacity: 0, scale: 0.95, y: 10 }}
       transition={{ duration: 0.2, ease: "easeOut" }}
       className={`bg-white rounded-[14px] shadow-[0px_22px_32px_0px_rgba(20,82,240,0.25)] overflow-hidden ${
-        isMobile ? "w-[calc(100vw-32px)] max-w-[372px]" : "w-[465px]"
+        isMobile ? "w-full" : "w-[465px]"
       }`}
     >
-      {/* Close button - desktop only */}
+      {/* Close button - visible on all devices */}
       <button
         onClick={onClose}
-        className="hidden md:flex absolute right-4 top-4 w-[17px] h-[17px] items-center justify-center text-[#adadad] hover:text-gray-600 transition-colors z-10"
+        className="absolute right-4 top-4 w-[24px] h-[24px] flex items-center justify-center text-[#adadad] hover:text-gray-600 transition-colors z-10 bg-white/80 rounded-full"
       >
         <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
           <path

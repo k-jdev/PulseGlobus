@@ -52,6 +52,7 @@ export const NewsMarker: FC<NewsMarkerProps> = ({
   sourcecountry,
   seendate,
   onClose,
+  isMobile = false,
 }) => {
   return (
     <motion.div
@@ -59,7 +60,9 @@ export const NewsMarker: FC<NewsMarkerProps> = ({
       animate={{ opacity: 1, scale: 1, y: 0 }}
       exit={{ opacity: 0, scale: 0.95, y: 10 }}
       transition={{ duration: 0.2, ease: "easeOut" }}
-      className="bg-white border border-[#e9edf8] rounded-[14px] px-6 py-5 min-w-[360px] max-w-[420px] relative"
+      className={`bg-white border border-[#e9edf8] rounded-[14px] relative shadow-[0px_22px_32px_0px_rgba(20,82,240,0.25)] ${
+        isMobile ? "px-5 py-4 w-full" : "px-6 py-5 min-w-[360px] max-w-[420px]"
+      }`}
     >
       {/* Close button */}
       {onClose && (

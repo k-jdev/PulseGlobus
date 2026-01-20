@@ -1,1 +1,1 @@
-export { useMapbox } from "./useMapbox";
+export { useMapbox, type MarkerClickEvent } from "./useMapbox";
