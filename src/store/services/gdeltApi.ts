@@ -2,6 +2,12 @@ import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
 
 const GDELT_API_BASE_URL = "https://api.gdeltproject.org/api/v2/doc";
 
+const POLYMARKET_RELEVANT_QUERY =
+  "(Trump OR Biden OR Ukraine OR Russia OR Israel OR Gaza OR China OR Bitcoin OR inflation)";
+
+const BREAKING_NEWS_QUERY =
+  "(Trump OR Biden OR Ukraine OR Russia OR Israel OR China OR Bitcoin)";
+
 export interface GdeltArticle {
   url: string;
   url_mobile: string;
@@ -28,7 +34,7 @@ export interface GdeltQueryParams {
 
 function diversifyArticlesByCountry(
   articles: GdeltArticle[],
-  maxPerCountry: number = 20
+  maxPerCountry: number = 20,
 ): GdeltArticle[] {
   const countryCount: Record<string, number> = {};
   const diversified: GdeltArticle[] = [];
@@ -54,6 +60,29 @@ function diversifyArticlesByCountry(
   return diversified;
 }
 
+function deduplicateArticles(articles: GdeltArticle[]): GdeltArticle[] {
+  const seenTitles = new Set<string>();
+  const deduplicated: GdeltArticle[] = [];
+
+  for (const article of articles) {
+    const normalizedTitle = article.title
+      .toLowerCase()
+      .replace(/[^\w\s]/g, "")
+      .replace(/\s+/g, " ")
+      .trim();
+
+    const titlePrefix = normalizedTitle.slice(0, 50);
+
+    if (!seenTitles.has(normalizedTitle) && !seenTitles.has(titlePrefix)) {
+      seenTitles.add(normalizedTitle);
+      seenTitles.add(titlePrefix);
+      deduplicated.push(article);
+    }
+  }
+
+  return deduplicated;
+}
+
 export const gdeltApi = createApi({
   reducerPath: "gdeltApi",
   baseQuery: fetchBaseQuery({ baseUrl: GDELT_API_BASE_URL }),
@@ -61,8 +90,8 @@ export const gdeltApi = createApi({
   endpoints: (builder) => ({
     getNews: builder.query<GdeltArticle[], GdeltQueryParams>({
       query: ({
-        query = "(politics OR economy OR technology OR sports OR business)",
-        maxrecords = 500,
+        query = POLYMARKET_RELEVANT_QUERY,
+        maxrecords = 250,
         timespan = "1d",
 
         sourcecountry,
@@ -81,17 +110,14 @@ export const gdeltApi = createApi({
         if (sourcecountry) queryParts.push(`sourcecountry:${sourcecountry}`);
         if (theme) queryParts.push(`theme:${theme}`);
 
-        params.set(
-          "query",
-          queryParts.join(" ") || "(politics OR economy OR technology)"
-        );
+        params.set("query", queryParts.join(" ") || POLYMARKET_RELEVANT_QUERY);
 
         return `/doc?${params.toString()}`;
       },
       transformResponse: (response: GdeltResponse) => {
         const articles = response.articles || [];
-
-        return diversifyArticlesByCountry(articles, 12);
+        const deduplicated = deduplicateArticles(articles);
+        return diversifyArticlesByCountry(deduplicated, 12);
       },
       providesTags: ["News"],
     }),
@@ -100,7 +126,7 @@ export const gdeltApi = createApi({
       query: (searchQuery) => {
         const params = new URLSearchParams({
           query: `${
-            searchQuery || "(politics OR economy OR technology)"
+            searchQuery || POLYMARKET_RELEVANT_QUERY
           } sourcelang:english`,
           mode: "ArtList",
           format: "json",
@@ -111,8 +137,8 @@ export const gdeltApi = createApi({
       },
       transformResponse: (response: GdeltResponse) => {
         const articles = response.articles || [];
-        // Для поиска возвращаем больше результатов без сильной диверсификации
-        return articles.slice(0, 100);
+        // Deduplicate for search results
+        return deduplicated.slice(0, 100);
       },
       providesTags: ["News"],
     }),
@@ -121,10 +147,9 @@ export const gdeltApi = createApi({
       GdeltArticle[],
       { maxrecords?: number; timespan?: string }
     >({
-      query: ({ maxrecords = 400, timespan = "4h" } = {}) => {
+      query: ({ maxrecords = 250, timespan = "4h" } = {}) => {
         const params = new URLSearchParams({
-          query:
-            "(politics OR economy OR technology OR sports OR business OR world) sourcelang:english",
+          query: `${BREAKING_NEWS_QUERY} sourcelang:english`,
           mode: "ArtList",
           format: "json",
           maxrecords: maxrecords.toString(),
@@ -134,7 +159,8 @@ export const gdeltApi = createApi({
       },
       transformResponse: (response: GdeltResponse) => {
         const articles = response.articles || [];
-        return diversifyArticlesByCountry(articles, 15);
+        // First deduplicate, then diversify by country
+        return diversifyArticlesByCountry(deduplicated, 15);
       },
       providesTags: ["News"],
     }),

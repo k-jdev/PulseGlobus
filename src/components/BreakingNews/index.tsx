@@ -60,7 +60,7 @@ const formatCountry = (country: string): string => {
 
 const convertArticleToNews = (
   article: GdeltArticle,
-  index: number
+  index: number,
 ): NewsItem => {
   return {
     id: `${article.url}-${index}`,
@@ -87,9 +87,9 @@ export const BreakingNews = ({ isOpen }: BreakingNewsProps) => {
     "24h": "1d",
   };
 
-  // Crypto-relevant news: geopolitics, economy, conflicts, disasters
+  // Polymarket-relevant news: US politics, geopolitics, crypto, economy
   const breakingNewsQuery =
-    "(war OR conflict OR earthquake OR election OR sanctions OR bitcoin OR crisis OR Ukraine OR Israel OR China)";
+    "(Trump OR Biden OR Ukraine OR Russia OR Israel OR Gaza OR China OR Bitcoin)";
 
   const {
     data: articles,

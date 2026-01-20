@@ -69,8 +69,8 @@ const GlobusMapbox = ({
     error: newsError,
   } = useGetNewsQuery({
     query:
-      "(war OR conflict OR earthquake OR election OR sanctions OR bitcoin OR crisis OR Ukraine OR Israel OR China)",
-    maxrecords: 200,
+      "(Trump OR Biden OR Ukraine OR Russia OR Israel OR Gaza OR China OR Bitcoin OR inflation)",
+    maxrecords: 250,
     timespan: "1d",
   });
 

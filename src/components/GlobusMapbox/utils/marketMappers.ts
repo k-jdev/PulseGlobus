@@ -155,7 +155,7 @@ function getOffsetWithBounds(
   id: string,
   index: number,
   centerCoords: [number, number],
-  cityName: string
+  cityName: string,
 ): [number, number] {
   const hash = hashCode(id + index.toString());
   const hash2 = hashCode(id + index.toString() + "salt");
@@ -191,7 +191,7 @@ function getOffset(
   id: string,
   index: number,
   centerCoords?: [number, number],
-  cityName?: string
+  cityName?: string,
 ): [number, number] {
   // Если есть координаты и название города - используем bounds
   if (centerCoords && cityName) {
@@ -1895,7 +1895,7 @@ const KEYWORD_CITY_MAP: {
 
 function getCoordinatesForMarket(
   market: Market,
-  index: number = 0
+  index: number = 0,
 ): [number, number] {
   const searchText = `${market.question} ${market.description || ""} ${
     market.events?.[0]?.title || ""
@@ -1923,7 +1923,7 @@ function getCoordinatesForMarket(
       market.id,
       index,
       bestMatch.city.coordinates,
-      bestMatch.city.name
+      bestMatch.city.name,
     );
     return [
       bestMatch.city.coordinates[0] + offset[0],
@@ -1936,7 +1936,7 @@ function getCoordinatesForMarket(
     market.id,
     index,
     cityData.coordinates,
-    cityData.name
+    cityData.name,
   );
 
   return [
@@ -1974,7 +1974,7 @@ export function convertMarketsToMapMarkers(markets: Market[]): MapMarker[] {
           endDate: markets[0].endDate,
           question: markets[0].question?.substring(0, 50),
         }
-      : "no markets"
+      : "no markets",
   );
 
   return markets
@@ -2024,7 +2024,7 @@ export function convertMarketsToMapMarkers(markets: Market[]): MapMarker[] {
 }
 
 export function convertEventsToMapMarkers(
-  events: PolymarketEvent[]
+  events: PolymarketEvent[],
 ): MapMarker[] {
   return events
     .filter((event) => event.active && !event.closed)
@@ -2057,7 +2057,7 @@ export function convertEventsToMapMarkers(
           event.id,
           index,
           bestMatch.city.coordinates,
-          bestMatch.city.name
+          bestMatch.city.name,
         );
         coordinates = [
           bestMatch.city.coordinates[0] + offset[0],
@@ -2072,7 +2072,7 @@ export function convertEventsToMapMarkers(
           event.id,
           index,
           cityData.coordinates,
-          cityData.name
+          cityData.name,
         );
         coordinates = [
           cityData.coordinates[0] + offset[0],
@@ -2119,7 +2119,7 @@ function parseMarketPrices(prices: string): number[] {
 }
 
 export function convertEventsWithMarketsToMapMarkers(
-  events: PolymarketEvent[]
+  events: PolymarketEvent[],
 ): MapMarker[] {
   const now = new Date();
 
@@ -2183,7 +2183,7 @@ export function convertEventsWithMarketsToMapMarkers(
           event.id,
           index,
           bestMatch.city.coordinates,
-          bestMatch.city.name
+          bestMatch.city.name,
         );
         coordinates = [
           bestMatch.city.coordinates[0] + offset[0],
@@ -2198,7 +2198,7 @@ export function convertEventsWithMarketsToMapMarkers(
           event.id,
           index,
           cityData.coordinates,
-          cityData.name
+          cityData.name,
         );
         coordinates = [
           cityData.coordinates[0] + offset[0],
@@ -2587,7 +2587,7 @@ const countryIndexTracker: Record<string, number> = {};
 function getCountryCoordinates(
   sourcecountry: string,
   articleId: string,
-  index: number
+  index: number,
 ): [number, number] {
   const cities = COUNTRY_CITIES[sourcecountry];
   const offset = getOffset(articleId, index);
@@ -2619,7 +2619,7 @@ function getCountryCoordinates(
 function getLocationFromTitle(
   title: string,
   articleId: string,
-  index: number
+  index: number,
 ): [number, number] | null {
   const lowerTitle = title.toLowerCase();
   const offset = getOffset(articleId, index);
@@ -2642,7 +2642,7 @@ function getNewsCoordinates(
   title: string,
   sourcecountry: string,
   articleId: string,
-  index: number
+  index: number,
 ): [number, number] {
   // 1. First try to extract location from title
   const titleLocation = getLocationFromTitle(title, articleId, index);
@@ -2655,7 +2655,7 @@ function getNewsCoordinates(
 }
 
 export function convertGdeltArticlesToMapMarkers(
-  articles: GdeltArticle[]
+  articles: GdeltArticle[],
 ): MapMarker[] {
   // Reset country index tracker for fresh distribution
   Object.keys(countryIndexTracker).forEach((key) => {
@@ -2668,7 +2668,7 @@ export function convertGdeltArticlesToMapMarkers(
       article.title,
       article.sourcecountry,
       article.url,
-      index
+      index,
     );
 
     return {
@@ -2745,14 +2745,56 @@ const NEWS_MARKET_KEYWORDS: Record<string, string[]> = {
     "machine learning",
     "gpt",
   ],
-  election: [
-    "election",
-    "vote",
-    "voting",
-    "ballot",
-    "poll",
+  us_election: [
+    "republican",
+    "democrat",
+    "gop",
+    "dnc",
+    "rnc",
+    "congress",
+    "senate",
+    "house of representatives",
+    "electoral college",
+    "swing state",
     "primary",
-    "candidate",
+    "caucus",
+    "nominee",
+    "presidential",
+  ],
+  us_politicians: [
+    "j.d. vance",
+    "jd vance",
+    "vance",
+    "marco rubio",
+    "rubio",
+    "desantis",
+    "ron desantis",
+    "nikki haley",
+    "haley",
+    "vivek ramaswamy",
+    "ramaswamy",
+    "tim scott",
+    "pence",
+    "mike pence",
+    "kamala harris",
+    "harris",
+    "pete buttigieg",
+    "buttigieg",
+    "aoc",
+    "ocasio-cortez",
+    "bernie sanders",
+    "sanders",
+    "elizabeth warren",
+    "warren",
+    "newsom",
+    "gavin newsom",
+    "mitch mcconnell",
+    "mcconnell",
+    "kevin mccarthy",
+    "mccarthy",
+    "mike johnson",
+    "schumer",
+    "pelosi",
   ],
   economy: [
     "economy",
@@ -2788,7 +2830,177 @@ const NEWS_MARKET_KEYWORDS: Record<string, string[]> = {
   coup: ["coup", "overthrow", "revolution", "uprising", "military takeover"],
   sanctions: ["sanctions", "embargo", "tariff", "trade war"],
   nuclear: ["nuclear", "atomic", "uranium", "missile"],
+  sports: [
+    "super bowl",
+    "nfl",
+    "nba",
+    "mlb",
+    "world series",
+    "stanley cup",
+    "nhl",
+    "world cup",
+    "fifa",
+    "olympics",
+    "championship",
+    "playoffs",
+    "finals",
+    "mvp",
+  ],
+  entertainment: [
+    "oscars",
+    "academy awards",
+    "grammy",
+    "emmy",
+    "golden globe",
+    "box office",
+    "netflix",
+    "disney",
+    "streaming",
+  ],
+  tech_companies: [
+    "apple",
+    "google",
+    "microsoft",
+    "amazon",
+    "meta",
+    "facebook",
+    "tesla",
+    "nvidia",
+    "spacex",
+    "elon musk",
+    "musk",
+    "tim cook",
+    "satya nadella",
+    "zuckerberg",
+  ],
+  north_korea: [
+    "north korea",
+    "dprk",
+    "pyongyang",
+    "kim jong un",
+    "kim jong-un",
+  ],
+  india: ["india", "indian", "modi", "narendra modi", "delhi", "mumbai"],
+  europe: [
+    "european union",
+    " eu ",
+    "brussels",
+    "macron",
+    "scholz",
+    "starmer",
+    "sunak",
+    "germany",
+    "france",
+    "uk",
+    "britain",
+    "british",
+  ],
+  middle_east: [
+    "saudi",
+    "saudi arabia",
+    "uae",
+    "qatar",
+    "dubai",
+    "lebanon",
+    "hezbollah",
+    "syria",
+    "assad",
+    "iraq",
+    "yemen",
+    "houthi",
+  ],
+  asia: [
+    "asean",
+    "myanmar",
+    "burma",
+    "thailand",
+    "vietnam",
+    "indonesia",
+    "philippines",
+    "malaysia",
+    "singapore",
+    "japan",
+    "south korea",
+    "korea",
+  ],
+  africa: [
+    "africa",
+    "nigeria",
+    "south africa",
+    "kenya",
+    "ethiopia",
+    "egypt",
+    "morocco",
+    "sudan",
+  ],
+  latin_america: [
+    "brazil",
+    "mexico",
+    "argentina",
+    "venezuela",
+    "colombia",
+    "chile",
+    "peru",
+    "lula",
+    "milei",
+  ],
 };
+
+// Geographic context mapping - which topics are related to which regions
+const GEOGRAPHIC_CONTEXT: Record<string, string[]> = {
+  us_election: [
+    "us",
+    "usa",
+    "united states",
+    "america",
+    "american",
+    "washington",
+  ],
+  us_politicians: [
+    "us",
+    "usa",
+    "united states",
+    "america",
+    "american",
+    "washington",
+  ],
+  trump: ["us", "usa", "united states", "america", "american"],
+  biden: ["us", "usa", "united states", "america", "american", "washington"],
+  ukraine: ["ukraine", "ukrainian", "europe", "eastern europe"],
+  russia: ["russia", "russian", "moscow"],
+  china: ["china", "chinese", "asia", "asian"],
+  taiwan: ["taiwan", "taiwanese", "asia", "china"],
+  israel: ["israel", "israeli", "middle east", "gaza"],
+  iran: ["iran", "iranian", "middle east", "persian"],
+  north_korea: ["north korea", "korea", "asia"],
+  india: ["india", "indian", "south asia"],
+  europe: ["europe", "european", "eu"],
+  middle_east: ["middle east", "gulf", "arab"],
+  asia: ["asia", "asian", "southeast asia"],
+  africa: ["africa", "african"],
+  latin_america: ["latin america", "south america", "central america"],
+};
+
+// Conflicting geographic contexts - topics that should NOT be matched together
+const CONFLICTING_CONTEXTS: [string, string][] = [
+  ["us_election", "asia"],
+  ["us_election", "middle_east"],
+  ["us_election", "africa"],
+  ["us_election", "latin_america"],
+  ["us_election", "europe"],
+  ["us_politicians", "asia"],
+  ["us_politicians", "middle_east"],
+  ["us_politicians", "africa"],
+  ["trump", "asia"],
+  ["biden", "asia"],
+  ["israel", "asia"],
+  ["iran", "asia"],
+  ["ukraine", "asia"],
+  ["russia", "latin_america"],
+  ["china", "latin_america"],
+  ["north_korea", "europe"],
+  ["north_korea", "latin_america"],
+];
 
 // Find matching keywords between news and market
 function findMatchingKeywords(text1: string, text2: string): string[] {
@@ -2806,6 +3018,102 @@ function findMatchingKeywords(text1: string, text2: string): string[] {
   }
 
   return matches;
+}
+
+// Check if texts have conflicting geographic contexts
+function hasConflictingContext(text1: string, text2: string): boolean {
+  const lower1 = text1.toLowerCase();
+  const lower2 = text2.toLowerCase();
+
+  // Find which topics each text belongs to
+  const topics1: string[] = [];
+  const topics2: string[] = [];
+
+  for (const [topic, keywords] of Object.entries(NEWS_MARKET_KEYWORDS)) {
+    for (const keyword of keywords) {
+      if (lower1.includes(keyword) && !topics1.includes(topic)) {
+        topics1.push(topic);
+      }
+      if (lower2.includes(keyword) && !topics2.includes(topic)) {
+        topics2.push(topic);
+      }
+    }
+  }
+
+  // Check for conflicting contexts
+  for (const [ctx1, ctx2] of CONFLICTING_CONTEXTS) {
+    if (
+      (topics1.includes(ctx1) && topics2.includes(ctx2)) ||
+      (topics1.includes(ctx2) && topics2.includes(ctx1))
+    ) {
+      return true;
+    }
+  }
+
+  return false;
+}
+
+// Check if both texts share the same geographic region
+function hasMatchingGeographicContext(text1: string, text2: string): boolean {
+  const lower1 = text1.toLowerCase();
+  const lower2 = text2.toLowerCase();
+
+  // Check each geographic context
+  for (const [topic, regions] of Object.entries(GEOGRAPHIC_CONTEXT)) {
+    // Check if text1 is about this topic
+    const text1HasTopic = NEWS_MARKET_KEYWORDS[topic]?.some((kw) =>
+      lower1.includes(kw),
+    );
+    if (!text1HasTopic) continue;
+
+    // If text1 is about this topic, check if text2 mentions the related region
+    const text2HasRegion = regions.some((region) => lower2.includes(region));
+    if (text2HasRegion) return true;
+
+    // Also check if text2 has the same topic keywords
+    const text2HasTopic = NEWS_MARKET_KEYWORDS[topic]?.some((kw) =>
+      lower2.includes(kw),
+    );
+    if (text2HasTopic) return true;
+  }
+
+  return false;
+}
+
+// Get person names mentioned in text for precise matching
+function extractPersonNames(text: string): string[] {
+  const lower = text.toLowerCase();
+  const names: string[] = [];
+
+  const politicianNames = NEWS_MARKET_KEYWORDS.us_politicians || [];
+  const otherNames = [
+    "putin",
+    "zelensky",
+    "xi jinping",
+    "netanyahu",
+    "khamenei",
+    "kim jong un",
+    "modi",
+    "macron",
+    "scholz",
+    "starmer",
+    "sunak",
+    "lula",
+    "milei",
+    "assad",
+    "musk",
+    "zuckerberg",
+  ];
+
+  const allNames = [...politicianNames, ...otherNames];
+
+  for (const name of allNames) {
+    if (lower.includes(name)) {
+      names.push(name);
+    }
+  }
+
+  return names;
 }
 
 // Извлечь значимые слова из текста (убираем стоп-слова)
@@ -2949,6 +3257,11 @@ function calculateRelationScore(text1: string, text2: string): number {
 
   if (words1.length === 0 || words2.length === 0) return 0;
 
+  // PENALTY: Check for conflicting geographic contexts FIRST
+  if (hasConflictingContext(text1, text2)) {
+    return 0; // Immediately reject if contexts conflict
+  }
+
   const set1 = new Set(words1);
   const set2 = new Set(words2);
 
@@ -2962,11 +3275,23 @@ function calculateRelationScore(text1: string, text2: string): number {
 
   // Бонус за совпадение по ключевым темам
   const keywordMatches = findMatchingKeywords(text1, text2);
-  const keywordBonus = keywordMatches.length * 15;
+  const keywordBonus = keywordMatches.length * 12; // Reduced from 15
+
+  // BONUS: Extra points for matching person names (very specific)
+  const names1 = extractPersonNames(text1);
+  const names2 = extractPersonNames(text2);
+  const matchingNames = names1.filter((n) => names2.includes(n));
+  const nameBonus = matchingNames.length * 25; // High bonus for name matches
+
+  // BONUS: Extra points for matching geographic context
+  const geoBonus = hasMatchingGeographicContext(text1, text2) ? 15 : 0;
 
   // Нормализуем score (0-100)
-  const baseScore = (matchCount / Math.min(set1.size, set2.size)) * 60;
-  const totalScore = Math.min(100, baseScore + keywordBonus);
+  const baseScore = (matchCount / Math.min(set1.size, set2.size)) * 40; // Reduced from 60
+  const totalScore = Math.min(
+    100,
+    baseScore + keywordBonus + nameBonus + geoBonus,
+  );
 
   return Math.round(totalScore);
 }
@@ -3034,10 +3359,10 @@ function calculateRelationScore(text1: string, text2: string): number {
 // Link markets to nearby news and adjust their positions
 export function linkMarketsToNews(
   marketMarkers: MapMarker[],
-  newsMarkers: MapMarker[]
+  newsMarkers: MapMarker[],
 ): { markets: MapMarker[]; news: MapMarker[] } {
-  // Минимальный score для установления связи
-  const MIN_RELATION_SCORE = 20;
+  // Минимальный score для установления связи (increased from 20)
+  const MIN_RELATION_SCORE = 30;
 
   // Создаём копии для модификации
   const linkedMarkets = marketMarkers.map((market) => ({ ...market }));
@@ -3053,7 +3378,7 @@ export function linkMarketsToNews(
     for (const news of linkedNews) {
       const score = calculateRelationScore(
         `${market.title} ${market.description || ""}`,
-        `${news.title} ${news.description || ""}`
+        `${news.title} ${news.description || ""}`,
       );
 
       if (score >= MIN_RELATION_SCORE) {
@@ -3088,7 +3413,7 @@ export function linkMarketsToNews(
         ...news.relatedMarketIds.map((marketId) => {
           const market = linkedMarkets.find((m) => m.id === marketId);
           return market?.relationScore || 0;
-        })
+        }),
       );
       news.relationScore = maxScore;
     }
@@ -3098,7 +3423,7 @@ export function linkMarketsToNews(
 }
 
 export function createGeoJSONFromMarkers(
-  markers: MapMarker[]
+  markers: MapMarker[],
 ): GeoJSON.FeatureCollection {
   return {
     type: "FeatureCollection",
