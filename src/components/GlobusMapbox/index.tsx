@@ -30,6 +30,7 @@ const GlobusMapbox = ({
   showNews = true,
 }: GlobusMapboxProps) => {
   const mapContainerRef = useRef<HTMLDivElement>(null);
+  const mobilePopupRef = useRef<HTMLDivElement>(null);
   const [selectedMarket, setSelectedMarket] = useState<MapMarker | null>(null);
   const [popupPosition, setPopupPosition] = useState<{
     left: number;
@@ -37,14 +38,21 @@ const GlobusMapbox = ({
   } | null>(null);
   const [isPopupVisible, setIsPopupVisible] = useState(true);
 
-  // Close popup when mobile menu opens
+  const [markerScreenPosition, setMarkerScreenPosition] = useState<{
+    x: number;
+    y: number;
+  } | null>(null);
+
+  const [popupSize, setPopupSize] = useState<{ width: number; height: number }>(
+    { width: 360, height: 300 },
+  );
+
   useEffect(() => {
     if (isMobileMenuOpen) {
       setSelectedMarket(null);
     }
   }, [isMobileMenuOpen]);
 
-  // Polymarket data
   const {
     data: events,
     isLoading: isLoadingEvents,
@@ -55,7 +63,6 @@ const GlobusMapbox = ({
     order: "volume24hr",
   });
 
-  // GDELT News data - crypto-relevant global events
   const {
     data: newsArticles,
     isLoading: isLoadingNews,
@@ -99,7 +106,6 @@ const GlobusMapbox = ({
         ? convertGdeltArticlesToMapMarkers(newsArticles)
         : [];
 
-    // Link markets to nearby news based on content matching
     let linkedMarketMarkers: MapMarker[];
     let linkedNewsMarkers: MapMarker[];
 
@@ -159,15 +165,61 @@ const GlobusMapbox = ({
         screenPosition,
       );
       setSelectedMarket(marker);
-      // Позиция попапа точно под маркером
-      const popupWidth = 360;
-      const left = screenPosition.x - popupWidth / 2;
-      const top = screenPosition.y + 20;
-      setPopupPosition({ left, top });
+
+      const isMobile = window.innerWidth < 768;
+
+      if (isMobile) {
+        setPopupPosition({ left: 16, top: 100 });
+
+        setMarkerScreenPosition({ x: screenPosition.x, y: screenPosition.y });
+      } else {
+        const popupWidth = 360;
+        const left = screenPosition.x - popupWidth / 2;
+        const top = screenPosition.y + 20;
+        setPopupPosition({ left, top });
+      }
       setIsPopupVisible(true);
     },
     [],
   );
+
+  useEffect(() => {
+    const isMobile = window.innerWidth < 768;
+    if (!isMobile || !selectedMarket || !mobilePopupRef.current) return;
+
+    const popup = mobilePopupRef.current;
+    const rect = popup.getBoundingClientRect();
+    const popupWidth = rect.width;
+    const popupHeight = rect.height;
+
+    setPopupSize({ width: popupWidth, height: popupHeight });
+
+    const centerX = (window.innerWidth - popupWidth) / 2;
+    const topPadding = 180;
+    const centerY = topPadding;
+
+    setPopupPosition({ left: centerX, top: centerY });
+  }, [selectedMarket]);
+
+  useEffect(() => {
+    const isMobile = window.innerWidth < 768;
+    if (!isMobile || !mobilePopupRef.current) return;
+
+    const resizeObserver = new ResizeObserver((entries) => {
+      for (const entry of entries) {
+        const { width, height } = entry.contentRect;
+        if (width > 0 && height > 0) {
+          setPopupSize({ width, height });
+        }
+      }
+    });
+
+    resizeObserver.observe(mobilePopupRef.current);
+
+    return () => {
+      resizeObserver.disconnect();
+    };
+  }, [selectedMarket]);
 
   const {
     theme,
@@ -183,50 +235,55 @@ const GlobusMapbox = ({
   const handleClosePopup = () => {
     setSelectedMarket(null);
     setPopupPosition(null);
-    clearConnections(); // Очищаем линии связей при закрытии попапа
+    setMarkerScreenPosition(null);
+    clearConnections();
   };
 
-  // Обновляем позицию попапа при движении карты (только на мобильных)
   useEffect(() => {
     const map = mapRef.current;
     if (!map || !selectedMarket) return;
 
-    const updatePopupPosition = () => {
+    const updateMarkerPosition = () => {
       const isMobile = window.innerWidth < 768;
       if (!isMobile || !selectedMarket) return;
 
       const screenPos = projectCoordinates(selectedMarket.coordinates);
       if (screenPos) {
-        const popupWidth = 360;
-        const minTop = 120; // Минимальная позиция маркера (навбар + поиск)
-        const left = screenPos.x - popupWidth / 2;
-        const top = screenPos.y + 20;
-        setPopupPosition({ left, top });
+        setMarkerScreenPosition({ x: screenPos.x, y: screenPos.y });
 
-        // Проверяем видимость - скрываем если маркер вышел за границы экрана или под навбар
         const isMarkerVisible =
-          screenPos.x > -popupWidth / 2 &&
-          screenPos.x < window.innerWidth + popupWidth / 2 &&
-          screenPos.y > minTop &&
+          screenPos.x > -50 &&
+          screenPos.x < window.innerWidth + 50 &&
+          screenPos.y > 50 &&
           screenPos.y < window.innerHeight - 50;
 
         setIsPopupVisible(isMarkerVisible);
+
+        const isTooFarAway =
+          screenPos.x < -150 ||
+          screenPos.x > window.innerWidth + 150 ||
+          screenPos.y < -150 ||
+          screenPos.y > window.innerHeight + 150;
+
+        if (isTooFarAway) {
+          setSelectedMarket(null);
+          setPopupPosition(null);
+          setMarkerScreenPosition(null);
+        }
       }
     };
 
-    map.on("move", updatePopupPosition);
+    map.on("move", updateMarkerPosition);
     return () => {
-      map.off("move", updatePopupPosition);
+      map.off("move", updateMarkerPosition);
     };
   }, [selectedMarket, projectCoordinates, mapRef]);
 
-  // Обработчик клика на новость во вкладке News - перелёт к месту на карте
   const handleNewsClick = (newsId: string, coordinates: [number, number]) => {
     console.log("📍 Flying to news location:", newsId, coordinates);
     flyToLocation(coordinates, 4);
   };
 
-  // Get related news for selected market
   const relatedNews = useMemo(() => {
     if (
       !selectedMarket ||
@@ -269,7 +326,6 @@ const GlobusMapbox = ({
       />
       {selectedMarket && (
         <>
-          {/* Desktop popup - right side */}
           <div className="hidden md:block fixed top-[160px] right-6 z-50">
             {selectedMarket.type === "news" ? (
               <NewsMarker
@@ -306,15 +362,116 @@ const GlobusMapbox = ({
               />
             )}
           </div>
-          {/* Mobile popup - positioned near marker, doesn't block map interaction */}
+          {markerScreenPosition && popupPosition && (
+            <svg
+              className="md:hidden fixed inset-0 w-full h-full pointer-events-none z-40"
+              style={{ overflow: "visible" }}
+            >
+              <defs>
+                <linearGradient
+                  id="lineGradient"
+                  x1="0%"
+                  y1="0%"
+                  x2="100%"
+                  y2="100%"
+                >
+                  <stop offset="0%" stopColor="#1452f0" stopOpacity="0.8" />
+                  <stop offset="100%" stopColor="#1452f0" stopOpacity="0.3" />
+                </linearGradient>
+              </defs>
+              {(() => {
+                const popupWidth = popupSize.width;
+                const popupHeight = popupSize.height;
+                const popupLeft = popupPosition.left ?? 16;
+                const popupTop = popupPosition.top ?? 100;
+
+                const popupCenterX = popupLeft + popupWidth / 2;
+                const popupCenterY = popupTop + popupHeight / 2;
+
+                const markerX = markerScreenPosition.x;
+                const markerY = markerScreenPosition.y;
+
+                const dx = markerX - popupCenterX;
+                const dy = markerY - popupCenterY;
+
+                let edgeX = popupCenterX;
+                let edgeY = popupCenterY;
+
+                const halfW = popupWidth / 2;
+                const halfH = popupHeight / 2;
+
+                if (Math.abs(dx) > 1 || Math.abs(dy) > 1) {
+                  const absRatioX = Math.abs(dx) / halfW;
+                  const absRatioY = Math.abs(dy) / halfH;
+
+                  if (absRatioX > absRatioY) {
+                    edgeX = dx > 0 ? popupLeft + popupWidth : popupLeft;
+                    const t = (edgeX - popupCenterX) / dx;
+                    edgeY = popupCenterY + dy * t;
+
+                    edgeY = Math.max(
+                      popupTop,
+                      Math.min(popupTop + popupHeight, edgeY),
+                    );
+                  } else {
+                    edgeY = dy > 0 ? popupTop + popupHeight : popupTop;
+                    const t = (edgeY - popupCenterY) / dy;
+                    edgeX = popupCenterX + dx * t;
+                    edgeX = Math.max(
+                      popupLeft,
+                      Math.min(popupLeft + popupWidth, edgeX),
+                    );
+                  }
+                }
+
+                return (
+                  <>
+                    <line
+                      x1={markerX}
+                      y1={markerY}
+                      x2={edgeX}
+                      y2={edgeY}
+                      stroke="#1452f0"
+                      strokeWidth="2"
+                      strokeDasharray="8 6"
+                      strokeLinecap="round"
+                      opacity={isPopupVisible ? 0.6 : 0}
+                      style={{ transition: "opacity 150ms ease" }}
+                    />
+                    <circle
+                      cx={markerX}
+                      cy={markerY}
+                      r="8"
+                      fill="#1452f0"
+                      stroke="#ffffff"
+                      strokeWidth="3"
+                      opacity={isPopupVisible ? 1 : 0}
+                      style={{ transition: "opacity 150ms ease" }}
+                    />
+                    <circle
+                      cx={markerX}
+                      cy={markerY}
+                      r="3"
+                      fill="#ffffff"
+                      opacity={isPopupVisible ? 1 : 0}
+                      style={{ transition: "opacity 150ms ease" }}
+                    />
+                  </>
+                );
+              })()}
+            </svg>
+          )}
           <div
-            className={`md:hidden fixed z-50 pointer-events-none transition-opacity duration-150 ${isPopupVisible ? "opacity-100" : "opacity-0 pointer-events-none"}`}
+            className="md:hidden fixed z-50"
             style={{
               left: popupPosition?.left ?? 16,
-              top: popupPosition?.top ?? 100,
+              top: popupPosition?.top ?? 80,
             }}
           >
-            <div className="pointer-events-auto w-[360px] max-w-[calc(100vw-32px)]">
+            <div
+              ref={mobilePopupRef}
+              style={{ width: "min(360px, calc(100vw - 32px))" }}
+            >
               {selectedMarket.type === "news" ? (
                 <NewsMarker
                   key={`mobile-${selectedMarket.id}`}
