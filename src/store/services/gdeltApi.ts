@@ -1,6 +1,9 @@
 import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
 
-const GDELT_API_BASE_URL = "https://api.gdeltproject.org/api/v2/doc";
+// DOC API для списка статей
+const GDELT_DOC_API_BASE_URL = "https://api.gdeltproject.org/api/v2/doc";
+// GEO API для географических данных с координатами
+const GDELT_GEO_API_BASE_URL = "https://api.gdeltproject.org/api/v2/geo";
 
 const POLYMARKET_RELEVANT_QUERY =
   "(Trump OR Biden OR Ukraine OR Russia OR Israel OR Gaza OR China OR Bitcoin OR inflation)";
@@ -8,6 +11,7 @@ const POLYMARKET_RELEVANT_QUERY =
 const BREAKING_NEWS_QUERY =
   "(Trump OR Biden OR Ukraine OR Russia OR Israel OR China OR Bitcoin)";
 
+// Интерфейс для статьи из DOC API
 export interface GdeltArticle {
   url: string;
   url_mobile: string;
@@ -17,6 +21,38 @@ export interface GdeltArticle {
   domain: string;
   language: string;
   sourcecountry: string;
+}
+
+// Интерфейс для локации из GEO API (GeoJSON)
+export interface GdeltGeoFeature {
+  type: "Feature";
+  geometry: {
+    type: "Point";
+    coordinates: [number, number]; // [longitude, latitude]
+  };
+  properties: {
+    name: string;
+    count: number;
+    html?: string;
+    articles?: Array<{
+      url: string;
+      title: string;
+      image?: string;
+      domain?: string;
+      seendate?: string;
+    }>;
+  };
+}
+
+export interface GdeltGeoResponse {
+  type: "FeatureCollection";
+  features: GdeltGeoFeature[];
+}
+
+// Расширенный интерфейс статьи с координатами
+export interface GdeltArticleWithCoords extends GdeltArticle {
+  coordinates?: [number, number]; // [longitude, latitude]
+  locationName?: string;
 }
 
 export interface GdeltResponse {
@@ -85,9 +121,119 @@ function deduplicateArticles(articles: GdeltArticle[]): GdeltArticle[] {
 
 export const gdeltApi = createApi({
   reducerPath: "gdeltApi",
-  baseQuery: fetchBaseQuery({ baseUrl: GDELT_API_BASE_URL }),
-  tagTypes: ["News"],
+  baseQuery: fetchBaseQuery({ baseUrl: GDELT_DOC_API_BASE_URL }),
+  tagTypes: ["News", "GeoNews"],
   endpoints: (builder) => ({
+    // Основной эндпоинт с координатами из GEO API
+    getNewsWithCoords: builder.query<
+      GdeltArticleWithCoords[],
+      GdeltQueryParams
+    >({
+      async queryFn(
+        { query = POLYMARKET_RELEVANT_QUERY, timespan = "1d" } = {},
+        _queryApi,
+        _extraOptions,
+        fetchWithBQ,
+      ) {
+        try {
+          // Запрашиваем GEO API для получения координат
+          const geoParams = new URLSearchParams({
+            query: `${query} sourcelang:english`,
+            mode: "PointData",
+            format: "GeoJSON",
+            timespan,
+            maxpoints: "500",
+          });
+
+          const geoResponse = await fetch(
+            `${GDELT_GEO_API_BASE_URL}/geo?${geoParams.toString()}`,
+          );
+          const geoData: GdeltGeoResponse = await geoResponse.json();
+
+          // Преобразуем GeoJSON features в статьи с координатами
+          const articlesWithCoords: GdeltArticleWithCoords[] = [];
+          const seenUrls = new Set<string>();
+
+          for (const feature of geoData.features || []) {
+            const coords = feature.geometry?.coordinates;
+            const locationName = feature.properties?.name;
+
+            // Парсим HTML из properties для извлечения статей
+            const html = feature.properties?.html || "";
+
+            // Извлекаем URL и заголовки из HTML
+            const linkRegex =
+              /<a[^>]*href=["']([^"']+)["'][^>]*>([^<]*)<\/a>/gi;
+            let match;
+            while ((match = linkRegex.exec(html)) !== null) {
+              const url = match[1];
+              const title = match[2].trim();
+
+              if (url && title && !seenUrls.has(url)) {
+                seenUrls.add(url);
+
+                // Извлекаем изображение если есть
+                const imgMatch = html.match(
+                  /<img[^>]*src=["']([^"']+)["'][^>]*>/i,
+                );
+                const socialimage = imgMatch ? imgMatch[1] : "";
+
+                // Извлекаем домен из URL
+                let domain = "";
+                try {
+                  domain = new URL(url).hostname;
+                } catch {
+                  domain = "";
+                }
+
+                articlesWithCoords.push({
+                  url,
+                  url_mobile: url,
+                  title,
+                  seendate: new Date().toISOString(),
+                  socialimage,
+                  domain,
+                  language: "English",
+                  sourcecountry: locationName || "Unknown",
+                  coordinates: coords as [number, number],
+                  locationName,
+                });
+              }
+            }
+          }
+
+          // Дедупликация по заголовкам
+          const deduplicated = deduplicateArticles(articlesWithCoords);
+
+          return { data: deduplicated.slice(0, 150) };
+        } catch (error) {
+          // Fallback на обычный DOC API
+          const docParams = new URLSearchParams({
+            query: `${query} sourcelang:english`,
+            mode: "ArtList",
+            format: "json",
+            maxrecords: "250",
+            timespan,
+          });
+
+          const result = await fetchWithBQ(`/doc?${docParams.toString()}`);
+
+          if (result.error) {
+            return { error: result.error };
+          }
+
+          const response = result.data as GdeltResponse;
+          const articles = response.articles || [];
+          const deduplicated = deduplicateArticles(articles);
+          const diversified = diversifyArticlesByCountry(deduplicated, 12);
+
+          return { data: diversified as GdeltArticleWithCoords[] };
+        }
+      },
+      providesTags: ["GeoNews"],
+    }),
+
+    // Оригинальный эндпоинт (без координат, для обратной совместимости)
     getNews: builder.query<GdeltArticle[], GdeltQueryParams>({
       query: ({
         query = POLYMARKET_RELEVANT_QUERY,
@@ -169,6 +315,7 @@ export const gdeltApi = createApi({
 
 export const {
   useGetNewsQuery,
+  useGetNewsWithCoordsQuery,
   useGetNewsByQueryQuery,
   useGetBreakingNewsQuery,
 } = gdeltApi;
