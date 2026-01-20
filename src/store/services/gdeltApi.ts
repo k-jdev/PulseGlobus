@@ -137,7 +137,7 @@ export const gdeltApi = createApi({
       },
       transformResponse: (response: GdeltResponse) => {
         const articles = response.articles || [];
-        // Deduplicate for search results
+        const deduplicated = deduplicateArticles(articles);
         return deduplicated.slice(0, 100);
       },
       providesTags: ["News"],
@@ -159,7 +159,7 @@ export const gdeltApi = createApi({
       },
       transformResponse: (response: GdeltResponse) => {
         const articles = response.articles || [];
-        // First deduplicate, then diversify by country
+        const deduplicated = deduplicateArticles(articles);
         return diversifyArticlesByCountry(deduplicated, 15);
       },
       providesTags: ["News"],
