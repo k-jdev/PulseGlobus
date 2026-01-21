@@ -314,7 +314,6 @@ export const useMapbox = (
         },
       });
 
-      // Источник для линий связей между маркетами и новостями
       map.addSource("connections", {
         type: "geojson",
         data: {

@@ -334,8 +334,8 @@ const GlobusMapbox = ({
           </div>
           {markerScreenPosition && popupPosition && (
             <svg
-              className="md:hidden fixed inset-0 w-full h-full pointer-events-none z-40"
-              style={{ overflow: "visible" }}
+              className="md:hidden fixed inset-0 w-full h-full pointer-events-none z-10"
+              style={{ overflow: "visible", clipPath: "inset(144px 0 0 0)" }}
             >
               <defs>
                 <linearGradient
