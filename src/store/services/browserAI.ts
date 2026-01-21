@@ -104,6 +104,15 @@ export const COUNTRY_COORDINATES: Record<
   CO: { name: "Colombia", coords: [-74.2973, 4.5709] },
   PE: { name: "Peru", coords: [-75.0152, -9.19] },
   EC: { name: "Ecuador", coords: [-78.1834, -1.8312] },
+  CR: { name: "Costa Rica", coords: [-84.0907, 9.9281] },
+  PA: { name: "Panama", coords: [-79.5199, 8.9824] },
+  GT: { name: "Guatemala", coords: [-90.5069, 14.6349] },
+  HN: { name: "Honduras", coords: [-87.2068, 14.0723] },
+  SV: { name: "El Salvador", coords: [-89.1872, 13.6929] },
+  NI: { name: "Nicaragua", coords: [-85.2072, 12.8654] },
+  CU: { name: "Cuba", coords: [-77.7812, 21.5218] },
+  DO: { name: "Dominican Republic", coords: [-70.1627, 18.7357] },
+  PR: { name: "Puerto Rico", coords: [-66.5901, 18.2208] },
 };
 
 const COUNTRY_KEYWORDS: Record<string, string[]> = {
@@ -177,6 +186,15 @@ const COUNTRY_KEYWORDS: Record<string, string[]> = {
     "starmer",
     "scotland",
     "wales",
+    "premier league",
+    "english premier",
+    "arsenal",
+    "chelsea",
+    "manchester united",
+    "manchester city",
+    "liverpool fc",
+    "tottenham",
+    "epl",
   ],
   DE: [
     "germany",
@@ -309,6 +327,18 @@ const COUNTRY_KEYWORDS: Record<string, string[]> = {
   QA: ["qatar", "qatari", "doha"],
   KW: ["kuwait", "kuwaiti"],
   PS: ["palestine", "palestinian", "west bank", "ramallah"],
+  CR: ["costa rica", "costa rican", "san jose costa", "ticos"],
+  PA: ["panama", "panamanian", "panama city", "panama canal"],
+  GT: ["guatemala", "guatemalan"],
+  HN: ["honduras", "honduran", "tegucigalpa"],
+  SV: ["el salvador", "salvadoran", "bukele", "san salvador"],
+  NI: ["nicaragua", "nicaraguan", "managua", "ortega"],
+  CU: ["cuba", "cuban", "havana", "castro"],
+  DO: ["dominican republic", "dominican", "santo domingo"],
+  CL: ["chile", "chilean", "santiago"],
+  CO: ["colombia", "colombian", "bogota", "medellin"],
+  PE: ["peru", "peruvian", "lima"],
+  EC: ["ecuador", "ecuadorian", "quito"],
 };
 
 const CATEGORY_KEYWORDS: Record<string, string[]> = {

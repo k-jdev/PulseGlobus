@@ -32,7 +32,7 @@ export const COUNTRY_COORDINATES: Record<
   string,
   { name: string; city: string; coordinates: [number, number] }
 > = {
-  // Северная Америка
+  // Северная Америка (все USA маркеры идут в Вашингтон DC)
   "united states": {
     name: "United States",
     city: "Washington DC",
@@ -343,6 +343,78 @@ export const COUNTRY_COORDINATES: Record<
   },
   peru: { name: "Peru", city: "Lima", coordinates: [-77.0428, -12.0464] },
   cuba: { name: "Cuba", city: "Havana", coordinates: [-82.3666, 23.1136] },
+
+  // Центральная Америка
+  "costa rica": {
+    name: "Costa Rica",
+    city: "San José",
+    coordinates: [-84.0907, 9.9281],
+  },
+  panama: {
+    name: "Panama",
+    city: "Panama City",
+    coordinates: [-79.5199, 8.9824],
+  },
+  guatemala: {
+    name: "Guatemala",
+    city: "Guatemala City",
+    coordinates: [-90.5069, 14.6349],
+  },
+  honduras: {
+    name: "Honduras",
+    city: "Tegucigalpa",
+    coordinates: [-87.2068, 14.0723],
+  },
+  "el salvador": {
+    name: "El Salvador",
+    city: "San Salvador",
+    coordinates: [-89.2182, 13.6929],
+  },
+  nicaragua: {
+    name: "Nicaragua",
+    city: "Managua",
+    coordinates: [-86.2362, 12.1364],
+  },
+  ecuador: {
+    name: "Ecuador",
+    city: "Quito",
+    coordinates: [-78.4678, -0.1807],
+  },
+  bolivia: {
+    name: "Bolivia",
+    city: "La Paz",
+    coordinates: [-68.1193, -16.4897],
+  },
+  paraguay: {
+    name: "Paraguay",
+    city: "Asunción",
+    coordinates: [-57.5759, -25.2637],
+  },
+  uruguay: {
+    name: "Uruguay",
+    city: "Montevideo",
+    coordinates: [-56.1645, -34.9011],
+  },
+  "dominican republic": {
+    name: "Dominican Republic",
+    city: "Santo Domingo",
+    coordinates: [-69.9312, 18.4861],
+  },
+  "puerto rico": {
+    name: "Puerto Rico",
+    city: "San Juan",
+    coordinates: [-66.1057, 18.4655],
+  },
+  jamaica: {
+    name: "Jamaica",
+    city: "Kingston",
+    coordinates: [-76.7928, 17.9714],
+  },
+  haiti: {
+    name: "Haiti",
+    city: "Port-au-Prince",
+    coordinates: [-72.3074, 18.5944],
+  },
 
   // Океания
   australia: {
@@ -1030,11 +1102,11 @@ export const POLITICAL_KEYWORDS: Record<
   string,
   { country: string; city: string; coordinates: [number, number] }
 > = {
-  // США
+  // США (все идут в район Вашингтона DC)
   trump: {
     country: "United States",
-    city: "Mar-a-Lago",
-    coordinates: [-80.0364, 26.6774],
+    city: "Washington DC",
+    coordinates: [-77.0369, 38.9072],
   },
   biden: {
     country: "United States",
@@ -1058,7 +1130,7 @@ export const POLITICAL_KEYWORDS: Record<
   },
   pentagon: {
     country: "United States",
-    city: "Washington DC",
+    city: "Arlington",
     coordinates: [-77.0569, 38.8719],
   },
 
@@ -1327,6 +1399,135 @@ export const ORGANIZATION_KEYWORDS: Record<
     city: "Cape Canaveral",
     coordinates: [-80.6077, 28.3922],
   },
+
+  // Спортивные лиги и события
+  "premier league": {
+    country: "United Kingdom",
+    city: "London",
+    coordinates: [-0.1276, 51.5074],
+  },
+  "english premier league": {
+    country: "United Kingdom",
+    city: "London",
+    coordinates: [-0.1276, 51.5074],
+  },
+  epl: {
+    country: "United Kingdom",
+    city: "London",
+    coordinates: [-0.1276, 51.5074],
+  },
+  "la liga": {
+    country: "Spain",
+    city: "Madrid",
+    coordinates: [-3.7038, 40.4168],
+  },
+  bundesliga: {
+    country: "Germany",
+    city: "Munich",
+    coordinates: [11.582, 48.1351],
+  },
+  "serie a": {
+    country: "Italy",
+    city: "Milan",
+    coordinates: [9.19, 45.4642],
+  },
+  "ligue 1": {
+    country: "France",
+    city: "Paris",
+    coordinates: [2.3522, 48.8566],
+  },
+  "champions league": {
+    country: "Switzerland",
+    city: "Nyon",
+    coordinates: [6.2388, 46.388],
+  },
+  uefa: {
+    country: "Switzerland",
+    city: "Nyon",
+    coordinates: [6.2388, 46.388],
+  },
+  nba: {
+    country: "United States",
+    city: "New York",
+    coordinates: [-74.006, 40.7128],
+  },
+  nfl: {
+    country: "United States",
+    city: "New York",
+    coordinates: [-74.006, 40.7128],
+  },
+  mlb: {
+    country: "United States",
+    city: "New York",
+    coordinates: [-74.006, 40.7128],
+  },
+  nhl: {
+    country: "United States",
+    city: "New York",
+    coordinates: [-74.006, 40.7128],
+  },
+  mls: {
+    country: "United States",
+    city: "New York",
+    coordinates: [-74.006, 40.7128],
+  },
+  "super bowl": {
+    country: "United States",
+    city: "Los Angeles",
+    coordinates: [-118.2437, 34.0522],
+  },
+  "world cup": {
+    country: "Switzerland",
+    city: "Zurich",
+    coordinates: [8.5417, 47.3769],
+  },
+  "copa america": {
+    country: "Argentina",
+    city: "Buenos Aires",
+    coordinates: [-58.3816, -34.6037],
+  },
+  "euro 2024": {
+    country: "Germany",
+    city: "Berlin",
+    coordinates: [13.405, 52.52],
+  },
+
+  // Британские клубы (для более точного определения)
+  manchester: {
+    country: "United Kingdom",
+    city: "Manchester",
+    coordinates: [-2.2426, 53.4808],
+  },
+  "manchester united": {
+    country: "United Kingdom",
+    city: "Manchester",
+    coordinates: [-2.2426, 53.4808],
+  },
+  "manchester city": {
+    country: "United Kingdom",
+    city: "Manchester",
+    coordinates: [-2.2426, 53.4808],
+  },
+  liverpool: {
+    country: "United Kingdom",
+    city: "Liverpool",
+    coordinates: [-2.9916, 53.4084],
+  },
+  chelsea: {
+    country: "United Kingdom",
+    city: "London",
+    coordinates: [-0.1276, 51.5074],
+  },
+  arsenal: {
+    country: "United Kingdom",
+    city: "London",
+    coordinates: [-0.1276, 51.5074],
+  },
+  tottenham: {
+    country: "United Kingdom",
+    city: "London",
+    coordinates: [-0.1276, 51.5074],
+  },
 };
 
 // ============================================
@@ -1338,47 +1539,21 @@ export const COUNTRY_CITIES: Record<
   string,
   Array<{ name: string; coordinates: [number, number] }>
 > = {
+  // США - распределяются по всей стране
   "United States": [
     { name: "Washington DC", coordinates: [-77.0369, 38.9072] },
     { name: "New York", coordinates: [-74.006, 40.7128] },
     { name: "Los Angeles", coordinates: [-118.2437, 34.0522] },
     { name: "Chicago", coordinates: [-87.6298, 41.8781] },
     { name: "Houston", coordinates: [-95.3698, 29.7604] },
-    { name: "Phoenix", coordinates: [-112.074, 33.4484] },
-    { name: "Philadelphia", coordinates: [-75.1652, 39.9526] },
-    { name: "San Antonio", coordinates: [-98.4936, 29.4241] },
-    { name: "San Diego", coordinates: [-117.1611, 32.7157] },
-    { name: "Dallas", coordinates: [-96.797, 32.7767] },
-    { name: "San Jose", coordinates: [-121.8863, 37.3382] },
-    { name: "Austin", coordinates: [-97.7431, 30.2672] },
-    { name: "Jacksonville", coordinates: [-81.6557, 30.3322] },
-    { name: "San Francisco", coordinates: [-122.4194, 37.7749] },
-    { name: "Columbus", coordinates: [-82.9988, 39.9612] },
-    { name: "Indianapolis", coordinates: [-86.1581, 39.7684] },
-    { name: "Charlotte", coordinates: [-80.8431, 35.2271] },
+    { name: "Miami", coordinates: [-80.1918, 25.7617] },
     { name: "Seattle", coordinates: [-122.3321, 47.6062] },
     { name: "Denver", coordinates: [-104.9903, 39.7392] },
-    { name: "Boston", coordinates: [-71.0589, 42.3601] },
-    { name: "Detroit", coordinates: [-83.0458, 42.3314] },
-    { name: "Nashville", coordinates: [-86.7816, 36.1627] },
-    { name: "Portland", coordinates: [-122.6765, 45.5152] },
-    { name: "Memphis", coordinates: [-90.049, 35.1495] },
-    { name: "Oklahoma City", coordinates: [-97.5164, 35.4676] },
-    { name: "Las Vegas", coordinates: [-115.1398, 36.1699] },
-    { name: "Louisville", coordinates: [-85.7585, 38.2527] },
-    { name: "Baltimore", coordinates: [-76.6122, 39.2904] },
-    { name: "Milwaukee", coordinates: [-87.9065, 43.0389] },
-    { name: "Albuquerque", coordinates: [-106.6504, 35.0844] },
-    { name: "Tucson", coordinates: [-110.9265, 32.2226] },
-    { name: "Fresno", coordinates: [-119.7871, 36.7378] },
-    { name: "Sacramento", coordinates: [-121.4944, 38.5816] },
     { name: "Atlanta", coordinates: [-84.388, 33.749] },
-    { name: "Kansas City", coordinates: [-94.5786, 39.0997] },
-    { name: "Miami", coordinates: [-80.1918, 25.7617] },
-    { name: "Raleigh", coordinates: [-78.6382, 35.7796] },
-    { name: "Minneapolis", coordinates: [-93.265, 44.9778] },
-    { name: "Cleveland", coordinates: [-81.6944, 41.4993] },
-    { name: "Tampa", coordinates: [-82.4572, 27.9506] },
+    { name: "Boston", coordinates: [-71.0589, 42.3601] },
+    { name: "Phoenix", coordinates: [-112.074, 33.4484] },
+    { name: "San Francisco", coordinates: [-122.4194, 37.7749] },
+    { name: "Dallas", coordinates: [-96.797, 32.7767] },
   ],
   "United Kingdom": [
     { name: "London", coordinates: [-0.1276, 51.5074] },
@@ -1603,6 +1778,62 @@ export const COUNTRY_CITIES: Record<
     { name: "Mendoza", coordinates: [-68.8272, -32.8908] },
     { name: "Tucumán", coordinates: [-65.2176, -26.8241] },
     { name: "Mar del Plata", coordinates: [-57.5575, -38.0023] },
+  ],
+  "Costa Rica": [
+    { name: "San José", coordinates: [-84.0907, 9.9281] },
+    { name: "Limón", coordinates: [-83.0356, 9.9908] },
+    { name: "Alajuela", coordinates: [-84.2115, 10.0162] },
+    { name: "Heredia", coordinates: [-84.1168, 9.9982] },
+    { name: "Cartago", coordinates: [-83.9186, 9.8639] },
+  ],
+  Panama: [
+    { name: "Panama City", coordinates: [-79.5199, 8.9824] },
+    { name: "Colón", coordinates: [-79.9015, 9.3592] },
+    { name: "David", coordinates: [-82.4279, 8.4276] },
+  ],
+  Guatemala: [
+    { name: "Guatemala City", coordinates: [-90.5069, 14.6349] },
+    { name: "Quetzaltenango", coordinates: [-91.5183, 14.8333] },
+    { name: "Antigua Guatemala", coordinates: [-90.7294, 14.5586] },
+  ],
+  Honduras: [
+    { name: "Tegucigalpa", coordinates: [-87.2068, 14.0723] },
+    { name: "San Pedro Sula", coordinates: [-88.0251, 15.5039] },
+  ],
+  "El Salvador": [
+    { name: "San Salvador", coordinates: [-89.2182, 13.6929] },
+    { name: "Santa Ana", coordinates: [-89.5591, 13.9942] },
+  ],
+  Nicaragua: [
+    { name: "Managua", coordinates: [-86.2362, 12.1364] },
+    { name: "León", coordinates: [-86.8779, 12.4346] },
+  ],
+  Ecuador: [
+    { name: "Quito", coordinates: [-78.4678, -0.1807] },
+    { name: "Guayaquil", coordinates: [-79.9223, -2.1894] },
+    { name: "Cuenca", coordinates: [-79.0045, -2.9001] },
+  ],
+  Colombia: [
+    { name: "Bogotá", coordinates: [-74.0721, 4.711] },
+    { name: "Medellín", coordinates: [-75.5636, 6.2442] },
+    { name: "Cali", coordinates: [-76.5225, 3.4516] },
+    { name: "Barranquilla", coordinates: [-74.7964, 10.9639] },
+    { name: "Cartagena", coordinates: [-75.5144, 10.3997] },
+  ],
+  Venezuela: [
+    { name: "Caracas", coordinates: [-66.9036, 10.4806] },
+    { name: "Maracaibo", coordinates: [-71.6128, 10.6666] },
+    { name: "Valencia", coordinates: [-68.0076, 10.1579] },
+  ],
+  Chile: [
+    { name: "Santiago", coordinates: [-70.6693, -33.4489] },
+    { name: "Valparaíso", coordinates: [-71.6273, -33.0472] },
+    { name: "Concepción", coordinates: [-73.0498, -36.8201] },
+  ],
+  Peru: [
+    { name: "Lima", coordinates: [-77.0428, -12.0464] },
+    { name: "Arequipa", coordinates: [-71.537, -16.409] },
+    { name: "Cusco", coordinates: [-71.9675, -13.532] },
   ],
 };
 

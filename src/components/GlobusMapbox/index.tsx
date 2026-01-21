@@ -131,7 +131,7 @@ const GlobusMapbox = ({
     method: aiMethod,
   } = useAIEnhancedMarkers(mapMarkers, {
     enabled: true,
-    enhanceCoordinates: true,
+    enhanceCoordinates: false, // Координаты уже хорошо расставляются в geoLocation
   });
 
   useEffect(() => {

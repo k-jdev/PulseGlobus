@@ -259,10 +259,110 @@ const KEYWORD_CITY_MAP: {
   keyword: string;
   city: { name: string; coordinates: [number, number] };
 }[] = [
+  // === Европейские страны ===
+  {
+    keyword: "portugal",
+    city: { name: "Lisbon", coordinates: [-9.1393, 38.7223] },
+  },
+  {
+    keyword: "portuguese",
+    city: { name: "Lisbon", coordinates: [-9.1393, 38.7223] },
+  },
+  {
+    keyword: "germany",
+    city: { name: "Berlin", coordinates: [13.405, 52.52] },
+  },
+  {
+    keyword: "german",
+    city: { name: "Berlin", coordinates: [13.405, 52.52] },
+  },
+  {
+    keyword: "france",
+    city: { name: "Paris", coordinates: [2.3522, 48.8566] },
+  },
+  {
+    keyword: "french",
+    city: { name: "Paris", coordinates: [2.3522, 48.8566] },
+  },
+  {
+    keyword: "spain",
+    city: { name: "Madrid", coordinates: [-3.7038, 40.4168] },
+  },
+  {
+    keyword: "spanish",
+    city: { name: "Madrid", coordinates: [-3.7038, 40.4168] },
+  },
+  {
+    keyword: "italy",
+    city: { name: "Rome", coordinates: [12.4964, 41.9028] },
+  },
+  {
+    keyword: "italian",
+    city: { name: "Rome", coordinates: [12.4964, 41.9028] },
+  },
+  {
+    keyword: "netherlands",
+    city: { name: "Amsterdam", coordinates: [4.9041, 52.3676] },
+  },
+  {
+    keyword: "dutch",
+    city: { name: "Amsterdam", coordinates: [4.9041, 52.3676] },
+  },
+  {
+    keyword: "poland",
+    city: { name: "Warsaw", coordinates: [21.0122, 52.2297] },
+  },
+  {
+    keyword: "polish",
+    city: { name: "Warsaw", coordinates: [21.0122, 52.2297] },
+  },
+  {
+    keyword: "greece",
+    city: { name: "Athens", coordinates: [23.7275, 37.9838] },
+  },
+  {
+    keyword: "greek",
+    city: { name: "Athens", coordinates: [23.7275, 37.9838] },
+  },
+  {
+    keyword: "sweden",
+    city: { name: "Stockholm", coordinates: [18.0686, 59.3293] },
+  },
+  {
+    keyword: "norway",
+    city: { name: "Oslo", coordinates: [10.7522, 59.9139] },
+  },
+  {
+    keyword: "denmark",
+    city: { name: "Copenhagen", coordinates: [12.5683, 55.6761] },
+  },
+  {
+    keyword: "finland",
+    city: { name: "Helsinki", coordinates: [24.9384, 60.1699] },
+  },
+  {
+    keyword: "austria",
+    city: { name: "Vienna", coordinates: [16.3738, 48.2082] },
+  },
+  {
+    keyword: "switzerland",
+    city: { name: "Zurich", coordinates: [8.5417, 47.3769] },
+  },
+  {
+    keyword: "belgium",
+    city: { name: "Brussels", coordinates: [4.3517, 50.8503] },
+  },
+  {
+    keyword: "ireland",
+    city: { name: "Dublin", coordinates: [-6.2603, 53.3498] },
+  },
+  // === США ===
+  // Trump ТОЛЬКО в Вашингтоне DC
   {
     keyword: "trump",
-    city: { name: "Mar-a-Lago", coordinates: [-80.0364, 26.6774] },
+    city: { name: "Washington DC", coordinates: [-77.0369, 38.9072] },
   },
+  // Остальные политики по своим местам
   {
     keyword: "biden",
     city: { name: "Washington DC", coordinates: [-77.0369, 38.9072] },
@@ -295,7 +395,6 @@ const KEYWORD_CITY_MAP: {
     keyword: "democrat",
     city: { name: "Washington DC", coordinates: [-77.0369, 38.9072] },
   },
-
   {
     keyword: "california",
     city: { name: "Los Angeles", coordinates: [-118.2437, 34.0522] },
@@ -1907,8 +2006,23 @@ function getCoordinatesForMarket(
     index,
   });
 
+  // DEBUG: Логируем Portugal маркеты
+  if (market.question?.toLowerCase().includes("portugal")) {
+    console.log("🇵🇹 PORTUGAL MARKET DEBUG:", {
+      question: market.question,
+      description: market.description?.substring(0, 100),
+      category: market.category,
+      nlpLocation: location,
+      nlpCoordinates: coordinates,
+      confidence: location?.confidence,
+    });
+  }
+
   // Если нашли локацию, используем её
   if (location && location.confidence >= 0.6) {
+    if (market.question?.toLowerCase().includes("portugal")) {
+      console.log("🇵🇹 Using NLP coordinates:", coordinates);
+    }
     return coordinates;
   }
 
@@ -2203,28 +2317,56 @@ const MARKET_COUNTRY_KEYWORDS: Record<string, string[]> = {
     "england",
     "scotland",
     "wales",
+    "premier league",
+    "english premier",
+    "arsenal",
+    "chelsea",
+    "manchester united",
+    "manchester city",
+    "liverpool fc",
+    "tottenham",
   ],
-  Germany: ["germany", "german", "berlin", "merkel", "scholz", "bundesbank"],
-  France: ["france", "french", "paris", "macron"],
+  Germany: [
+    "germany",
+    "german",
+    "berlin",
+    "merkel",
+    "scholz",
+    "bundesbank",
+    "bundesliga",
+  ],
+  France: ["france", "french", "paris", "macron", "ligue 1"],
   Japan: ["japan", "japanese", "tokyo", "yen", "boj"],
   "South Korea": ["korea", "korean", "seoul", "kim jong"],
   India: ["india", "indian", "modi", "mumbai", "delhi"],
-  Brazil: ["brazil", "brazilian", "lula", "bolsonaro"],
+  Brazil: ["brazil", "brazilian", "lula", "bolsonaro", "serie a brazil"],
   Canada: ["canada", "canadian", "trudeau", "ottawa"],
   Australia: ["australia", "australian", "sydney", "melbourne"],
   Iran: ["iran", "iranian", "tehran", "ayatollah"],
   "Saudi Arabia": ["saudi", "arabia", "riyadh", "mbs"],
   Turkey: ["turkey", "turkish", "erdogan", "ankara", "istanbul"],
-  Mexico: ["mexico", "mexican"],
-  Argentina: ["argentina", "milei"],
+  Mexico: ["mexico", "mexican", "liga mx"],
+  Argentina: ["argentina", "milei", "buenos aires"],
   Poland: ["poland", "polish", "warsaw"],
-  Netherlands: ["netherlands", "dutch", "amsterdam"],
+  Netherlands: ["netherlands", "dutch", "amsterdam", "eredivisie"],
   Switzerland: ["switzerland", "swiss", "zurich", "geneva"],
   Singapore: ["singapore"],
   "United Arab Emirates": ["uae", "dubai", "abu dhabi", "emirates"],
+  "Costa Rica": ["costa rica", "costa rican", "san jose costa", "ticos"],
+  Colombia: ["colombia", "colombian", "bogota", "medellin"],
+  Chile: ["chile", "chilean", "santiago"],
+  Peru: ["peru", "peruvian", "lima"],
+  Ecuador: ["ecuador", "ecuadorian", "quito"],
+  Venezuela: ["venezuela", "venezuelan", "caracas", "maduro"],
+  Panama: ["panama", "panamanian", "panama city"],
+  Guatemala: ["guatemala", "guatemalan"],
+  Honduras: ["honduras", "honduran"],
+  El_Salvador: ["el salvador", "salvadoran", "bukele"],
+  Spain: ["spain", "spanish", "madrid", "barcelona", "la liga"],
+  Italy: ["italy", "italian", "rome", "milan", "serie a", "juventus"],
+  Portugal: ["portugal", "portuguese", "lisbon"],
 };
 
-// Определить страну маркета по контенту
 function detectMarketCountry(title: string, description: string): string {
   const searchText = `${title} ${description}`.toLowerCase();
 
@@ -2243,8 +2385,47 @@ function detectMarketCountry(title: string, description: string): string {
 // Счётчик для ротации городов маркетов по странам
 const marketCountryCityIndex: Record<string, number> = {};
 
+// Washington DC координаты для маркетов о Trump
+const WASHINGTON_DC: { name: string; coordinates: [number, number] } = {
+  name: "Washington DC",
+  coordinates: [-77.0369, 38.9072],
+};
+
+// Проверка, является ли маркет о Trump
+function isTrumpMarket(title: string, description: string): boolean {
+  const text = `${title} ${description}`.toLowerCase();
+  const trumpKeywords = [
+    "trump",
+    "donald trump",
+    "trump's",
+    "trumps",
+    "trump administration",
+    "president trump",
+    "former president trump",
+  ];
+  return trumpKeywords.some((keyword) => text.includes(keyword));
+}
+
 // Получить координаты для маркета с распределением по стране
-function getMarketCoordinates(country: string, seed: number): [number, number] {
+function getMarketCoordinates(
+  country: string,
+  seed: number,
+  title: string = "",
+  description: string = "",
+): [number, number] {
+  // Маркеты о Trump всегда показываем в Washington DC
+  if (isTrumpMarket(title, description)) {
+    const random1 = Math.sin(seed * 12.9898) * 43758.5453;
+    const random2 = Math.cos(seed * 78.233) * 43758.5453;
+    const offsetLng = (random1 - Math.floor(random1) - 0.5) * 0.3;
+    const offsetLat = (random2 - Math.floor(random2) - 0.5) * 0.2;
+
+    return [
+      WASHINGTON_DC.coordinates[0] + offsetLng,
+      WASHINGTON_DC.coordinates[1] + offsetLat,
+    ];
+  }
+
   const cities =
     CITIES_BY_COUNTRY[country] || CITIES_BY_COUNTRY["United States"];
 
@@ -2292,7 +2473,12 @@ export function convertEventsWithMarketsToMapMarkers(
       // Определяем страну по контенту и распределяем по её городам
       const country = detectMarketCountry(event.title, event.description || "");
       const seed = hashCode(event.id + event.title + index);
-      const coordinates = getMarketCoordinates(country, seed);
+      const coordinates = getMarketCoordinates(
+        country,
+        seed,
+        event.title,
+        event.description || "",
+      );
 
       const markets = event.markets || [];
       const hasMultipleMarkets = markets.length > 1;
@@ -3040,7 +3226,7 @@ const CITIES_BY_COUNTRY: Record<
   string,
   Array<{ name: string; coordinates: [number, number] }>
 > = {
-  // США
+  // США - распределены по всей стране
   "United States": [
     { name: "New York", coordinates: [-74.006, 40.7128] },
     { name: "Los Angeles", coordinates: [-118.2437, 34.0522] },
@@ -3311,6 +3497,133 @@ const CITIES_BY_COUNTRY: Record<
     { name: "Jurong", coordinates: [103.7436, 1.3329] },
     { name: "Changi", coordinates: [103.9915, 1.3644] },
   ],
+
+  // Коста-Рика
+  "Costa Rica": [
+    { name: "San José", coordinates: [-84.0907, 9.9281] },
+    { name: "Alajuela", coordinates: [-84.2115, 10.0162] },
+    { name: "Cartago", coordinates: [-83.9193, 9.8644] },
+    { name: "Heredia", coordinates: [-84.1165, 9.9985] },
+    { name: "Limón", coordinates: [-83.0359, 9.9907] },
+  ],
+
+  // Колумбия
+  Colombia: [
+    { name: "Bogotá", coordinates: [-74.0721, 4.711] },
+    { name: "Medellín", coordinates: [-75.5636, 6.2442] },
+    { name: "Cali", coordinates: [-76.5225, 3.4516] },
+    { name: "Barranquilla", coordinates: [-74.7889, 10.9639] },
+  ],
+
+  // Чили
+  Chile: [
+    { name: "Santiago", coordinates: [-70.6693, -33.4489] },
+    { name: "Valparaíso", coordinates: [-71.6273, -33.0472] },
+    { name: "Concepción", coordinates: [-73.0498, -36.8282] },
+  ],
+
+  // Перу
+  Peru: [
+    { name: "Lima", coordinates: [-77.0428, -12.0464] },
+    { name: "Arequipa", coordinates: [-71.537, -16.409] },
+    { name: "Cusco", coordinates: [-71.9675, -13.532] },
+  ],
+
+  // Эквадор
+  Ecuador: [
+    { name: "Quito", coordinates: [-78.4678, -0.1807] },
+    { name: "Guayaquil", coordinates: [-79.8891, -2.1894] },
+    { name: "Cuenca", coordinates: [-79.0053, -2.9001] },
+  ],
+
+  // Венесуэла
+  Venezuela: [
+    { name: "Caracas", coordinates: [-66.9036, 10.4806] },
+    { name: "Maracaibo", coordinates: [-71.6561, 10.6666] },
+    { name: "Valencia", coordinates: [-68.0076, 10.1579] },
+  ],
+
+  // Панама
+  Panama: [
+    { name: "Panama City", coordinates: [-79.5199, 8.9824] },
+    { name: "Colón", coordinates: [-79.9014, 9.3547] },
+  ],
+
+  // Сальвадор
+  El_Salvador: [
+    { name: "San Salvador", coordinates: [-89.1872, 13.6929] },
+    { name: "Santa Ana", coordinates: [-89.5569, 13.9942] },
+  ],
+
+  // Гватемала
+  Guatemala: [
+    { name: "Guatemala City", coordinates: [-90.5069, 14.6349] },
+    { name: "Antigua", coordinates: [-90.7295, 14.5586] },
+  ],
+
+  // Гондурас
+  Honduras: [
+    { name: "Tegucigalpa", coordinates: [-87.2068, 14.0723] },
+    { name: "San Pedro Sula", coordinates: [-88.0259, 15.504] },
+  ],
+
+  // Португалия
+  Portugal: [
+    { name: "Lisbon", coordinates: [-9.1393, 38.7223] },
+    { name: "Porto", coordinates: [-8.6291, 41.1579] },
+    { name: "Faro", coordinates: [-7.9304, 37.0194] },
+    { name: "Coimbra", coordinates: [-8.4103, 40.2033] },
+    { name: "Braga", coordinates: [-8.42, 41.5454] },
+  ],
+
+  // Греция
+  Greece: [
+    { name: "Athens", coordinates: [23.7275, 37.9838] },
+    { name: "Thessaloniki", coordinates: [22.9444, 40.6401] },
+    { name: "Patras", coordinates: [21.7346, 38.2466] },
+  ],
+
+  // Австрия
+  Austria: [
+    { name: "Vienna", coordinates: [16.3738, 48.2082] },
+    { name: "Salzburg", coordinates: [13.055, 47.8095] },
+    { name: "Graz", coordinates: [15.4395, 47.0707] },
+  ],
+
+  // Бельгия
+  Belgium: [
+    { name: "Brussels", coordinates: [4.3517, 50.8503] },
+    { name: "Antwerp", coordinates: [4.4025, 51.2194] },
+    { name: "Ghent", coordinates: [3.7174, 51.0543] },
+  ],
+
+  // Швеция
+  Sweden: [
+    { name: "Stockholm", coordinates: [18.0686, 59.3293] },
+    { name: "Gothenburg", coordinates: [11.9746, 57.7089] },
+    { name: "Malmö", coordinates: [13.0038, 55.604] },
+  ],
+
+  // Норвегия
+  Norway: [
+    { name: "Oslo", coordinates: [10.7522, 59.9139] },
+    { name: "Bergen", coordinates: [5.3221, 60.3913] },
+    { name: "Trondheim", coordinates: [10.3951, 63.4305] },
+  ],
+
+  // Дания
+  Denmark: [
+    { name: "Copenhagen", coordinates: [12.5683, 55.6761] },
+    { name: "Aarhus", coordinates: [10.2039, 56.1629] },
+    { name: "Odense", coordinates: [10.3883, 55.4038] },
+  ],
+
+  // Финляндия
+  Finland: [
+    { name: "Helsinki", coordinates: [24.9384, 60.1699] },
+    { name: "Tampere", coordinates: [23.7871, 61.4978] },
+    { name: "Turku", coordinates: [22.2666, 60.4518] },
+  ],
 };
 
 // Алиасы для нормализации названий стран
@@ -3381,6 +3694,28 @@ const COUNTRY_ALIASES: Record<string, string> = {
   ie: "Ireland",
   singapore: "Singapore",
   sg: "Singapore",
+  "costa rica": "Costa Rica",
+  cr: "Costa Rica",
+  colombia: "Colombia",
+  co: "Colombia",
+  chile: "Chile",
+  cl: "Chile",
+  peru: "Peru",
+  pe: "Peru",
+  ecuador: "Ecuador",
+  ec: "Ecuador",
+  venezuela: "Venezuela",
+  ve: "Venezuela",
+  panama: "Panama",
+  pa: "Panama",
+  guatemala: "Guatemala",
+  gt: "Guatemala",
+  honduras: "Honduras",
+  hn: "Honduras",
+  "el salvador": "El_Salvador",
+  sv: "El_Salvador",
+  portugal: "Portugal",
+  pt: "Portugal",
 };
 
 // Дефолтная локация если страна не найдена
