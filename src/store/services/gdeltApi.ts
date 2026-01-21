@@ -1,8 +1,38 @@
 import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
 
-const GDELT_DOC_API_BASE_URL = "https://api.gdeltproject.org/api/v2/doc";
+// Список CORS прокси для обхода блокировки GDELT API (с фолбэком)
+const CORS_PROXIES = [
+  "https://corsproxy.io/?",
+  "https://api.codetabs.com/v1/proxy?quest=",
+];
 
-const GDELT_GEO_API_BASE_URL = "https://api.gdeltproject.org/api/v2/geo";
+// Функция для запроса через прокси с фолбэком
+async function fetchWithProxy(url: string): Promise<Response> {
+  let lastError: Error | null = null;
+
+  for (const proxy of CORS_PROXIES) {
+    try {
+      const proxyUrl = `${proxy}${encodeURIComponent(url)}`;
+      const response = await fetch(proxyUrl);
+      if (response.ok) {
+        return response;
+      }
+    } catch (error) {
+      lastError = error as Error;
+      continue;
+    }
+  }
+
+  // Если все прокси не работают, пробуем напрямую (на случай если CORS разрешён)
+  try {
+    return await fetch(url);
+  } catch {
+    throw lastError || new Error("All proxies failed");
+  }
+}
+
+const GDELT_DOC_API_BASE = "https://api.gdeltproject.org/api/v2/doc";
+const GDELT_GEO_API_BASE = "https://api.gdeltproject.org/api/v2/geo";
 
 const POLYMARKET_RELEVANT_QUERY =
   "(Trump OR Biden OR Ukraine OR Russia OR Israel OR Gaza OR China OR Bitcoin OR inflation)";
@@ -117,7 +147,7 @@ function deduplicateArticles(articles: GdeltArticle[]): GdeltArticle[] {
 
 export const gdeltApi = createApi({
   reducerPath: "gdeltApi",
-  baseQuery: fetchBaseQuery({ baseUrl: GDELT_DOC_API_BASE_URL }),
+  baseQuery: fetchBaseQuery({ baseUrl: "/" }),
   tagTypes: ["News", "GeoNews"],
   endpoints: (builder) => ({
     getNewsWithCoords: builder.query<
@@ -128,7 +158,7 @@ export const gdeltApi = createApi({
         { query = POLYMARKET_RELEVANT_QUERY, timespan = "1d" } = {},
         _queryApi,
         _extraOptions,
-        fetchWithBQ,
+        _fetchWithBQ,
       ) {
         try {
           const geoParams = new URLSearchParams({
@@ -139,9 +169,8 @@ export const gdeltApi = createApi({
             maxpoints: "500",
           });
 
-          const geoResponse = await fetch(
-            `${GDELT_GEO_API_BASE_URL}/geo?${geoParams.toString()}`,
-          );
+          const geoUrl = `${GDELT_GEO_API_BASE}/geo?${geoParams.toString()}`;
+          const geoResponse = await fetchWithProxy(geoUrl);
           const geoData: GdeltGeoResponse = await geoResponse.json();
 
           const articlesWithCoords: GdeltArticleWithCoords[] = [];
@@ -195,82 +224,104 @@ export const gdeltApi = createApi({
 
           return { data: deduplicated.slice(0, 150) };
         } catch (error) {
-          const docParams = new URLSearchParams({
-            query: `${query} sourcelang:english`,
-            mode: "ArtList",
-            format: "json",
-            maxrecords: "250",
-            timespan,
-          });
+          // Fallback: используем Doc API если Geo API не работает
+          try {
+            const docParams = new URLSearchParams({
+              query: `${query} sourcelang:english`,
+              mode: "ArtList",
+              format: "json",
+              maxrecords: "250",
+              timespan,
+            });
 
-          const result = await fetchWithBQ(`/doc?${docParams.toString()}`);
+            const docUrl = `${GDELT_DOC_API_BASE}/doc?${docParams.toString()}`;
+            const response = await fetchWithProxy(docUrl);
+            const data: GdeltResponse = await response.json();
 
-          if (result.error) {
-            return { error: result.error };
+            const articles = data.articles || [];
+            const deduplicated = deduplicateArticles(articles);
+            const diversified = diversifyArticlesByCountry(deduplicated, 12);
+
+            return { data: diversified as GdeltArticleWithCoords[] };
+          } catch (fallbackError) {
+            return {
+              error: {
+                status: "FETCH_ERROR",
+                error: String(fallbackError),
+              } as any,
+            };
           }
-
-          const response = result.data as GdeltResponse;
-          const articles = response.articles || [];
-          const deduplicated = deduplicateArticles(articles);
-          const diversified = diversifyArticlesByCountry(deduplicated, 12);
-
-          return { data: diversified as GdeltArticleWithCoords[] };
         }
       },
       providesTags: ["GeoNews"],
     }),
 
     getNews: builder.query<GdeltArticle[], GdeltQueryParams>({
-      query: ({
+      async queryFn({
         query = POLYMARKET_RELEVANT_QUERY,
         maxrecords = 250,
         timespan = "1d",
-
         sourcecountry,
         theme,
-      } = {}) => {
-        const params = new URLSearchParams({
-          mode: "ArtList",
-          format: "json",
-          maxrecords: maxrecords.toString(),
-          timespan,
-        });
+      } = {}) {
+        try {
+          const params = new URLSearchParams({
+            mode: "ArtList",
+            format: "json",
+            maxrecords: maxrecords.toString(),
+            timespan,
+          });
 
-        let queryParts: string[] = [];
-        if (query) queryParts.push(query);
-        queryParts.push("sourcelang:english");
-        if (sourcecountry) queryParts.push(`sourcecountry:${sourcecountry}`);
-        if (theme) queryParts.push(`theme:${theme}`);
+          let queryParts: string[] = [];
+          if (query) queryParts.push(query);
+          queryParts.push("sourcelang:english");
+          if (sourcecountry) queryParts.push(`sourcecountry:${sourcecountry}`);
+          if (theme) queryParts.push(`theme:${theme}`);
 
-        params.set("query", queryParts.join(" ") || POLYMARKET_RELEVANT_QUERY);
+          params.set(
+            "query",
+            queryParts.join(" ") || POLYMARKET_RELEVANT_QUERY,
+          );
 
-        return `/doc?${params.toString()}`;
-      },
-      transformResponse: (response: GdeltResponse) => {
-        const articles = response.articles || [];
-        const deduplicated = deduplicateArticles(articles);
-        return diversifyArticlesByCountry(deduplicated, 12);
+          const url = `${GDELT_DOC_API_BASE}/doc?${params.toString()}`;
+          const response = await fetchWithProxy(url);
+          const data: GdeltResponse = await response.json();
+
+          const articles = data.articles || [];
+          const deduplicated = deduplicateArticles(articles);
+          return { data: diversifyArticlesByCountry(deduplicated, 12) };
+        } catch (error) {
+          return {
+            error: { status: "FETCH_ERROR", error: String(error) } as any,
+          };
+        }
       },
       providesTags: ["News"],
     }),
 
     getNewsByQuery: builder.query<GdeltArticle[], string>({
-      query: (searchQuery) => {
-        const params = new URLSearchParams({
-          query: `${
-            searchQuery || POLYMARKET_RELEVANT_QUERY
-          } sourcelang:english`,
-          mode: "ArtList",
-          format: "json",
-          maxrecords: "250",
-          timespan: "7d",
-        });
-        return `/doc?${params.toString()}`;
-      },
-      transformResponse: (response: GdeltResponse) => {
-        const articles = response.articles || [];
-        const deduplicated = deduplicateArticles(articles);
-        return deduplicated.slice(0, 100);
+      async queryFn(searchQuery) {
+        try {
+          const params = new URLSearchParams({
+            query: `${searchQuery || POLYMARKET_RELEVANT_QUERY} sourcelang:english`,
+            mode: "ArtList",
+            format: "json",
+            maxrecords: "250",
+            timespan: "7d",
+          });
+
+          const url = `${GDELT_DOC_API_BASE}/doc?${params.toString()}`;
+          const response = await fetchWithProxy(url);
+          const data: GdeltResponse = await response.json();
+
+          const articles = data.articles || [];
+          const deduplicated = deduplicateArticles(articles);
+          return { data: deduplicated.slice(0, 100) };
+        } catch (error) {
+          return {
+            error: { status: "FETCH_ERROR", error: String(error) } as any,
+          };
+        }
       },
       providesTags: ["News"],
     }),
@@ -279,20 +330,28 @@ export const gdeltApi = createApi({
       GdeltArticle[],
       { maxrecords?: number; timespan?: string }
     >({
-      query: ({ maxrecords = 250, timespan = "4h" } = {}) => {
-        const params = new URLSearchParams({
-          query: `${BREAKING_NEWS_QUERY} sourcelang:english`,
-          mode: "ArtList",
-          format: "json",
-          maxrecords: maxrecords.toString(),
-          timespan,
-        });
-        return `/doc?${params.toString()}`;
-      },
-      transformResponse: (response: GdeltResponse) => {
-        const articles = response.articles || [];
-        const deduplicated = deduplicateArticles(articles);
-        return diversifyArticlesByCountry(deduplicated, 15);
+      async queryFn({ maxrecords = 250, timespan = "4h" } = {}) {
+        try {
+          const params = new URLSearchParams({
+            query: `${BREAKING_NEWS_QUERY} sourcelang:english`,
+            mode: "ArtList",
+            format: "json",
+            maxrecords: maxrecords.toString(),
+            timespan,
+          });
+
+          const url = `${GDELT_DOC_API_BASE}/doc?${params.toString()}`;
+          const response = await fetchWithProxy(url);
+          const data: GdeltResponse = await response.json();
+
+          const articles = data.articles || [];
+          const deduplicated = deduplicateArticles(articles);
+          return { data: diversifyArticlesByCountry(deduplicated, 15) };
+        } catch (error) {
+          return {
+            error: { status: "FETCH_ERROR", error: String(error) } as any,
+          };
+        }
       },
       providesTags: ["News"],
     }),
