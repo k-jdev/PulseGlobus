@@ -1,5 +1,10 @@
 import { useRef, useMemo, useEffect, useState, useCallback } from "react";
-import { useMapbox, MarkerClickEvent, useProgressiveMarkers } from "./hooks";
+import {
+  useMapbox,
+  MarkerClickEvent,
+  useProgressiveMarkers,
+  useAIEnhancedMarkers,
+} from "./hooks";
 import { MapContainer, MarketStatsPopup, NewsMarker } from "./components";
 import { useGetEventsWithMarketsQuery } from "../../store/services/polymarketApi";
 import { useGetNewsQuery } from "../../store/services/gdeltApi";
@@ -120,8 +125,24 @@ const GlobusMapbox = ({
     return filteredMarkers;
   }, [events, newsArticles, timeFilter, showNews]);
 
-  // Маркеры загружаются сразу без задержки
-  const { visibleMarkers } = useProgressiveMarkers(mapMarkers);
+  const {
+    enhancedMarkers,
+    isAIAvailable,
+    method: aiMethod,
+  } = useAIEnhancedMarkers(mapMarkers, {
+    enabled: true,
+    enhanceCoordinates: true,
+  });
+
+  useEffect(() => {
+    if (aiMethod !== "none") {
+      console.log(
+        `🗺️ AI геоклассификация: ${aiMethod} (доступен: ${isAIAvailable})`,
+      );
+    }
+  }, [aiMethod, isAIAvailable]);
+
+  const { visibleMarkers } = useProgressiveMarkers(enhancedMarkers);
 
   const handleMarkerClick = useCallback(
     ({ marker, screenPosition }: MarkerClickEvent) => {
