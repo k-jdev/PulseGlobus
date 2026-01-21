@@ -194,12 +194,12 @@ export const polymarketApi = createApi({
         { limit = 20 } = {},
         _queryApi,
         _extraOptions,
-        fetchWithBQ
+        fetchWithBQ,
       ) {
         try {
           // First get active markets sorted by recent activity
           const marketsResult = await fetchWithBQ(
-            `/markets?limit=100&active=true&closed=false&order=volume24hr&ascending=false`
+            `/markets?limit=100&active=true&closed=false&order=volume24hr&ascending=false`,
           );
 
           if (marketsResult.error) {
@@ -222,7 +222,7 @@ export const polymarketApi = createApi({
                 : 50;
             const tradeSize = Math.max(
               10,
-              avgTradeSize * (0.5 + Math.random())
+              avgTradeSize * (0.5 + Math.random()),
             );
 
             return {

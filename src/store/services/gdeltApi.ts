@@ -1,8 +1,7 @@
 import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
 
-// DOC API для списка статей
 const GDELT_DOC_API_BASE_URL = "https://api.gdeltproject.org/api/v2/doc";
-// GEO API для географических данных с координатами
+
 const GDELT_GEO_API_BASE_URL = "https://api.gdeltproject.org/api/v2/geo";
 
 const POLYMARKET_RELEVANT_QUERY =
@@ -11,7 +10,6 @@ const POLYMARKET_RELEVANT_QUERY =
 const BREAKING_NEWS_QUERY =
   "(Trump OR Biden OR Ukraine OR Russia OR Israel OR China OR Bitcoin)";
 
-// Интерфейс для статьи из DOC API
 export interface GdeltArticle {
   url: string;
   url_mobile: string;
@@ -23,7 +21,6 @@ export interface GdeltArticle {
   sourcecountry: string;
 }
 
-// Интерфейс для локации из GEO API (GeoJSON)
 export interface GdeltGeoFeature {
   type: "Feature";
   geometry: {
@@ -49,7 +46,6 @@ export interface GdeltGeoResponse {
   features: GdeltGeoFeature[];
 }
 
-// Расширенный интерфейс статьи с координатами
 export interface GdeltArticleWithCoords extends GdeltArticle {
   coordinates?: [number, number]; // [longitude, latitude]
   locationName?: string;
@@ -124,7 +120,6 @@ export const gdeltApi = createApi({
   baseQuery: fetchBaseQuery({ baseUrl: GDELT_DOC_API_BASE_URL }),
   tagTypes: ["News", "GeoNews"],
   endpoints: (builder) => ({
-    // Основной эндпоинт с координатами из GEO API
     getNewsWithCoords: builder.query<
       GdeltArticleWithCoords[],
       GdeltQueryParams
@@ -136,7 +131,6 @@ export const gdeltApi = createApi({
         fetchWithBQ,
       ) {
         try {
-          // Запрашиваем GEO API для получения координат
           const geoParams = new URLSearchParams({
             query: `${query} sourcelang:english`,
             mode: "PointData",
@@ -150,7 +144,6 @@ export const gdeltApi = createApi({
           );
           const geoData: GdeltGeoResponse = await geoResponse.json();
 
-          // Преобразуем GeoJSON features в статьи с координатами
           const articlesWithCoords: GdeltArticleWithCoords[] = [];
           const seenUrls = new Set<string>();
 
@@ -158,10 +151,8 @@ export const gdeltApi = createApi({
             const coords = feature.geometry?.coordinates;
             const locationName = feature.properties?.name;
 
-            // Парсим HTML из properties для извлечения статей
             const html = feature.properties?.html || "";
 
-            // Извлекаем URL и заголовки из HTML
             const linkRegex =
               /<a[^>]*href=["']([^"']+)["'][^>]*>([^<]*)<\/a>/gi;
             let match;
@@ -172,13 +163,11 @@ export const gdeltApi = createApi({
               if (url && title && !seenUrls.has(url)) {
                 seenUrls.add(url);
 
-                // Извлекаем изображение если есть
                 const imgMatch = html.match(
                   /<img[^>]*src=["']([^"']+)["'][^>]*>/i,
                 );
                 const socialimage = imgMatch ? imgMatch[1] : "";
 
-                // Извлекаем домен из URL
                 let domain = "";
                 try {
                   domain = new URL(url).hostname;
@@ -202,12 +191,10 @@ export const gdeltApi = createApi({
             }
           }
 
-          // Дедупликация по заголовкам
           const deduplicated = deduplicateArticles(articlesWithCoords);
 
           return { data: deduplicated.slice(0, 150) };
         } catch (error) {
-          // Fallback на обычный DOC API
           const docParams = new URLSearchParams({
             query: `${query} sourcelang:english`,
             mode: "ArtList",
@@ -233,7 +220,6 @@ export const gdeltApi = createApi({
       providesTags: ["GeoNews"],
     }),
 
-    // Оригинальный эндпоинт (без координат, для обратной совместимости)
     getNews: builder.query<GdeltArticle[], GdeltQueryParams>({
       query: ({
         query = POLYMARKET_RELEVANT_QUERY,

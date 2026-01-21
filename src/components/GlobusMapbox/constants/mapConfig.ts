@@ -9,6 +9,12 @@ export const MAP_CONFIG = {
   maxZoom: 20,
   minZoom: 1,
   zoom: 3,
+  // Оптимизация производительности
+  antialias: false, // Отключаем сглаживание для ускорения
+  fadeDuration: 0, // Мгновенные переходы
+  preserveDrawingBuffer: false, // Оптимизация памяти
+  trackResize: true,
+  refreshExpiredTiles: false, // Не перезагружаем просроченные тайлы сразу
 };
 
 export const THEME_CONFIGS = {

@@ -1,5 +1,5 @@
 import { useRef, useMemo, useEffect, useState, useCallback } from "react";
-import { useMapbox, MarkerClickEvent } from "./hooks";
+import { useMapbox, MarkerClickEvent, useProgressiveMarkers } from "./hooks";
 import { MapContainer, MarketStatsPopup, NewsMarker } from "./components";
 import { useGetEventsWithMarketsQuery } from "../../store/services/polymarketApi";
 import { useGetNewsQuery } from "../../store/services/gdeltApi";
@@ -53,49 +53,18 @@ const GlobusMapbox = ({
     }
   }, [isMobileMenuOpen]);
 
-  const {
-    data: events,
-    isLoading: isLoadingEvents,
-    error: eventsError,
-  } = useGetEventsWithMarketsQuery({
-    limit: 100,
+  const { data: events } = useGetEventsWithMarketsQuery({
+    limit: 80,
     active: true,
     order: "volume24hr",
   });
 
-  const {
-    data: newsArticles,
-    isLoading: isLoadingNews,
-    error: newsError,
-  } = useGetNewsQuery({
+  const { data: newsArticles } = useGetNewsQuery({
     query:
       "(Trump OR Biden OR Ukraine OR Russia OR Israel OR Gaza OR China OR Bitcoin OR inflation)",
-    maxrecords: 250,
+    maxrecords: 120,
     timespan: "1d",
   });
-
-  useEffect(() => {
-    console.log("📊 Polymarket Events API:", {
-      isLoading: isLoadingEvents,
-      error: eventsError,
-      eventsCount: events?.length || 0,
-    });
-    if (events && events.length > 0) {
-      console.log("📈 First event:", events[0]);
-      console.log("📦 First event markets:", events[0].markets?.length || 0);
-    }
-  }, [events, isLoadingEvents, eventsError]);
-
-  useEffect(() => {
-    console.log("📰 GDELT News API:", {
-      isLoading: isLoadingNews,
-      error: newsError,
-      articlesCount: newsArticles?.length || 0,
-    });
-    if (newsArticles && newsArticles.length > 0) {
-      console.log("📰 First article:", newsArticles[0]);
-    }
-  }, [newsArticles, isLoadingNews, newsError]);
 
   const mapMarkers = useMemo(() => {
     const marketMarkers = events
@@ -125,34 +94,34 @@ const GlobusMapbox = ({
         filteredMarkers = [
           ...linkedMarketMarkers
             .sort((a, b) => b.volume24hr - a.volume24hr)
-            .slice(0, 30),
-          ...linkedNewsMarkers.slice(0, 20),
+            .slice(0, 25),
+          ...linkedNewsMarkers.slice(0, 15),
         ];
         break;
       case "6h":
         filteredMarkers = [
           ...linkedMarketMarkers
             .sort((a, b) => b.volume1wk - a.volume1wk)
-            .slice(0, 60),
-          ...linkedNewsMarkers.slice(0, 40),
+            .slice(0, 50),
+          ...linkedNewsMarkers.slice(0, 30),
         ];
         break;
       case "24h":
       default:
         filteredMarkers = [
-          ...linkedMarketMarkers.sort((a, b) => b.volume1mo - a.volume1mo),
-          ...linkedNewsMarkers,
+          ...linkedMarketMarkers
+            .sort((a, b) => b.volume1mo - a.volume1mo)
+            .slice(0, 80),
+          ...linkedNewsMarkers.slice(0, 100),
         ];
         break;
     }
 
-    console.log(
-      `🎯 Filtered markers (${timeFilter}):`,
-      filteredMarkers.length,
-      `(markets: ${linkedMarketMarkers.length}, news: ${linkedNewsMarkers.length})`,
-    );
     return filteredMarkers;
   }, [events, newsArticles, timeFilter, showNews]);
+
+  // Маркеры загружаются сразу без задержки
+  const { visibleMarkers } = useProgressiveMarkers(mapMarkers);
 
   const handleMarkerClick = useCallback(
     ({ marker, screenPosition }: MarkerClickEvent) => {
@@ -230,7 +199,7 @@ const GlobusMapbox = ({
     flyToLocation,
     projectCoordinates,
     mapRef,
-  } = useMapbox(mapContainerRef, undefined, mapMarkers, handleMarkerClick);
+  } = useMapbox(mapContainerRef, undefined, visibleMarkers, handleMarkerClick);
 
   const handleClosePopup = () => {
     setSelectedMarket(null);
@@ -324,6 +293,7 @@ const GlobusMapbox = ({
         theme={theme}
         onThemeChange={changeTheme}
       />
+
       {selectedMarket && (
         <>
           <div className="hidden md:block fixed top-[160px] right-6 z-50">
