@@ -42,13 +42,14 @@ export const TokenGate: FC<TokenGateProps> = ({
   const renderOverlay = () => {
     return (
       <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm p-3 sm:p-4">
-        <div className="bg-white flex flex-col gap-3 sm:gap-4 items-start overflow-hidden rounded-[14px] shadow-[0px_22px_32px_0px_rgba(20,82,240,0.25)] w-full max-w-[95vw] sm:max-w-[480px] md:max-w-[520px]">
+        <div className="bg-white flex flex-col gap-3 sm:gap-4 items-start overflow-hidden rounded-[14px] shadow-[0px_22px_32px_0px_rgba(20,82,240,0.25)] w-full max-w-[95vw] sm:max-w-[480px] md:max-w-[520px] select-none">
           {/* Header Image */}
           <div className="relative w-full aspect-[2100/793]">
             <img
               alt="PulseGlobus"
-              className="absolute inset-0 w-full h-full object-cover"
+              className="absolute inset-0 w-full h-full object-cover pointer-events-none"
               src={modalHeader}
+              draggable="false"
             />
           </div>
 
