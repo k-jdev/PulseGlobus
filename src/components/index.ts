@@ -3,3 +3,4 @@ export { default as NavbarComponent } from "./Navbar";
 export { default as MainNavigationComponent } from "./MainNavigation";
 export { Search } from "./Search";
 export { ConnectWallet } from "./ConnectWallet";
+export { TokenGate } from "./TokenGate";

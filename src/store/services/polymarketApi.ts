@@ -2,6 +2,8 @@ import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
 
 const POLYMARKET_API_BASE_URL = "/api/polymarket";
 
+const BUILDER_API_KEY = "019be474-bdb7-7d8d-9267-2d7322159eb4";
+
 export interface ImageOptimized {
   id: string;
   imageUrlSource: string;
@@ -145,7 +147,13 @@ export interface TradesResponse {
 
 export const polymarketApi = createApi({
   reducerPath: "polymarketApi",
-  baseQuery: fetchBaseQuery({ baseUrl: POLYMARKET_API_BASE_URL }),
+  baseQuery: fetchBaseQuery({
+    baseUrl: POLYMARKET_API_BASE_URL,
+    prepareHeaders: (headers) => {
+      headers.set("X-Builder-Api-Key", BUILDER_API_KEY);
+      return headers;
+    },
+  }),
   tagTypes: ["Markets", "Events", "Trades"],
   endpoints: (builder) => ({
     getMarkets: builder.query<Market[], { limit?: number; active?: boolean }>({

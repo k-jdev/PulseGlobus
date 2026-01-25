@@ -3,10 +3,16 @@ import {
   GlobusMapboxComponent,
   NavbarComponent,
   MainNavigationComponent,
+  TokenGate,
 } from "./components";
 import { Theme } from "./components/GlobusMapbox/constants/mapConfig";
 
 export type TimeFilter = "1h" | "6h" | "24h";
+
+// ⚠️ ЗАМЕНИ НА РЕАЛЬНЫЙ АДРЕС $PULSE ТОКЕНА!
+const PULSE_TOKEN_ADDRESS =
+  "0x0000000000000000000000000000000000000000" as `0x${string}`;
+const REQUIRED_TOKENS = 1000;
 
 // Check if mobile on initial load
 const isMobileDevice = () => window.innerWidth < 768;
@@ -38,46 +44,52 @@ function App() {
   };
 
   return (
-    <div className="relative w-full h-screen overflow-hidden">
-      <NavbarComponent
-        theme={theme}
-        onThemeChange={changeTheme}
-        timeFilter={timeFilter}
-        onTimeFilterChange={setTimeFilter}
-        onMobileMenuChange={handleMobileMenuChange}
-        onSearchFocus={handleSearchFocus}
-      />
-      <GlobusMapboxComponent
-        timeFilter={timeFilter}
-        isMobileMenuOpen={isMobileMenuOpen}
-        onThemeChange={(currentTheme, changeThemeFn) => {
-          setTheme(currentTheme);
-          if (!changeTheme) {
-            setChangeTheme(() => changeThemeFn);
-          }
-        }}
-        onSpinStateChange={(pausedState, toggleSpinFn) => {
-          setIsPaused(pausedState);
-          if (!toggleSpin) {
-            setToggleSpin(() => toggleSpinFn);
-          }
-        }}
-      />
-      <MainNavigationComponent
-        theme={theme}
-        onThemeChange={changeTheme}
-        isPaused={isPaused}
-        onToggleSpin={toggleSpin}
-        timeFilter={timeFilter}
-        onTimeFilterChange={setTimeFilter}
-        isMobileMenuOpen={isMobileMenuOpen}
-        onClosePopups={(closeFn) => {
-          if (!closePopups) {
-            setClosePopups(() => closeFn);
-          }
-        }}
-      />
-    </div>
+    <TokenGate
+      tokenAddress={PULSE_TOKEN_ADDRESS}
+      requiredAmount={REQUIRED_TOKENS}
+      tokenSymbol="$PULSE"
+    >
+      <div className="relative w-full h-screen overflow-hidden">
+        <NavbarComponent
+          theme={theme}
+          onThemeChange={changeTheme}
+          timeFilter={timeFilter}
+          onTimeFilterChange={setTimeFilter}
+          onMobileMenuChange={handleMobileMenuChange}
+          onSearchFocus={handleSearchFocus}
+        />
+        <GlobusMapboxComponent
+          timeFilter={timeFilter}
+          isMobileMenuOpen={isMobileMenuOpen}
+          onThemeChange={(currentTheme, changeThemeFn) => {
+            setTheme(currentTheme);
+            if (!changeTheme) {
+              setChangeTheme(() => changeThemeFn);
+            }
+          }}
+          onSpinStateChange={(pausedState, toggleSpinFn) => {
+            setIsPaused(pausedState);
+            if (!toggleSpin) {
+              setToggleSpin(() => toggleSpinFn);
+            }
+          }}
+        />
+        <MainNavigationComponent
+          theme={theme}
+          onThemeChange={changeTheme}
+          isPaused={isPaused}
+          onToggleSpin={toggleSpin}
+          timeFilter={timeFilter}
+          onTimeFilterChange={setTimeFilter}
+          isMobileMenuOpen={isMobileMenuOpen}
+          onClosePopups={(closeFn) => {
+            if (!closePopups) {
+              setClosePopups(() => closeFn);
+            }
+          }}
+        />
+      </div>
+    </TokenGate>
   );
 }
 
