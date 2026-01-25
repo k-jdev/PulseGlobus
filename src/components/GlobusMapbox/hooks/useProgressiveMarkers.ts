@@ -2,11 +2,10 @@ import { useState, useEffect, useRef, useMemo } from "react";
 import { MapMarker } from "../utils/marketMappers";
 
 interface UseProgressiveMarkersOptions {
-  /** Количество маркеров в первом батче (показывается сразу) */
   initialBatchSize?: number;
-  /** Количество маркеров в последующих батчах */
+
   batchSize?: number;
-  /** Задержка между батчами в мс */
+
   delayBetweenBatches?: number;
   enabled?: boolean;
 }
@@ -19,18 +18,14 @@ interface UseProgressiveMarkersResult {
   progress: number;
 }
 
-/**
- * Хук для плавной постепенной загрузки маркеров
- * Первый батч показывается сразу, остальные добавляются быстро
- */
 export function useProgressiveMarkers(
   allMarkers: MapMarker[],
   options: UseProgressiveMarkersOptions = {},
 ): UseProgressiveMarkersResult {
   const {
-    initialBatchSize = 40, // Сразу показываем 40 маркеров
-    batchSize = 30, // Потом по 30
-    delayBetweenBatches = 16, // ~60fps - незаметно для глаза
+    initialBatchSize = 40,
+    batchSize = 30,
+    delayBetweenBatches = 16,
     enabled = true,
   } = options;
 
@@ -38,14 +33,12 @@ export function useProgressiveMarkers(
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
   const currentIndexRef = useRef<number>(0);
 
-  // Стабильная ссылка на маркеры
   const stableMarkers = useMemo(() => {
     if (!enabled || !allMarkers) return [];
     return allMarkers;
   }, [allMarkers, enabled]);
 
   useEffect(() => {
-    // Очищаем таймеры
     if (timeoutRef.current) {
       clearTimeout(timeoutRef.current);
       timeoutRef.current = null;
@@ -57,17 +50,14 @@ export function useProgressiveMarkers(
       return;
     }
 
-    // Сразу показываем первый батч
     const firstBatch = stableMarkers.slice(0, initialBatchSize);
     setVisibleMarkers(firstBatch);
     currentIndexRef.current = initialBatchSize;
 
-    // Если маркеров меньше первого батча - готово
     if (stableMarkers.length <= initialBatchSize) {
       return;
     }
 
-    // Добавляем остальные маркеры постепенно
     const addNextBatch = () => {
       const startIndex = currentIndexRef.current;
       if (startIndex >= stableMarkers.length) return;
@@ -78,13 +68,11 @@ export function useProgressiveMarkers(
       setVisibleMarkers((prev) => [...prev, ...nextBatch]);
       currentIndexRef.current = endIndex;
 
-      // Продолжаем если есть ещё
       if (endIndex < stableMarkers.length) {
         timeoutRef.current = setTimeout(addNextBatch, delayBetweenBatches);
       }
     };
 
-    // Запускаем добавление с небольшой задержкой
     timeoutRef.current = setTimeout(addNextBatch, delayBetweenBatches);
 
     return () => {

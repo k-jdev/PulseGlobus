@@ -3,18 +3,29 @@ export const MAPBOX_ACCESS_TOKEN =
 
 export type Theme = "light" | "dark";
 
+export const getResponsiveZoom = (): number => {
+  if (typeof window === "undefined") return 3;
+  const width = window.innerWidth;
+
+  if (width < 768) return 1.7;
+
+  if (width < 1024) return 2;
+
+  return 3;
+};
+
 export const MAP_CONFIG = {
   style: "mapbox://styles/mapbox/light-v11",
-  center: [-98, 38.88] as [number, number],
+  center: [0, 20] as [number, number],
   maxZoom: 20,
   minZoom: 1,
-  zoom: 3,
-  // Оптимизация производительности
-  antialias: false, // Отключаем сглаживание для ускорения
-  fadeDuration: 0, // Мгновенные переходы
-  preserveDrawingBuffer: false, // Оптимизация памяти
+  zoom: getResponsiveZoom(),
+
+  antialias: false,
+  fadeDuration: 0,
+  preserveDrawingBuffer: false,
   trackResize: true,
-  refreshExpiredTiles: false, // Не перезагружаем просроченные тайлы сразу
+  refreshExpiredTiles: false,
 };
 
 export const THEME_CONFIGS = {

@@ -10,7 +10,6 @@ import {
 import { createPopupContent } from "../utils/popupContent";
 import { MapMarker, createGeoJSONFromMarkers } from "../utils/marketMappers";
 
-// Функция для отрисовки линий связей между маркером и связанными элементами
 function drawConnectionLines(
   map: mapboxgl.Map,
   clickedFeature: MapboxGeoJSONFeature,
@@ -26,11 +25,9 @@ function drawConnectionLines(
 
   const lines: GeoJSON.Feature<GeoJSON.LineString>[] = [];
 
-  // Получаем связанные ID
   let relatedIds: string[] = [];
 
   if (clickedType === "market") {
-    // Маркет -> связанные новости
     const relatedNewsIds = properties.relatedNewsIds;
     if (relatedNewsIds) {
       try {
@@ -42,7 +39,6 @@ function drawConnectionLines(
       relatedIds = [properties.relatedNewsId];
     }
   } else if (clickedType === "news") {
-    // Новость -> связанные маркеты
     const relatedMarketIds = properties.relatedMarketIds;
     if (relatedMarketIds) {
       try {
@@ -53,7 +49,6 @@ function drawConnectionLines(
     }
   }
 
-  // Создаём линии к связанным маркерам
   for (const relatedId of relatedIds) {
     const relatedMarker = allMarkers.find((m) => m.id === relatedId);
     if (relatedMarker) {
@@ -82,7 +77,6 @@ function drawConnectionLines(
   }
 }
 
-// Функция для очистки линий связей
 function clearConnectionLines(map: mapboxgl.Map) {
   const connectionsSource = map.getSource(
     "connections",

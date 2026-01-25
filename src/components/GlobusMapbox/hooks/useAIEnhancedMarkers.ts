@@ -44,7 +44,7 @@ export function useAIEnhancedMarkers(
         const status = await checkBrowserAI();
         setIsAIAvailable(status.available);
         setMethod(status.method);
-        console.log(`🤖 AI Status: ${status.method} - ${status.message}`);
+        // console.log(`🤖 AI Status: ${status.method} - ${status.message}`);
       } catch (error) {
         console.warn("AI check failed:", error);
         setMethod("keywords");
