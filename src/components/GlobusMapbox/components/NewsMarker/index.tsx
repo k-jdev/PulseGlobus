@@ -265,43 +265,12 @@ export const NewsMarker: FC<NewsMarkerProps> = ({
                           </span>
                         </div>
                       </div>
-                      <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        width="20"
-                        height="20"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="#1452f0"
-                        strokeWidth="2"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        className="flex-shrink-0 opacity-0 group-hover:opacity-100 transition-opacity self-center"
-                      >
-                        <circle cx="12" cy="12" r="10" />
-                        <polyline points="12 8 16 12 12 16" />
-                        <line x1="8" y1="12" x2="16" y2="12" />
-                      </svg>
                     </button>
                   );
                 })}
               </div>
             ) : (
               <div className="flex flex-col items-center justify-center py-8 text-center">
-                <svg
-                  width="48"
-                  height="48"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  className="text-[#e4e4e4] mb-3"
-                >
-                  <path
-                    d="M3 3v18h18M7 16l4-4 4 4 5-6"
-                    stroke="currentColor"
-                    strokeWidth="1.5"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  />
-                </svg>
                 <span className="text-[14px] font-medium text-[#808080] tracking-[-0.28px]">
                   No related markets found
                 </span>
