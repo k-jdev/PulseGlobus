@@ -274,6 +274,19 @@ const GlobusMapbox = ({
     flyToLocation(coordinates, 4);
   };
 
+  const handleMarketClick = (
+    marketId: string,
+    coordinates: [number, number],
+  ) => {
+    console.log("📍 Flying to market location:", marketId, coordinates);
+    // Find the market in mapMarkers and select it
+    const market = mapMarkers.find((m) => m.id === marketId);
+    if (market) {
+      setSelectedMarket(market);
+      flyToLocation(coordinates, 4);
+    }
+  };
+
   const relatedNews = useMemo(() => {
     if (
       !selectedMarket ||
@@ -296,6 +309,39 @@ const GlobusMapbox = ({
         sourcecountry: news.sourcecountry,
         seendate: news.seendate,
         coordinates: news.coordinates,
+      }));
+  }, [selectedMarket, mapMarkers]);
+
+  // Get related markets for news popup
+  const relatedMarkets = useMemo(() => {
+    if (!selectedMarket || selectedMarket.type !== "news") {
+      return [];
+    }
+
+    // Find the news in mapMarkers to get relatedMarketIds (they are set there)
+    const newsInMapMarkers = mapMarkers.find((m) => m.id === selectedMarket.id);
+    const relatedMarketIds =
+      newsInMapMarkers?.relatedMarketIds || selectedMarket.relatedMarketIds;
+
+    if (!relatedMarketIds || relatedMarketIds.length === 0) {
+      return [];
+    }
+
+    return relatedMarketIds
+      .map((marketId) => mapMarkers.find((m) => m.id === marketId))
+      .filter(
+        (market): market is MapMarker =>
+          market !== undefined && market.type === "market",
+      )
+      .map((market) => ({
+        id: market.id,
+        title: market.title,
+        image: market.image,
+        slug: market.slug,
+        eventSlug: market.eventSlug,
+        outcomePrices: market.outcomePrices,
+        outcomes: market.outcomes,
+        coordinates: market.coordinates,
       }));
   }, [selectedMarket, mapMarkers]);
 
@@ -328,6 +374,8 @@ const GlobusMapbox = ({
                 sourcecountry={selectedMarket.sourcecountry}
                 seendate={selectedMarket.seendate}
                 onClose={handleClosePopup}
+                relatedMarkets={relatedMarkets}
+                onMarketClick={handleMarketClick}
               />
             ) : (
               <MarketStatsPopup
@@ -474,6 +522,8 @@ const GlobusMapbox = ({
                   seendate={selectedMarket.seendate}
                   onClose={handleClosePopup}
                   isMobile={true}
+                  relatedMarkets={relatedMarkets}
+                  onMarketClick={handleMarketClick}
                 />
               ) : (
                 <MarketStatsPopup

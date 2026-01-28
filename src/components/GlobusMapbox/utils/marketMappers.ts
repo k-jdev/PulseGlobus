@@ -4084,25 +4084,25 @@ const GEOGRAPHIC_CONTEXT: Record<string, string[]> = {
 };
 
 // Conflicting geographic contexts - topics that should NOT be matched together
-const CONFLICTING_CONTEXTS: [string, string][] = [
-  ["us_election", "asia"],
-  ["us_election", "middle_east"],
-  ["us_election", "africa"],
-  ["us_election", "latin_america"],
-  ["us_election", "europe"],
-  ["us_politicians", "asia"],
-  ["us_politicians", "middle_east"],
-  ["us_politicians", "africa"],
-  ["trump", "asia"],
-  ["biden", "asia"],
-  ["israel", "asia"],
-  ["iran", "asia"],
-  ["ukraine", "asia"],
-  ["russia", "latin_america"],
-  ["china", "latin_america"],
-  ["north_korea", "europe"],
-  ["north_korea", "latin_america"],
-];
+// const CONFLICTING_CONTEXTS: [string, string][] = [
+//   ["us_election", "asia"],
+//   ["us_election", "middle_east"],
+//   ["us_election", "africa"],
+//   ["us_election", "latin_america"],
+//   ["us_election", "europe"],
+//   ["us_politicians", "asia"],
+//   ["us_politicians", "middle_east"],
+//   ["us_politicians", "africa"],
+//   ["trump", "asia"],
+//   ["biden", "asia"],
+//   ["israel", "asia"],
+//   ["iran", "asia"],
+//   ["ukraine", "asia"],
+//   ["russia", "latin_america"],
+//   ["china", "latin_america"],
+//   ["north_korea", "europe"],
+//   ["north_korea", "latin_america"],
+// ];
 
 // Find matching keywords between news and market
 function findMatchingKeywords(text1: string, text2: string): string[] {
@@ -4123,37 +4123,37 @@ function findMatchingKeywords(text1: string, text2: string): string[] {
 }
 
 // Check if texts have conflicting geographic contexts
-function hasConflictingContext(text1: string, text2: string): boolean {
-  const lower1 = text1.toLowerCase();
-  const lower2 = text2.toLowerCase();
+// function hasConflictingContext(text1: string, text2: string): boolean {
+//   const lower1 = text1.toLowerCase();
+//   const lower2 = text2.toLowerCase();
 
-  // Find which topics each text belongs to
-  const topics1: string[] = [];
-  const topics2: string[] = [];
+//   // Find which topics each text belongs to
+//   const topics1: string[] = [];
+//   const topics2: string[] = [];
 
-  for (const [topic, keywords] of Object.entries(NEWS_MARKET_KEYWORDS)) {
-    for (const keyword of keywords) {
-      if (lower1.includes(keyword) && !topics1.includes(topic)) {
-        topics1.push(topic);
-      }
-      if (lower2.includes(keyword) && !topics2.includes(topic)) {
-        topics2.push(topic);
-      }
-    }
-  }
+//   for (const [topic, keywords] of Object.entries(NEWS_MARKET_KEYWORDS)) {
+//     for (const keyword of keywords) {
+//       if (lower1.includes(keyword) && !topics1.includes(topic)) {
+//         topics1.push(topic);
+//       }
+//       if (lower2.includes(keyword) && !topics2.includes(topic)) {
+//         topics2.push(topic);
+//       }
+//     }
+//   }
 
-  // Check for conflicting contexts
-  for (const [ctx1, ctx2] of CONFLICTING_CONTEXTS) {
-    if (
-      (topics1.includes(ctx1) && topics2.includes(ctx2)) ||
-      (topics1.includes(ctx2) && topics2.includes(ctx1))
-    ) {
-      return true;
-    }
-  }
+//   // Check for conflicting contexts
+//   for (const [ctx1, ctx2] of CONFLICTING_CONTEXTS) {
+//     if (
+//       (topics1.includes(ctx1) && topics2.includes(ctx2)) ||
+//       (topics1.includes(ctx2) && topics2.includes(ctx1))
+//     ) {
+//       return true;
+//     }
+//   }
 
-  return false;
-}
+//   return false;
+// }
 
 // Check if both texts share the same geographic region
 function hasMatchingGeographicContext(text1: string, text2: string): boolean {
@@ -4359,10 +4359,10 @@ function calculateRelationScore(text1: string, text2: string): number {
 
   if (words1.length === 0 || words2.length === 0) return 0;
 
-  // PENALTY: Check for conflicting geographic contexts FIRST
-  if (hasConflictingContext(text1, text2)) {
-    return 0; // Immediately reject if contexts conflict
-  }
+  // TEMPORARILY DISABLED: Conflicting context check was too aggressive
+  // if (hasConflictingContext(text1, text2)) {
+  //   return 0; // Immediately reject if contexts conflict
+  // }
 
   const set1 = new Set(words1);
   const set2 = new Set(words2);
@@ -4463,8 +4463,8 @@ export function linkMarketsToNews(
   marketMarkers: MapMarker[],
   newsMarkers: MapMarker[],
 ): { markets: MapMarker[]; news: MapMarker[] } {
-  // Минимальный score для установления связи (increased from 20)
-  const MIN_RELATION_SCORE = 30;
+  // Минимальный score для установления связи (lowered from 30 for better matching)
+  const MIN_RELATION_SCORE = 20;
 
   // Создаём копии для модификации
   const linkedMarkets = marketMarkers.map((market) => ({ ...market }));
