@@ -217,6 +217,7 @@ const GlobusMapbox = ({
     isPaused,
     toggleSpin,
     clearConnections,
+    drawConnections,
     flyToLocation,
     projectCoordinates,
     mapRef,
@@ -228,6 +229,19 @@ const GlobusMapbox = ({
     setMarkerScreenPosition(null);
     clearConnections();
   };
+
+  // Draw connection lines when selectedMarket changes
+  useEffect(() => {
+    if (selectedMarket) {
+      // Find the marker in mapMarkers to get the latest relatedIds
+      // (visibleMarkers may not have them due to filtering/progressive loading)
+      const markerWithRelations =
+        mapMarkers.find((m) => m.id === selectedMarket.id) || selectedMarket;
+      drawConnections(markerWithRelations);
+    } else {
+      clearConnections();
+    }
+  }, [selectedMarket, mapMarkers, drawConnections, clearConnections]);
 
   useEffect(() => {
     const map = mapRef.current;

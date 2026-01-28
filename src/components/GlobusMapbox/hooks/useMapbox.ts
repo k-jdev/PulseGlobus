@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useCallback } from "react";
 import mapboxgl, { MapboxGeoJSONFeature } from "mapbox-gl";
 import {
   MAPBOX_ACCESS_TOKEN,
@@ -636,11 +636,64 @@ export const useMapbox = (
     }
   };
 
-  const clearConnections = () => {
+  const clearConnections = useCallback(() => {
     if (mapRef.current) {
       clearConnectionLines(mapRef.current);
     }
-  };
+  }, []);
+
+  const drawConnections = useCallback((marker: MapMarker) => {
+    if (!mapRef.current) return;
+
+    const map = mapRef.current;
+    const clickedCoords = marker.coordinates;
+    const lines: GeoJSON.Feature<GeoJSON.LineString>[] = [];
+
+    let relatedIds: string[] = [];
+
+    if (marker.type === "market") {
+      relatedIds = marker.relatedNewsIds || [];
+    } else if (marker.type === "news") {
+      relatedIds = marker.relatedMarketIds || [];
+    }
+
+    console.log("🔗 drawConnections called:", {
+      markerType: marker.type,
+      markerId: marker.id,
+      relatedIds,
+      markersCount: markersRef.current.length,
+    });
+
+    for (const relatedId of relatedIds) {
+      const relatedMarker = markersRef.current.find((m) => m.id === relatedId);
+      console.log("  Finding marker:", relatedId, "found:", !!relatedMarker);
+      if (relatedMarker) {
+        lines.push({
+          type: "Feature",
+          properties: {
+            sourceId: marker.id,
+            targetId: relatedId,
+          },
+          geometry: {
+            type: "LineString",
+            coordinates: [clickedCoords, relatedMarker.coordinates],
+          },
+        });
+      }
+    }
+
+    console.log("  Lines to draw:", lines.length);
+
+    const connectionsSource = map.getSource(
+      "connections",
+    ) as mapboxgl.GeoJSONSource;
+    if (connectionsSource) {
+      connectionsSource.setData({
+        type: "FeatureCollection",
+        features: lines,
+      });
+    }
+  }, []);
 
   const flyToLocation = (coordinates: [number, number], zoom: number = 4) => {
     if (mapRef.current) {
@@ -671,6 +724,7 @@ export const useMapbox = (
     isPaused,
     toggleSpin,
     clearConnections,
+    drawConnections,
     flyToLocation,
     projectCoordinates,
   };
