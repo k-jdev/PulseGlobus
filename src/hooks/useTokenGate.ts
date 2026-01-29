@@ -48,7 +48,7 @@ export function useTokenGate({
     chainId,
   });
 
-  const { data: balanceRaw, isLoading } = useReadContract({
+  const { data: balanceRaw, isLoading: isContractLoading } = useReadContract({
     address: tokenAddress,
     abi: ERC20_ABI,
     functionName: "balanceOf",
@@ -64,6 +64,8 @@ export function useTokenGate({
     balanceRaw && decimals ? parseFloat(formatUnits(balanceRaw, decimals)) : 0;
 
   const hasAccess = balance >= requiredAmount;
+
+  const isLoading = isContractLoading && !hasAccess;
 
   return {
     isConnected,
