@@ -57,7 +57,6 @@ export function useTokenGate({
     chainId,
     query: {
       enabled: !!address,
-      refetchInterval: 30000,
     },
   });
 
