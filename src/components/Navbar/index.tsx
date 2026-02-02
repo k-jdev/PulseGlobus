@@ -1,16 +1,15 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import logo from "../../assets/images/navbar/logo.png";
-import { Button } from "../ui";
-import { Search } from "../Search";
-import { Theme } from "../GlobusMapbox/constants/mapConfig";
-import { TimeFilter } from "../../App";
-import { ConnectWallet } from "../ConnectWallet";
+import logo from "@/assets/images/navbar/logo.png";
+import { Button } from "@/components/ui";
+import { Search } from "@/components/Search";
+import { Theme } from "@/components/GlobusMapbox/constants/mapConfig";
+import { TimeFilter } from "@/App";
+import { ConnectWallet } from "@/components/ConnectWallet";
 
-// Icons
-import sunIcon from "../../assets/svgs/mainNavigation/sun.svg";
-import moonIcon from "../../assets/svgs/mainNavigation/moon.svg";
-import moonBlueIcon from "../../assets/svgs/mainNavigation/moon-blue.svg";
+import sunIcon from "@/assets/svgs/mainNavigation/sun.svg";
+import moonIcon from "@/assets/svgs/mainNavigation/moon.svg";
+import moonBlueIcon from "@/assets/svgs/mainNavigation/moon-blue.svg";
 
 interface NavbarProps {
   theme?: Theme;

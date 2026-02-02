@@ -1,9 +1,5 @@
-import {
-  sunIcon,
-  moonIcon,
-  moonBlueIcon,
-} from "../../../../../assets/svgs/mainNavigation";
-import { Theme } from "../../../../GlobusMapbox/constants/mapConfig";
+import { sunIcon, moonIcon, moonBlueIcon } from "@/assets/svgs/mainNavigation";
+import { Theme } from "@/components/GlobusMapbox/constants/mapConfig";
 
 interface ThemeToggleProps {
   theme: Theme;

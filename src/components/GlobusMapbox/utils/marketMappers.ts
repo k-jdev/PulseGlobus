@@ -1,6 +1,6 @@
-import { Market, PolymarketEvent } from "../../../store/services/polymarketApi";
-import { GdeltArticle } from "../../../store/services/gdeltApi";
-import { getGeoCoordinates } from "../../../utils/geoLocation";
+import { Market, PolymarketEvent } from "@/store/services/polymarketApi";
+import { GdeltArticle } from "@/store/services/gdeltApi";
+import { getGeoCoordinates } from "@/utils/geoLocation";
 
 export interface OutcomeData {
   name: string;
@@ -2493,18 +2493,6 @@ export function convertEventsWithMarketsToMapMarkers(
     });
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
 const CITIES_BY_COUNTRY: Record<
   string,
   Array<{ name: string; coordinates: [number, number] }>
@@ -3307,7 +3295,6 @@ const GEOGRAPHIC_CONTEXT: Record<string, string[]> = {
   latin_america: ["latin america", "south america", "central america"],
 };
 
-
 function findMatchingKeywords(text1: string, text2: string): string[] {
   const lower1 = text1.toLowerCase();
   const lower2 = text2.toLowerCase();
@@ -3324,11 +3311,6 @@ function findMatchingKeywords(text1: string, text2: string): string[] {
 
   return matches;
 }
-
-
-
-
-
 
 function hasMatchingGeographicContext(text1: string, text2: string): boolean {
   const lower1 = text1.toLowerCase();
@@ -3526,7 +3508,6 @@ function calculateRelationScore(text1: string, text2: string): number {
 
   if (words1.length === 0 || words2.length === 0) return 0;
 
-
   const set1 = new Set(words1);
   const set2 = new Set(words2);
 
@@ -3555,14 +3536,6 @@ function calculateRelationScore(text1: string, text2: string): number {
 
   return Math.round(totalScore);
 }
-
-
-
-
-
-
-
-
 
 export function linkMarketsToNews(
   marketMarkers: MapMarker[],

@@ -1,5 +1,5 @@
-import { Button } from "../../../../ui";
-import { arrowDownIcon } from "../../../../../assets/svgs/mainNavigation";
+import { Button } from "@/components/ui";
+import { arrowDownIcon } from "@/assets/svgs/mainNavigation";
 
 interface LiveButtonProps {
   isOpen: boolean;

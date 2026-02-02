@@ -1,5 +1,5 @@
-import { playIcon, pauseIcon } from "../../../../../assets/svgs/mainNavigation";
-import { Button } from "../../../../ui";
+import { playIcon, pauseIcon } from "@/assets/svgs/mainNavigation";
+import { Button } from "@/components/ui";
 
 interface PlayButtonProps {
   isPaused: boolean;

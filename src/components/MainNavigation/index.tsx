@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 
-import { Theme } from "../GlobusMapbox/constants/mapConfig";
+import { Theme } from "@/components/GlobusMapbox/constants/mapConfig";
 import {
   NewsButtonComponent,
   LiveButtonComponent,
@@ -10,9 +10,9 @@ import {
   PlayButtonComponent,
 } from "./components/ActionBar";
 import ThemeToggleComponent from "./components/ActionBar/ThemeToggle";
-import LiveTrades from "../LiveTrades";
-import BreakingNews from "../BreakingNews";
-import { TimeFilter } from "../../App";
+import LiveTrades from "@/components/LiveTrades";
+import BreakingNews from "@/components/BreakingNews";
+import { TimeFilter } from "@/App";
 
 interface MainNavigationProps {
   theme?: Theme;

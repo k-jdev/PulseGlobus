@@ -1,4 +1,4 @@
-import { Button } from "../../../../ui";
+import { Button } from "@/components/ui";
 
 export type TimeFilter = "1h" | "6h" | "24h";
 

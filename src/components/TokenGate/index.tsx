@@ -1,7 +1,7 @@
 import { FC, ReactNode } from "react";
 import { useWeb3Modal } from "@web3modal/wagmi/react";
-import { useTokenGate } from "../../hooks/useTokenGate";
-import modalHeader from "../../assets/images/tokenModal/modal-header.png";
+import { useTokenGate } from "@/hooks/useTokenGate";
+import modalHeader from "@/assets/images/tokenModal/modal-header.png";
 
 const DEFAULT_TOKEN_ADDRESS =
   "0xF9877901a3D8c8D26078703004E748E66A4009b5" as `0x${string}`;
