@@ -36,7 +36,6 @@ export interface MapMarker {
   volume1mo: number;
   endDate: string;
 
-  // News-specific fields
   type: MarkerType;
   url?: string;
   domain?: string;
@@ -68,15 +67,12 @@ interface RegionBounds {
 }
 
 const CITY_BOUNDS: Record<string, RegionBounds> = {
-  // США - восточное побережье (расширенные границы, строго на суше)
   "Washington DC": { minLng: -80.0, maxLng: -75.5, minLat: 36.5, maxLat: 41.0 },
   "New York": { minLng: -77.0, maxLng: -73.5, minLat: 39.5, maxLat: 43.0 },
   Boston: { minLng: -74.0, maxLng: -70.5, minLat: 41.0, maxLat: 44.0 },
   Miami: { minLng: -82.5, maxLng: -80.2, minLat: 25.0, maxLat: 27.0 },
-  // Mar-a-Lago (West Palm Beach area) - расширенная зона Флориды
   "Mar-a-Lago": { minLng: -82.5, maxLng: -80.2, minLat: 25.5, maxLat: 28.5 },
 
-  // США - центр и запад (расширенные границы)
   Chicago: { minLng: -91.0, maxLng: -85.0, minLat: 40.0, maxLat: 44.0 },
   Houston: { minLng: -98.0, maxLng: -93.5, minLat: 28.0, maxLat: 32.0 },
   "Los Angeles": { minLng: -120.5, maxLng: -116.5, minLat: 32.5, maxLat: 36.0 },
@@ -91,7 +87,6 @@ const CITY_BOUNDS: Record<string, RegionBounds> = {
   Tallahassee: { minLng: -87.0, maxLng: -82.5, minLat: 28.5, maxLat: 32.5 },
   Sacramento: { minLng: -124.0, maxLng: -119.0, minLat: 37.0, maxLat: 41.0 },
 
-  // Европа (расширенные границы)
   London: { minLng: -3.5, maxLng: 2.5, minLat: 50.0, maxLat: 54.0 },
   Paris: { minLng: -1.0, maxLng: 6.0, minLat: 46.0, maxLat: 50.5 },
   Brussels: { minLng: 2.0, maxLng: 8.0, minLat: 49.0, maxLat: 53.0 },
@@ -106,7 +101,6 @@ const CITY_BOUNDS: Record<string, RegionBounds> = {
   Kyiv: { minLng: 28.0, maxLng: 34.0, minLat: 48.5, maxLat: 52.5 },
   Moscow: { minLng: 34.0, maxLng: 41.0, minLat: 53.5, maxLat: 58.0 },
 
-  // Ближний Восток - расширенные границы, строго на суше
   "Tel Aviv": { minLng: 34.3, maxLng: 36.0, minLat: 31.0, maxLat: 33.5 },
   Jerusalem: { minLng: 34.5, maxLng: 36.5, minLat: 30.5, maxLat: 33.0 },
   Gaza: { minLng: 34.0, maxLng: 35.5, minLat: 30.5, maxLat: 32.5 },
@@ -121,7 +115,6 @@ const CITY_BOUNDS: Record<string, RegionBounds> = {
   Ankara: { minLng: 30.5, maxLng: 35.0, minLat: 38.0, maxLat: 42.0 },
   Istanbul: { minLng: 27.0, maxLng: 31.0, minLat: 39.5, maxLat: 43.0 },
 
-  // Азия (расширенные границы)
   Tokyo: { minLng: 137.5, maxLng: 141.5, minLat: 34.0, maxLat: 37.5 },
   Singapore: { minLng: 103.0, maxLng: 104.5, minLat: 1.0, maxLat: 2.0 },
   "Hong Kong": { minLng: 113.5, maxLng: 115.0, minLat: 21.8, maxLat: 23.0 },
@@ -132,11 +125,9 @@ const CITY_BOUNDS: Record<string, RegionBounds> = {
   Delhi: { minLng: 75.5, maxLng: 79.0, minLat: 27.0, maxLat: 30.5 },
   Bangkok: { minLng: 99.0, maxLng: 102.0, minLat: 12.5, maxLat: 15.5 },
 
-  // Австралия (расширенные границы)
   Sydney: { minLng: 149.5, maxLng: 152.5, minLat: -35.5, maxLat: -32.0 },
   Melbourne: { minLng: 143.5, maxLng: 147.0, minLat: -39.5, maxLat: -36.0 },
 
-  // Южная Америка (расширенные границы)
   "São Paulo": { minLng: -48.5, maxLng: -44.5, minLat: -25.5, maxLat: -21.5 },
   "Buenos Aires": {
     minLng: -60.0,
@@ -146,7 +137,6 @@ const CITY_BOUNDS: Record<string, RegionBounds> = {
   },
   "Mexico City": { minLng: -101.0, maxLng: -97.5, minLat: 18.0, maxLat: 21.5 },
 
-  // Африка (расширенные границы)
   Lagos: { minLng: 2.5, maxLng: 5.0, minLat: 5.5, maxLat: 8.0 },
   Johannesburg: { minLng: 26.5, maxLng: 30.0, minLat: -28.0, maxLat: -24.5 },
   Nairobi: { minLng: 35.5, maxLng: 38.5, minLat: -2.5, maxLat: 0.0 },
@@ -164,46 +154,37 @@ function getOffsetWithBounds(
   const bounds = CITY_BOUNDS[cityName];
 
   if (!bounds) {
-    // Если нет границ для города, используем средний разброс вокруг центра
-    const lngOffset = ((hash % 100) - 50) / 50; // -1.0 до +1.0 градуса
-    const latOffset = ((hash2 % 100) - 50) / 50; // -1.0 до +1.0 градуса
+    const lngOffset = ((hash % 100) - 50) / 50;
+    const latOffset = ((hash2 % 100) - 50) / 50;
     return [lngOffset, latOffset];
   }
 
-  // Генерируем случайную точку ВНУТРИ границ с отступом от краёв
   const lngRange = bounds.maxLng - bounds.minLng;
   const latRange = bounds.maxLat - bounds.minLat;
 
-  // Используем hash для равномерного распределения внутри границ
-  // Добавляем отступ 5% от краёв чтобы точки не были прямо на границе
-  const lngPercent = 0.05 + (hash % 90) / 100; // 5-95%
-  const latPercent = 0.05 + (hash2 % 90) / 100; // 5-95%
+  const lngPercent = 0.05 + (hash % 90) / 100;
+  const latPercent = 0.05 + (hash2 % 90) / 100;
 
-  // Вычисляем абсолютные координаты внутри границ
   const targetLng = bounds.minLng + lngRange * lngPercent;
   const targetLat = bounds.minLat + latRange * latPercent;
 
-  // Возвращаем смещение от центра до целевой точки
   return [targetLng - centerCoords[0], targetLat - centerCoords[1]];
 }
 
-// Функция для получения смещения с учётом города (если известен)
 function getOffset(
   id: string,
   index: number,
   centerCoords?: [number, number],
   cityName?: string,
 ): [number, number] {
-  // Если есть координаты и название города - используем bounds
   if (centerCoords && cityName) {
     return getOffsetWithBounds(id, index, centerCoords, cityName);
   }
 
-  // Иначе используем средний разброс вокруг центра
   const hash = hashCode(id + index.toString());
   const hash2 = hashCode(id + index.toString() + "salt");
-  const lngOffset = ((hash % 100) - 50) / 50; // -1.0 до +1.0 градуса
-  const latOffset = ((hash2 % 100) - 50) / 50; // -1.0 до +1.0 градуса
+  const lngOffset = ((hash % 100) - 50) / 50;
+  const latOffset = ((hash2 % 100) - 50) / 50;
   return [lngOffset, latOffset];
 }
 
@@ -251,7 +232,6 @@ const CATEGORY_CITY_MAP: Record<
   world: { name: "London", coordinates: [-0.1276, 51.5074] },
   climate: { name: "Copenhagen", coordinates: [12.5683, 55.6761] },
 
-  // Default should be a neutral location
   default: { name: "London", coordinates: [-0.1276, 51.5074] },
 };
 
@@ -259,7 +239,6 @@ const KEYWORD_CITY_MAP: {
   keyword: string;
   city: { name: string; coordinates: [number, number] };
 }[] = [
-  // === Европейские страны ===
   {
     keyword: "portugal",
     city: { name: "Lisbon", coordinates: [-9.1393, 38.7223] },
@@ -356,13 +335,10 @@ const KEYWORD_CITY_MAP: {
     keyword: "ireland",
     city: { name: "Dublin", coordinates: [-6.2603, 53.3498] },
   },
-  // === США ===
-  // Trump ТОЛЬКО в Вашингтоне DC
   {
     keyword: "trump",
     city: { name: "Washington DC", coordinates: [-77.0369, 38.9072] },
   },
-  // Остальные политики по своим местам
   {
     keyword: "biden",
     city: { name: "Washington DC", coordinates: [-77.0369, 38.9072] },
@@ -713,7 +689,6 @@ const KEYWORD_CITY_MAP: {
     city: { name: "Brussels", coordinates: [4.3517, 50.8503] },
   },
 
-  // === Украина (проверяется первой для новостей о войне) ===
   {
     keyword: "ukraine",
     city: { name: "Kyiv", coordinates: [30.5234, 50.4501] },
@@ -771,7 +746,6 @@ const KEYWORD_CITY_MAP: {
     city: { name: "Lviv", coordinates: [24.0297, 49.8397] },
   },
 
-  // === Россия ===
   {
     keyword: "russia",
     city: { name: "Moscow", coordinates: [37.6173, 55.7558] },
@@ -793,7 +767,6 @@ const KEYWORD_CITY_MAP: {
     city: { name: "Moscow", coordinates: [37.6173, 55.7558] },
   },
 
-  // === Беларусь ===
   {
     keyword: "belarus",
     city: { name: "Minsk", coordinates: [27.5615, 53.9006] },
@@ -871,7 +844,6 @@ const KEYWORD_CITY_MAP: {
     city: { name: "Tiraspol", coordinates: [29.9, 46.85] },
   },
 
-  // === Азия ===
   {
     keyword: "china",
     city: { name: "Beijing", coordinates: [116.4074, 39.9042] },
@@ -1061,7 +1033,6 @@ const KEYWORD_CITY_MAP: {
     city: { name: "Kabul", coordinates: [69.1723, 34.5553] },
   },
 
-  // === Ближний Восток ===
   {
     keyword: "israel",
     city: { name: "Tel Aviv", coordinates: [34.7818, 32.0853] },
@@ -1195,7 +1166,6 @@ const KEYWORD_CITY_MAP: {
     city: { name: "Istanbul", coordinates: [28.9784, 41.0082] },
   },
 
-  // === Африка ===
   {
     keyword: "africa",
     city: { name: "Johannesburg", coordinates: [28.0473, -26.2041] },
@@ -1306,7 +1276,6 @@ const KEYWORD_CITY_MAP: {
     city: { name: "Yaoundé", coordinates: [11.5021, 3.848] },
   },
 
-  // === Латинская Америка ===
   {
     keyword: "brazil",
     city: { name: "Brasília", coordinates: [-47.8825, -15.7942] },
@@ -1452,7 +1421,6 @@ const KEYWORD_CITY_MAP: {
     city: { name: "Port of Spain", coordinates: [-61.5125, 10.6596] },
   },
 
-  // === Океания ===
   {
     keyword: "australia",
     city: { name: "Sydney", coordinates: [151.2093, -33.8688] },
@@ -1486,7 +1454,6 @@ const KEYWORD_CITY_MAP: {
     city: { name: "Port Moresby", coordinates: [147.1803, -9.4438] },
   },
 
-  // === Канада ===
   {
     keyword: "canada",
     city: { name: "Ottawa", coordinates: [-75.6972, 45.4215] },
@@ -1512,7 +1479,6 @@ const KEYWORD_CITY_MAP: {
     city: { name: "Montreal", coordinates: [-73.5673, 45.5017] },
   },
 
-  // === Технологии ===
   {
     keyword: "elon",
     city: { name: "Austin", coordinates: [-97.7431, 30.2672] },
@@ -1630,7 +1596,6 @@ const KEYWORD_CITY_MAP: {
     city: { name: "Kyoto", coordinates: [135.7681, 35.0116] },
   },
 
-  // === Криптовалюта ===
   {
     keyword: "bitcoin",
     city: { name: "Miami", coordinates: [-80.1918, 25.7617] },
@@ -1661,7 +1626,6 @@ const KEYWORD_CITY_MAP: {
     city: { name: "Los Angeles", coordinates: [-118.2437, 34.0522] },
   },
 
-  // === Спорт ===
   {
     keyword: "super bowl",
     city: { name: "Las Vegas", coordinates: [-115.1398, 36.1699] },
@@ -1759,7 +1723,6 @@ const KEYWORD_CITY_MAP: {
     city: { name: "Augusta", coordinates: [-82.0105, 33.4735] },
   },
 
-  // === Экономика и финансы ===
   {
     keyword: "fed",
     city: { name: "Washington DC", coordinates: [-77.0369, 38.9072] },
@@ -1825,7 +1788,6 @@ const KEYWORD_CITY_MAP: {
     city: { name: "London", coordinates: [-0.1276, 51.5074] },
   },
 
-  // === Космос ===
   {
     keyword: "nasa",
     city: { name: "Cape Canaveral", coordinates: [-80.6077, 28.3922] },
@@ -1867,7 +1829,6 @@ const KEYWORD_CITY_MAP: {
     city: { name: "Seattle", coordinates: [-122.3321, 47.6062] },
   },
 
-  // === Развлечения ===
   {
     keyword: "hollywood",
     city: { name: "Los Angeles", coordinates: [-118.2437, 34.0522] },
@@ -1930,7 +1891,6 @@ const KEYWORD_CITY_MAP: {
     city: { name: "Mumbai", coordinates: [72.8777, 19.076] },
   },
 
-  // === Климат и энергетика ===
   {
     keyword: "climate",
     city: { name: "Copenhagen", coordinates: [12.5683, 55.6761] },
@@ -1969,7 +1929,6 @@ const KEYWORD_CITY_MAP: {
     city: { name: "Shanghai", coordinates: [121.4737, 31.2304] },
   },
 
-  // === Здоровье ===
   {
     keyword: "covid",
     city: { name: "Geneva", coordinates: [6.1432, 46.2044] },
@@ -1997,7 +1956,6 @@ function getCoordinatesForMarket(
   market: Market,
   index: number = 0,
 ): [number, number] {
-  // Используем новую NLP-систему геолокации
   const { coordinates, location } = getGeoCoordinates({
     id: market.id,
     title: market.question,
@@ -2006,7 +1964,6 @@ function getCoordinatesForMarket(
     index,
   });
 
-  // DEBUG: Логируем Portugal маркеты
   if (market.question?.toLowerCase().includes("portugal")) {
     console.log("🇵🇹 PORTUGAL MARKET DEBUG:", {
       question: market.question,
@@ -2018,7 +1975,6 @@ function getCoordinatesForMarket(
     });
   }
 
-  // Если нашли локацию, используем её
   if (location && location.confidence >= 0.6) {
     if (market.question?.toLowerCase().includes("portugal")) {
       console.log("🇵🇹 Using NLP coordinates:", coordinates);
@@ -2026,13 +1982,11 @@ function getCoordinatesForMarket(
     return coordinates;
   }
 
-  // Fallback на старую систему с KEYWORD_CITY_MAP для обратной совместимости
   const searchText = `${market.question} ${market.description || ""} ${
     market.events?.[0]?.title || ""
   }`.toLowerCase();
   const category = market.category?.toLowerCase() || "";
 
-  // Find the LONGEST matching keyword (more specific = better match)
   let bestMatch: {
     keyword: string;
     city: { name: string; coordinates: [number, number] };
@@ -2114,7 +2068,6 @@ export function convertMarketsToMapMarkers(markets: Market[]): MapMarker[] {
       const isNotClosed = market.closed !== true;
       const isNotArchived = market.archived !== true;
 
-      // Проверяем, что endDate в будущем или не установлен
       let isNotExpired = true;
       if (market.endDate) {
         const endDate = new Date(market.endDate);
@@ -2159,7 +2112,6 @@ export function convertEventsToMapMarkers(
   return events
     .filter((event) => event.active && !event.closed)
     .map((event, index) => {
-      // Используем NLP-систему геолокации
       const { coordinates: nlpCoordinates, location } = getGeoCoordinates({
         id: event.id,
         title: event.title,
@@ -2170,14 +2122,12 @@ export function convertEventsToMapMarkers(
 
       let coordinates: [number, number] = nlpCoordinates;
 
-      // Если NLP нашёл локацию с низкой уверенностью, пробуем fallback
       if (!location || location.confidence < 0.6) {
         const searchText = `${event.title} ${event.description || ""} ${
           event.subtitle || ""
         }`.toLowerCase();
         const category = event.category?.toLowerCase() || "default";
 
-        // Find the LONGEST matching keyword
         let bestMatch: {
           keyword: string;
           city: { name: string; coordinates: [number, number] };
@@ -2258,7 +2208,6 @@ function parseMarketPrices(prices: string): number[] {
   }
 }
 
-// Определение страны по ключевым словам в контенте маркета
 const MARKET_COUNTRY_KEYWORDS: Record<string, string[]> = {
   "United States": [
     "trump",
@@ -2378,20 +2327,16 @@ function detectMarketCountry(title: string, description: string): string {
     }
   }
 
-  // По умолчанию - США (большинство маркетов про США)
   return "United States";
 }
 
-// Счётчик для ротации городов маркетов по странам
 const marketCountryCityIndex: Record<string, number> = {};
 
-// Washington DC координаты для маркетов о Trump
 const WASHINGTON_DC: { name: string; coordinates: [number, number] } = {
   name: "Washington DC",
   coordinates: [-77.0369, 38.9072],
 };
 
-// Проверка, является ли маркет о Trump
 function isTrumpMarket(title: string, description: string): boolean {
   const text = `${title} ${description}`.toLowerCase();
   const trumpKeywords = [
@@ -2406,14 +2351,12 @@ function isTrumpMarket(title: string, description: string): boolean {
   return trumpKeywords.some((keyword) => text.includes(keyword));
 }
 
-// Получить координаты для маркета с распределением по стране
 function getMarketCoordinates(
   country: string,
   seed: number,
   title: string = "",
   description: string = "",
 ): [number, number] {
-  // Маркеты о Trump всегда показываем в Washington DC
   if (isTrumpMarket(title, description)) {
     const random1 = Math.sin(seed * 12.9898) * 43758.5453;
     const random2 = Math.cos(seed * 78.233) * 43758.5453;
@@ -2429,14 +2372,11 @@ function getMarketCoordinates(
   const cities =
     CITIES_BY_COUNTRY[country] || CITIES_BY_COUNTRY["United States"];
 
-  // Получить индекс и инкрементировать
   const currentIndex = marketCountryCityIndex[country] || 0;
   marketCountryCityIndex[country] = currentIndex + 1;
 
-  // Выбрать город по индексу (с ротацией)
   const city = cities[currentIndex % cities.length];
 
-  // Добавить случайный сдвиг
   const random1 = Math.sin(seed * 12.9898) * 43758.5453;
   const random2 = Math.cos(seed * 78.233) * 43758.5453;
   const offsetLng = (random1 - Math.floor(random1) - 0.5) * 0.5;
@@ -2450,7 +2390,6 @@ export function convertEventsWithMarketsToMapMarkers(
 ): MapMarker[] {
   const now = new Date();
 
-  // Сброс счётчиков для свежего распределения
   Object.keys(marketCountryCityIndex).forEach((key) => {
     marketCountryCityIndex[key] = 0;
   });
@@ -2470,7 +2409,6 @@ export function convertEventsWithMarketsToMapMarkers(
       return hasTitle && isActive && isNotClosed && isNotExpired;
     })
     .map((event, index) => {
-      // Определяем страну по контенту и распределяем по её городам
       const country = detectMarketCountry(event.title, event.description || "");
       const seed = hashCode(event.id + event.title + index);
       const coordinates = getMarketCoordinates(
@@ -2555,678 +2493,22 @@ export function convertEventsWithMarketsToMapMarkers(
     });
 }
 
-// Multiple cities per country for better distribution
-// const COUNTRY_CITIES: Record<
-//   string,
-//   Array<{ name: string; coordinates: [number, number] }>
-// > = {
-//   "United States": [
-//     // Northeast
-//     { name: "New York", coordinates: [-74.006, 40.7128] },
-//     { name: "Boston", coordinates: [-71.0589, 42.3601] },
-//     { name: "Philadelphia", coordinates: [-75.1652, 39.9526] },
-//     { name: "Pittsburgh", coordinates: [-79.9959, 40.4406] },
-//     { name: "Baltimore", coordinates: [-76.6122, 39.2904] },
-//     { name: "Buffalo", coordinates: [-78.8784, 42.8864] },
-//     { name: "Hartford", coordinates: [-72.6851, 41.7637] },
-//     { name: "Providence", coordinates: [-71.4128, 41.824] },
-//     { name: "Newark", coordinates: [-74.1724, 40.7357] },
-//     { name: "Albany", coordinates: [-73.7562, 42.6526] },
-//     // Southeast
-//     { name: "Miami", coordinates: [-80.1918, 25.7617] },
-//     { name: "Atlanta", coordinates: [-84.388, 33.749] },
-//     { name: "Tampa", coordinates: [-82.4572, 27.9506] },
-//     { name: "Orlando", coordinates: [-81.3792, 28.5383] },
-//     { name: "Charlotte", coordinates: [-80.8431, 35.2271] },
-//     { name: "Raleigh", coordinates: [-78.6382, 35.7796] },
-//     { name: "Nashville", coordinates: [-86.7816, 36.1627] },
-//     { name: "Jacksonville", coordinates: [-81.6557, 30.3322] },
-//     { name: "Richmond", coordinates: [-77.436, 37.5407] },
-//     { name: "Memphis", coordinates: [-90.049, 35.1495] },
-//     { name: "New Orleans", coordinates: [-90.0715, 29.9511] },
-//     { name: "Charleston", coordinates: [-79.9311, 32.7765] },
-//     { name: "Savannah", coordinates: [-81.0998, 32.0835] },
-//     { name: "Birmingham", coordinates: [-86.8025, 33.5207] },
-//     // Midwest
-//     { name: "Chicago", coordinates: [-87.6298, 41.8781] },
-//     { name: "Detroit", coordinates: [-83.0458, 42.3314] },
-//     { name: "Cleveland", coordinates: [-81.6944, 41.4993] },
-//     { name: "Cincinnati", coordinates: [-84.512, 39.1031] },
-//     { name: "Columbus", coordinates: [-82.9988, 39.9612] },
-//     { name: "Indianapolis", coordinates: [-86.1581, 39.7684] },
-//     { name: "Milwaukee", coordinates: [-87.9065, 43.0389] },
-//     { name: "Minneapolis", coordinates: [-93.265, 44.9778] },
-//     { name: "St. Louis", coordinates: [-90.1994, 38.627] },
-//     { name: "Kansas City", coordinates: [-94.5786, 39.0997] },
-//     { name: "Omaha", coordinates: [-95.9345, 41.2565] },
-//     { name: "Des Moines", coordinates: [-93.6091, 41.5868] },
-//     { name: "Madison", coordinates: [-89.4012, 43.0731] },
-//     // Southwest
-//     { name: "Phoenix", coordinates: [-112.074, 33.4484] },
-//     { name: "Los Angeles", coordinates: [-118.2437, 34.0522] },
-//     { name: "San Diego", coordinates: [-117.1611, 32.7157] },
-//     { name: "Las Vegas", coordinates: [-115.1398, 36.1699] },
-//     { name: "Tucson", coordinates: [-110.9747, 32.2226] },
-//     { name: "Albuquerque", coordinates: [-106.6504, 35.0844] },
-//     { name: "El Paso", coordinates: [-106.485, 31.7619] },
-//     { name: "San Antonio", coordinates: [-98.4936, 29.4241] },
-//     { name: "Austin", coordinates: [-97.7431, 30.2672] },
-//     { name: "Houston", coordinates: [-95.3698, 29.7604] },
-//     { name: "Dallas", coordinates: [-96.797, 32.7767] },
-//     { name: "Fort Worth", coordinates: [-97.3308, 32.7555] },
-//     { name: "Oklahoma City", coordinates: [-97.5164, 35.4676] },
-//     { name: "Tulsa", coordinates: [-95.9928, 36.1539] },
-//     // West Coast
-//     { name: "San Francisco", coordinates: [-122.4194, 37.7749] },
-//     { name: "Seattle", coordinates: [-122.3321, 47.6062] },
-//     { name: "Portland", coordinates: [-122.6765, 45.5152] },
-//     { name: "Sacramento", coordinates: [-121.4944, 38.5816] },
-//     { name: "San Jose", coordinates: [-121.8863, 37.3382] },
-//     { name: "Oakland", coordinates: [-122.2711, 37.8044] },
-//     { name: "Fresno", coordinates: [-119.7871, 36.7378] },
-//     { name: "Long Beach", coordinates: [-118.1937, 33.7701] },
-//     { name: "Bakersfield", coordinates: [-119.0187, 35.3733] },
-//     { name: "Anaheim", coordinates: [-117.9145, 33.8366] },
-//     { name: "Santa Barbara", coordinates: [-119.6982, 34.4208] },
-//     // Mountain/Central
-//     { name: "Denver", coordinates: [-104.9903, 39.7392] },
-//     { name: "Salt Lake City", coordinates: [-111.891, 40.7608] },
-//     { name: "Boise", coordinates: [-116.2023, 43.615] },
-//     { name: "Colorado Springs", coordinates: [-104.8214, 38.8339] },
-//     { name: "Reno", coordinates: [-119.8138, 39.5296] },
-//     { name: "Spokane", coordinates: [-117.4261, 47.6588] },
-//     { name: "Provo", coordinates: [-111.6585, 40.2338] },
-//     { name: "Billings", coordinates: [-108.5007, 45.7833] },
-//     { name: "Missoula", coordinates: [-114.0264, 46.8721] },
-//     { name: "Cheyenne", coordinates: [-104.8202, 41.14] },
-//     // Other notable cities
-//     { name: "Honolulu", coordinates: [-157.8583, 21.3069] },
-//     { name: "Anchorage", coordinates: [-149.9003, 61.2181] },
-//     { name: "Little Rock", coordinates: [-92.2896, 34.7465] },
-//     { name: "Louisville", coordinates: [-85.7585, 38.2527] },
-//     { name: "Lexington", coordinates: [-84.5037, 38.0406] },
-//     { name: "Grand Rapids", coordinates: [-85.6681, 42.9634] },
-//     { name: "Rochester", coordinates: [-77.6109, 43.1566] },
-//     { name: "Syracuse", coordinates: [-76.1474, 43.0481] },
-//     { name: "Worcester", coordinates: [-71.8023, 42.2626] },
-//     { name: "Chattanooga", coordinates: [-85.3097, 35.0456] },
-//     { name: "Knoxville", coordinates: [-83.9207, 35.9606] },
-//   ],
-//   "United Kingdom": [
-//     { name: "London", coordinates: [-0.1276, 51.5074] },
-//     { name: "Manchester", coordinates: [-2.2426, 53.4808] },
-//     { name: "Birmingham", coordinates: [-1.8904, 52.4862] },
-//     { name: "Edinburgh", coordinates: [-3.1883, 55.9533] },
-//     { name: "Glasgow", coordinates: [-4.2518, 55.8642] },
-//     { name: "Liverpool", coordinates: [-2.9916, 53.4084] },
-//     { name: "Bristol", coordinates: [-2.5879, 51.4545] },
-//     { name: "Leeds", coordinates: [-1.5491, 53.8008] },
-//     { name: "Sheffield", coordinates: [-1.4659, 53.3811] },
-//     { name: "Newcastle", coordinates: [-1.6178, 54.9783] },
-//     { name: "Nottingham", coordinates: [-1.1581, 52.9548] },
-//     { name: "Southampton", coordinates: [-1.4044, 50.9097] },
-//     { name: "Cardiff", coordinates: [-3.1791, 51.4816] },
-//     { name: "Belfast", coordinates: [-5.9301, 54.5973] },
-//     { name: "Cambridge", coordinates: [0.1218, 52.2053] },
-//     { name: "Oxford", coordinates: [-1.2577, 51.752] },
-//     { name: "Brighton", coordinates: [-0.1419, 50.8225] },
-//     { name: "Leicester", coordinates: [-1.1398, 52.6369] },
-//     { name: "Coventry", coordinates: [-1.5197, 52.4068] },
-//     { name: "Aberdeen", coordinates: [-2.0943, 57.1497] },
-//   ],
-//   UK: [
-//     { name: "London", coordinates: [-0.1276, 51.5074] },
-//     { name: "Manchester", coordinates: [-2.2426, 53.4808] },
-//     { name: "Birmingham", coordinates: [-1.8904, 52.4862] },
-//     { name: "Edinburgh", coordinates: [-3.1883, 55.9533] },
-//     { name: "Glasgow", coordinates: [-4.2518, 55.8642] },
-//     { name: "Liverpool", coordinates: [-2.9916, 53.4084] },
-//     { name: "Bristol", coordinates: [-2.5879, 51.4545] },
-//     { name: "Leeds", coordinates: [-1.5491, 53.8008] },
-//     { name: "Sheffield", coordinates: [-1.4659, 53.3811] },
-//     { name: "Newcastle", coordinates: [-1.6178, 54.9783] },
-//   ],
-//   Russia: [
-//     { name: "Moscow", coordinates: [37.6173, 55.7558] },
-//     { name: "St Petersburg", coordinates: [30.3351, 59.9343] },
-//     { name: "Novosibirsk", coordinates: [82.9346, 55.0084] },
-//     { name: "Yekaterinburg", coordinates: [60.6122, 56.8389] },
-//     { name: "Vladivostok", coordinates: [131.8869, 43.1155] },
-//     { name: "Kazan", coordinates: [49.1082, 55.8304] },
-//     { name: "Nizhny Novgorod", coordinates: [43.9361, 56.2965] },
-//     { name: "Chelyabinsk", coordinates: [61.4303, 55.1644] },
-//     { name: "Samara", coordinates: [50.1501, 53.1959] },
-//     { name: "Rostov-on-Don", coordinates: [39.7198, 47.2357] },
-//     { name: "Ufa", coordinates: [55.9579, 54.7388] },
-//     { name: "Krasnoyarsk", coordinates: [92.8932, 56.0153] },
-//     { name: "Voronezh", coordinates: [39.1843, 51.6683] },
-//     { name: "Perm", coordinates: [56.2588, 58.0105] },
-//     { name: "Volgograd", coordinates: [44.516, 48.708] },
-//     { name: "Krasnodar", coordinates: [38.9764, 45.0355] },
-//     { name: "Sochi", coordinates: [39.7233, 43.5992] },
-//     { name: "Kaliningrad", coordinates: [20.4522, 54.7104] },
-//     { name: "Omsk", coordinates: [73.3686, 54.9893] },
-//     { name: "Irkutsk", coordinates: [104.2964, 52.2978] },
-//   ],
-//   China: [
-//     { name: "Beijing", coordinates: [116.4074, 39.9042] },
-//     { name: "Shanghai", coordinates: [121.4737, 31.2304] },
-//     { name: "Guangzhou", coordinates: [113.2644, 23.1291] },
-//     { name: "Shenzhen", coordinates: [114.0579, 22.5431] },
-//     { name: "Chengdu", coordinates: [104.0665, 30.5723] },
-//     { name: "Chongqing", coordinates: [106.5516, 29.563] },
-//     { name: "Xi'an", coordinates: [108.9402, 34.3416] },
-//     { name: "Hangzhou", coordinates: [120.1551, 30.2741] },
-//     { name: "Wuhan", coordinates: [114.3055, 30.5928] },
-//     { name: "Nanjing", coordinates: [118.7969, 32.0603] },
-//     { name: "Tianjin", coordinates: [117.1907, 39.1256] },
-//     { name: "Suzhou", coordinates: [120.5853, 31.2989] },
-//     { name: "Qingdao", coordinates: [120.3826, 36.0671] },
-//     { name: "Dalian", coordinates: [121.6147, 38.9149] },
-//     { name: "Harbin", coordinates: [126.6346, 45.7571] },
-//     { name: "Shenyang", coordinates: [123.4328, 41.8057] },
-//     { name: "Xiamen", coordinates: [118.0894, 24.4798] },
-//     { name: "Kunming", coordinates: [102.8329, 24.8801] },
-//     { name: "Changsha", coordinates: [112.9388, 28.2282] },
-//     { name: "Zhengzhou", coordinates: [113.6254, 34.7466] },
-//   ],
-//   Germany: [
-//     { name: "Berlin", coordinates: [13.405, 52.52] },
-//     { name: "Munich", coordinates: [11.582, 48.1351] },
-//     { name: "Hamburg", coordinates: [9.9937, 53.5511] },
-//     { name: "Frankfurt", coordinates: [8.6821, 50.1109] },
-//     { name: "Cologne", coordinates: [6.9603, 50.9375] },
-//     { name: "Stuttgart", coordinates: [9.1829, 48.7758] },
-//     { name: "Dusseldorf", coordinates: [6.7735, 51.2277] },
-//     { name: "Dortmund", coordinates: [7.4653, 51.5136] },
-//     { name: "Essen", coordinates: [7.0099, 51.4556] },
-//     { name: "Leipzig", coordinates: [12.3731, 51.3397] },
-//     { name: "Bremen", coordinates: [8.8017, 53.0793] },
-//     { name: "Dresden", coordinates: [13.7373, 51.0504] },
-//     { name: "Hanover", coordinates: [9.7321, 52.3759] },
-//     { name: "Nuremberg", coordinates: [11.0775, 49.4521] },
-//     { name: "Duisburg", coordinates: [6.7623, 51.4344] },
-//     { name: "Bochum", coordinates: [7.2162, 51.4818] },
-//     { name: "Wuppertal", coordinates: [7.1831, 51.2562] },
-//     { name: "Bielefeld", coordinates: [8.5329, 52.0302] },
-//     { name: "Bonn", coordinates: [7.0982, 50.7374] },
-//     { name: "Mannheim", coordinates: [8.4664, 49.4875] },
-//   ],
-//   France: [
-//     { name: "Paris", coordinates: [2.3522, 48.8566] },
-//     { name: "Lyon", coordinates: [4.8357, 45.764] },
-//     { name: "Marseille", coordinates: [5.3698, 43.2965] },
-//     { name: "Toulouse", coordinates: [1.4442, 43.6047] },
-//     { name: "Nice", coordinates: [7.262, 43.7102] },
-//     { name: "Nantes", coordinates: [-1.5536, 47.2184] },
-//     { name: "Strasbourg", coordinates: [7.7521, 48.5734] },
-//     { name: "Montpellier", coordinates: [3.8767, 43.6108] },
-//     { name: "Bordeaux", coordinates: [-0.5792, 44.8378] },
-//     { name: "Lille", coordinates: [3.0573, 50.6292] },
-//     { name: "Rennes", coordinates: [-1.6778, 48.1173] },
-//     { name: "Reims", coordinates: [4.0317, 49.2583] },
-//     { name: "Le Havre", coordinates: [0.1079, 49.4944] },
-//     { name: "Saint-Etienne", coordinates: [4.3872, 45.4397] },
-//     { name: "Toulon", coordinates: [5.928, 43.1242] },
-//     { name: "Grenoble", coordinates: [5.7245, 45.1885] },
-//     { name: "Dijon", coordinates: [5.0415, 47.3216] },
-//     { name: "Angers", coordinates: [-0.5632, 47.4784] },
-//     { name: "Nimes", coordinates: [4.3601, 43.8367] },
-//     { name: "Aix-en-Provence", coordinates: [5.4474, 43.5297] },
-//   ],
-//   Japan: [
-//     { name: "Tokyo", coordinates: [139.6917, 35.6895] },
-//     { name: "Osaka", coordinates: [135.5023, 34.6937] },
-//     { name: "Nagoya", coordinates: [136.9066, 35.1815] },
-//     { name: "Sapporo", coordinates: [141.3545, 43.0618] },
-//     { name: "Fukuoka", coordinates: [130.4017, 33.5904] },
-//   ],
-//   India: [
-//     { name: "New Delhi", coordinates: [77.209, 28.6139] },
-//     { name: "Mumbai", coordinates: [72.8777, 19.076] },
-//     { name: "Bangalore", coordinates: [77.5946, 12.9716] },
-//     { name: "Chennai", coordinates: [80.2707, 13.0827] },
-//     { name: "Kolkata", coordinates: [88.3639, 22.5726] },
-//     { name: "Hyderabad", coordinates: [78.4867, 17.385] },
-//   ],
-//   Brazil: [
-//     { name: "Sao Paulo", coordinates: [-46.6333, -23.5505] },
-//     { name: "Rio de Janeiro", coordinates: [-43.1729, -22.9068] },
-//     { name: "Brasilia", coordinates: [-47.8825, -15.7942] },
-//     { name: "Salvador", coordinates: [-38.5016, -12.9714] },
-//     { name: "Fortaleza", coordinates: [-38.5267, -3.7172] },
-//   ],
-//   Canada: [
-//     { name: "Toronto", coordinates: [-79.3832, 43.6532] },
-//     { name: "Vancouver", coordinates: [-123.1207, 49.2827] },
-//     { name: "Montreal", coordinates: [-73.5673, 45.5017] },
-//     { name: "Calgary", coordinates: [-114.0719, 51.0447] },
-//     { name: "Ottawa", coordinates: [-75.6972, 45.4215] },
-//   ],
-//   Australia: [
-//     { name: "Sydney", coordinates: [151.2093, -33.8688] },
-//     { name: "Melbourne", coordinates: [144.9631, -37.8136] },
-//     { name: "Brisbane", coordinates: [153.0251, -27.4698] },
-//     { name: "Perth", coordinates: [115.8605, -31.9505] },
-//     { name: "Adelaide", coordinates: [138.6007, -34.9285] },
-//   ],
-//   Italy: [
-//     { name: "Rome", coordinates: [12.4964, 41.9028] },
-//     { name: "Milan", coordinates: [9.19, 45.4642] },
-//     { name: "Naples", coordinates: [14.2681, 40.8518] },
-//     { name: "Turin", coordinates: [7.6869, 45.0703] },
-//     { name: "Florence", coordinates: [11.2558, 43.7696] },
-//   ],
-//   Spain: [
-//     { name: "Madrid", coordinates: [-3.7038, 40.4168] },
-//     { name: "Barcelona", coordinates: [2.1734, 41.3851] },
-//     { name: "Valencia", coordinates: [-0.3763, 39.4699] },
-//     { name: "Seville", coordinates: [-5.9845, 37.3891] },
-//     { name: "Bilbao", coordinates: [-2.9253, 43.263] },
-//   ],
-//   Mexico: [
-//     { name: "Mexico City", coordinates: [-99.1332, 19.4326] },
-//     { name: "Guadalajara", coordinates: [-103.3496, 20.6597] },
-//     { name: "Monterrey", coordinates: [-100.3161, 25.6866] },
-//     { name: "Cancun", coordinates: [-86.8515, 21.1619] },
-//     { name: "Tijuana", coordinates: [-117.0382, 32.5149] },
-//   ],
-//   "South Korea": [
-//     { name: "Seoul", coordinates: [126.978, 37.5665] },
-//     { name: "Busan", coordinates: [129.0756, 35.1796] },
-//     { name: "Incheon", coordinates: [126.7052, 37.4563] },
-//     { name: "Daegu", coordinates: [128.6014, 35.8714] },
-//   ],
-//   Netherlands: [
-//     { name: "Amsterdam", coordinates: [4.9041, 52.3676] },
-//     { name: "Rotterdam", coordinates: [4.4777, 51.9244] },
-//     { name: "The Hague", coordinates: [4.3007, 52.0705] },
-//   ],
-//   Turkey: [
-//     { name: "Istanbul", coordinates: [28.9784, 41.0082] },
-//     { name: "Ankara", coordinates: [32.8597, 39.9334] },
-//     { name: "Izmir", coordinates: [27.1428, 38.4237] },
-//     { name: "Antalya", coordinates: [30.7133, 36.8969] },
-//   ],
-//   Switzerland: [
-//     { name: "Zurich", coordinates: [8.5417, 47.3769] },
-//     { name: "Geneva", coordinates: [6.1432, 46.2044] },
-//     { name: "Bern", coordinates: [7.4474, 46.948] },
-//   ],
-//   Poland: [
-//     { name: "Warsaw", coordinates: [21.0122, 52.2297] },
-//     { name: "Krakow", coordinates: [19.945, 50.0647] },
-//     { name: "Gdansk", coordinates: [18.6466, 54.352] },
-//     { name: "Wroclaw", coordinates: [17.0385, 51.1079] },
-//   ],
-//   Belgium: [{ name: "Brussels", coordinates: [4.3517, 50.8503] }],
-//   Sweden: [
-//     { name: "Stockholm", coordinates: [18.0686, 59.3293] },
-//     { name: "Gothenburg", coordinates: [11.9746, 57.7089] },
-//     { name: "Malmo", coordinates: [13.0038, 55.6049] },
-//   ],
-//   Argentina: [
-//     { name: "Buenos Aires", coordinates: [-58.3816, -34.6037] },
-//     { name: "Cordoba", coordinates: [-64.1888, -31.4201] },
-//     { name: "Mendoza", coordinates: [-68.8272, -32.8908] },
-//   ],
-//   Austria: [
-//     { name: "Vienna", coordinates: [16.3738, 48.2082] },
-//     { name: "Salzburg", coordinates: [13.055, 47.8095] },
-//   ],
-//   Norway: [
-//     { name: "Oslo", coordinates: [10.7522, 59.9139] },
-//     { name: "Bergen", coordinates: [5.3221, 60.393] },
-//   ],
-//   "United Arab Emirates": [
-//     { name: "Dubai", coordinates: [55.2708, 25.2048] },
-//     { name: "Abu Dhabi", coordinates: [54.3773, 24.4539] },
-//   ],
-//   Israel: [
-//     { name: "Tel Aviv", coordinates: [34.7818, 32.0853] },
-//     { name: "Jerusalem", coordinates: [35.2137, 31.7683] },
-//   ],
-//   Ireland: [
-//     { name: "Dublin", coordinates: [-6.2603, 53.3498] },
-//     { name: "Cork", coordinates: [-8.4863, 51.8969] },
-//   ],
-//   Denmark: [{ name: "Copenhagen", coordinates: [12.5683, 55.6761] }],
-//   Singapore: [{ name: "Singapore", coordinates: [103.8198, 1.3521] }],
-//   "Hong Kong": [{ name: "Hong Kong", coordinates: [114.1694, 22.3193] }],
-//   "Saudi Arabia": [
-//     { name: "Riyadh", coordinates: [46.6753, 24.7136] },
-//     { name: "Jeddah", coordinates: [39.1925, 21.4858] },
-//   ],
-//   Malaysia: [
-//     { name: "Kuala Lumpur", coordinates: [101.6869, 3.139] },
-//     { name: "Penang", coordinates: [100.3288, 5.4141] },
-//   ],
-//   "South Africa": [
-//     { name: "Johannesburg", coordinates: [28.0473, -26.2041] },
-//     { name: "Cape Town", coordinates: [18.4241, -33.9249] },
-//     { name: "Durban", coordinates: [31.0218, -29.8587] },
-//   ],
-//   Thailand: [
-//     { name: "Bangkok", coordinates: [100.5018, 13.7563] },
-//     { name: "Chiang Mai", coordinates: [98.9853, 18.7883] },
-//     { name: "Phuket", coordinates: [98.3923, 7.8804] },
-//   ],
-//   Indonesia: [
-//     { name: "Jakarta", coordinates: [106.8456, -6.2088] },
-//     { name: "Bali", coordinates: [115.1889, -8.4095] },
-//     { name: "Surabaya", coordinates: [112.7508, -7.2575] },
-//   ],
-//   Egypt: [
-//     { name: "Cairo", coordinates: [31.2357, 30.0444] },
-//     { name: "Alexandria", coordinates: [29.9187, 31.2001] },
-//   ],
-//   Philippines: [
-//     { name: "Manila", coordinates: [120.9842, 14.5995] },
-//     { name: "Cebu", coordinates: [123.8854, 10.3157] },
-//   ],
-//   Finland: [
-//     { name: "Helsinki", coordinates: [24.9384, 60.1699] },
-//     { name: "Tampere", coordinates: [23.7871, 61.4978] },
-//   ],
-//   Chile: [
-//     { name: "Santiago", coordinates: [-70.6693, -33.4489] },
-//     { name: "Valparaiso", coordinates: [-71.6273, -33.0458] },
-//   ],
-//   Portugal: [
-//     { name: "Lisbon", coordinates: [-9.1393, 38.7223] },
-//     { name: "Porto", coordinates: [-8.6291, 41.1579] },
-//   ],
-//   Vietnam: [
-//     { name: "Hanoi", coordinates: [105.8342, 21.0278] },
-//     { name: "Ho Chi Minh City", coordinates: [106.6297, 10.8231] },
-//     { name: "Da Nang", coordinates: [108.2022, 16.0544] },
-//   ],
-//   Greece: [
-//     { name: "Athens", coordinates: [23.7275, 37.9838] },
-//     { name: "Thessaloniki", coordinates: [22.9444, 40.6401] },
-//   ],
-//   Czechia: [
-//     { name: "Prague", coordinates: [14.4378, 50.0755] },
-//     { name: "Brno", coordinates: [16.6068, 49.1951] },
-//   ],
-//   "Czech Republic": [{ name: "Prague", coordinates: [14.4378, 50.0755] }],
-//   Romania: [
-//     { name: "Bucharest", coordinates: [26.1025, 44.4268] },
-//     { name: "Cluj-Napoca", coordinates: [23.5906, 46.7712] },
-//   ],
-//   "New Zealand": [
-//     { name: "Auckland", coordinates: [174.7633, -36.8485] },
-//     { name: "Wellington", coordinates: [174.7762, -41.2865] },
-//   ],
-//   Iraq: [
-//     { name: "Baghdad", coordinates: [44.3661, 33.3152] },
-//     { name: "Erbil", coordinates: [44.0088, 36.1912] },
-//   ],
-//   Algeria: [{ name: "Algiers", coordinates: [3.0588, 36.7538] }],
-//   Qatar: [{ name: "Doha", coordinates: [51.5074, 25.2867] }],
-//   Kazakhstan: [
-//     { name: "Astana", coordinates: [71.4704, 51.1605] },
-//     { name: "Almaty", coordinates: [76.9286, 43.2551] },
-//   ],
-//   Hungary: [{ name: "Budapest", coordinates: [19.0402, 47.4979] }],
-//   Kuwait: [{ name: "Kuwait City", coordinates: [47.9783, 29.3759] }],
-//   Ukraine: [
-//     { name: "Kyiv", coordinates: [30.5234, 50.4501] },
-//     { name: "Lviv", coordinates: [24.0297, 49.8397] },
-//     { name: "Odesa", coordinates: [30.7233, 46.4825] },
-//   ],
-//   Morocco: [
-//     { name: "Casablanca", coordinates: [-7.5898, 33.5731] },
-//     { name: "Marrakech", coordinates: [-7.9811, 31.6295] },
-//   ],
-//   Ecuador: [
-//     { name: "Quito", coordinates: [-78.4678, -0.1807] },
-//     { name: "Guayaquil", coordinates: [-79.9224, -2.1894] },
-//   ],
-//   "Puerto Rico": [{ name: "San Juan", coordinates: [-66.1057, 18.4655] }],
-//   Colombia: [
-//     { name: "Bogota", coordinates: [-74.0721, 4.711] },
-//     { name: "Medellin", coordinates: [-75.5636, 6.2476] },
-//   ],
-//   Pakistan: [
-//     { name: "Islamabad", coordinates: [73.0479, 33.6844] },
-//     { name: "Karachi", coordinates: [67.0011, 24.8607] },
-//     { name: "Lahore", coordinates: [74.3587, 31.5204] },
-//   ],
-//   Peru: [
-//     { name: "Lima", coordinates: [-77.0428, -12.0464] },
-//     { name: "Cusco", coordinates: [-71.9675, -13.532] },
-//   ],
-//   Nigeria: [
-//     { name: "Lagos", coordinates: [3.3792, 6.5244] },
-//     { name: "Abuja", coordinates: [7.4951, 9.0765] },
-//   ],
-//   Bangladesh: [
-//     { name: "Dhaka", coordinates: [90.4125, 23.8103] },
-//     { name: "Chittagong", coordinates: [91.8349, 22.3569] },
-//   ],
-//   Iran: [
-//     { name: "Tehran", coordinates: [51.3891, 35.6892] },
-//     { name: "Isfahan", coordinates: [51.6675, 32.6546] },
-//   ],
-//   Taiwan: [
-//     { name: "Taipei", coordinates: [121.5654, 25.033] },
-//     { name: "Kaohsiung", coordinates: [120.3014, 22.6273] },
-//   ],
-//   Venezuela: [
-//     { name: "Caracas", coordinates: [-66.9036, 10.4806] },
-//     { name: "Maracaibo", coordinates: [-71.6125, 10.6544] },
-//   ],
-// };
 
-// // Country index tracker to cycle through cities
-// const countryIndexTracker: Record<string, number> = {};
 
-// Маппинг коротких кодов стран на полные названия
-// const COUNTRY_NAME_ALIASES: Record<string, string> = {
-//   us: "United States",
-//   usa: "United States",
-//   "united states": "United States",
-//   "united states of america": "United States",
-//   uk: "United Kingdom",
-//   "united kingdom": "United Kingdom",
-//   britain: "United Kingdom",
-//   england: "United Kingdom",
-//   gb: "United Kingdom",
-//   de: "Germany",
-//   germany: "Germany",
-//   fr: "France",
-//   france: "France",
-//   jp: "Japan",
-//   japan: "Japan",
-//   cn: "China",
-//   china: "China",
-//   ru: "Russia",
-//   russia: "Russia",
-//   ca: "Canada",
-//   canada: "Canada",
-//   au: "Australia",
-//   australia: "Australia",
-//   in: "India",
-//   india: "India",
-//   br: "Brazil",
-//   brazil: "Brazil",
-//   mx: "Mexico",
-//   mexico: "Mexico",
-//   it: "Italy",
-//   italy: "Italy",
-//   es: "Spain",
-//   spain: "Spain",
-//   kr: "South Korea",
-//   "south korea": "South Korea",
-//   korea: "South Korea",
-//   nl: "Netherlands",
-//   netherlands: "Netherlands",
-//   tr: "Turkey",
-//   turkey: "Turkey",
-//   ch: "Switzerland",
-//   switzerland: "Switzerland",
-//   pl: "Poland",
-//   poland: "Poland",
-//   be: "Belgium",
-//   belgium: "Belgium",
-//   se: "Sweden",
-//   sweden: "Sweden",
-//   ar: "Argentina",
-//   argentina: "Argentina",
-//   at: "Austria",
-//   austria: "Austria",
-//   no: "Norway",
-//   norway: "Norway",
-//   ae: "United Arab Emirates",
-//   uae: "United Arab Emirates",
-//   "united arab emirates": "United Arab Emirates",
-//   il: "Israel",
-//   israel: "Israel",
-//   ie: "Ireland",
-//   ireland: "Ireland",
-//   dk: "Denmark",
-//   denmark: "Denmark",
-//   sg: "Singapore",
-//   singapore: "Singapore",
-//   hk: "Hong Kong",
-//   "hong kong": "Hong Kong",
-//   sa: "Saudi Arabia",
-//   "saudi arabia": "Saudi Arabia",
-//   my: "Malaysia",
-//   malaysia: "Malaysia",
-//   za: "South Africa",
-//   "south africa": "South Africa",
-//   th: "Thailand",
-//   thailand: "Thailand",
-//   id: "Indonesia",
-//   indonesia: "Indonesia",
-//   eg: "Egypt",
-//   egypt: "Egypt",
-//   ph: "Philippines",
-//   philippines: "Philippines",
-//   fi: "Finland",
-//   finland: "Finland",
-//   cl: "Chile",
-//   chile: "Chile",
-//   pt: "Portugal",
-//   portugal: "Portugal",
-//   vn: "Vietnam",
-//   vietnam: "Vietnam",
-//   gr: "Greece",
-//   greece: "Greece",
-//   cz: "Czech Republic",
-//   "czech republic": "Czech Republic",
-//   czechia: "Czech Republic",
-//   ro: "Romania",
-//   romania: "Romania",
-//   nz: "New Zealand",
-//   "new zealand": "New Zealand",
-//   iq: "Iraq",
-//   iraq: "Iraq",
-//   dz: "Algeria",
-//   algeria: "Algeria",
-//   qa: "Qatar",
-//   qatar: "Qatar",
-//   kz: "Kazakhstan",
-//   kazakhstan: "Kazakhstan",
-//   hu: "Hungary",
-//   hungary: "Hungary",
-//   kw: "Kuwait",
-//   kuwait: "Kuwait",
-//   ua: "Ukraine",
-//   ukraine: "Ukraine",
-//   ma: "Morocco",
-//   morocco: "Morocco",
-//   ec: "Ecuador",
-//   ecuador: "Ecuador",
-//   pr: "Puerto Rico",
-//   "puerto rico": "Puerto Rico",
-//   co: "Colombia",
-//   colombia: "Colombia",
-//   pk: "Pakistan",
-//   pakistan: "Pakistan",
-//   pe: "Peru",
-//   peru: "Peru",
-//   ng: "Nigeria",
-//   nigeria: "Nigeria",
-//   bd: "Bangladesh",
-//   bangladesh: "Bangladesh",
-//   ir: "Iran",
-//   iran: "Iran",
-//   tw: "Taiwan",
-//   taiwan: "Taiwan",
-//   ve: "Venezuela",
-//   venezuela: "Venezuela",
-// };
 
-// function normalizeCountryName(sourcecountry: string): string {
-//   if (!sourcecountry) return "United States";
-//   const lower = sourcecountry.toLowerCase().trim();
-//   return COUNTRY_NAME_ALIASES[lower] || sourcecountry;
-// }
 
-// function getCountryCoordinates(
-//   sourcecountry: string,
-//   articleId: string,
-//   index: number,
-// ): [number, number] {
-//   const normalizedCountry = normalizeCountryName(sourcecountry);
-//   const cities = COUNTRY_CITIES[normalizedCountry];
-//   const offset = getOffset(articleId, index);
 
-//   if (cities && cities.length > 0) {
-//     // Get the current index for this country and increment it
-//     const currentIndex = countryIndexTracker[normalizedCountry] || 0;
-//     countryIndexTracker[normalizedCountry] = (currentIndex + 1) % cities.length;
 
-//     // Select city based on rotation + hash for variety
-//     const hashOffset = hashCode(articleId) % cities.length;
-//     const cityIndex = (currentIndex + hashOffset) % cities.length;
-//     const city = cities[cityIndex];
 
-//     // Add larger offset for better spread within city area
-//     const spreadFactor = 0.3 + (hashCode(articleId + "spread") % 100) / 200;
-//     return [
-//       city.coordinates[0] + offset[0] * spreadFactor,
-//       city.coordinates[1] + offset[1] * spreadFactor,
-//     ];
-//   }
 
-//   // Default to random city in US if country not found
-//   const defaultCities = COUNTRY_CITIES["United States"];
-//   const cityIndex = hashCode(articleId) % defaultCities.length;
-//   const city = defaultCities[cityIndex];
-//   return [city.coordinates[0] + offset[0], city.coordinates[1] + offset[1]];
-// }
 
-// // Extract location from news title using keywords
-// function getLocationFromTitle(
-//   title: string,
-//   articleId: string,
-//   index: number,
-// ): [number, number] | null {
-//   const lowerTitle = title.toLowerCase();
-//   const offset = getOffset(articleId, index);
 
-//   // Check keywords in title
-//   for (const { keyword, city } of KEYWORD_CITY_MAP) {
-//     if (lowerTitle.includes(keyword.toLowerCase())) {
-//       return [
-//         city.coordinates[0] + offset[0] * 0.5,
-//         city.coordinates[1] + offset[1] * 0.5,
-//       ];
-//     }
-//   }
 
-//   return null;
 
-// Города по странам для распределения внутри страны
 const CITIES_BY_COUNTRY: Record<
   string,
   Array<{ name: string; coordinates: [number, number] }>
 > = {
-  // США - распределены по всей стране
   "United States": [
     { name: "New York", coordinates: [-74.006, 40.7128] },
     { name: "Los Angeles", coordinates: [-118.2437, 34.0522] },
@@ -3250,7 +2532,6 @@ const CITIES_BY_COUNTRY: Record<
     { name: "Austin", coordinates: [-97.7431, 30.2672] },
   ],
 
-  // Канада
   Canada: [
     { name: "Toronto", coordinates: [-79.3832, 43.6532] },
     { name: "Vancouver", coordinates: [-123.1207, 49.2827] },
@@ -3262,7 +2543,6 @@ const CITIES_BY_COUNTRY: Record<
     { name: "Quebec City", coordinates: [-71.2074, 46.8139] },
   ],
 
-  // UK
   "United Kingdom": [
     { name: "London", coordinates: [-0.1276, 51.5074] },
     { name: "Manchester", coordinates: [-2.2426, 53.4808] },
@@ -3274,7 +2554,6 @@ const CITIES_BY_COUNTRY: Record<
     { name: "Leeds", coordinates: [-1.5491, 53.8008] },
   ],
 
-  // Германия
   Germany: [
     { name: "Berlin", coordinates: [13.405, 52.52] },
     { name: "Munich", coordinates: [11.582, 48.1351] },
@@ -3286,7 +2565,6 @@ const CITIES_BY_COUNTRY: Record<
     { name: "Leipzig", coordinates: [12.3731, 51.3397] },
   ],
 
-  // Франция
   France: [
     { name: "Paris", coordinates: [2.3522, 48.8566] },
     { name: "Lyon", coordinates: [4.8357, 45.764] },
@@ -3298,7 +2576,6 @@ const CITIES_BY_COUNTRY: Record<
     { name: "Strasbourg", coordinates: [7.7521, 48.5734] },
   ],
 
-  // Россия
   Russia: [
     { name: "Moscow", coordinates: [37.6173, 55.7558] },
     { name: "St Petersburg", coordinates: [30.3351, 59.9343] },
@@ -3310,7 +2587,6 @@ const CITIES_BY_COUNTRY: Record<
     { name: "Sochi", coordinates: [39.7233, 43.5992] },
   ],
 
-  // Украина
   Ukraine: [
     { name: "Kyiv", coordinates: [30.5234, 50.4501] },
     { name: "Lviv", coordinates: [24.0297, 49.8397] },
@@ -3319,7 +2595,6 @@ const CITIES_BY_COUNTRY: Record<
     { name: "Dnipro", coordinates: [35.0462, 48.4647] },
   ],
 
-  // Китай
   China: [
     { name: "Beijing", coordinates: [116.4074, 39.9042] },
     { name: "Shanghai", coordinates: [121.4737, 31.2304] },
@@ -3331,7 +2606,6 @@ const CITIES_BY_COUNTRY: Record<
     { name: "Xi'an", coordinates: [108.9402, 34.3416] },
   ],
 
-  // Япония
   Japan: [
     { name: "Tokyo", coordinates: [139.6917, 35.6895] },
     { name: "Osaka", coordinates: [135.5023, 34.6937] },
@@ -3341,7 +2615,6 @@ const CITIES_BY_COUNTRY: Record<
     { name: "Kyoto", coordinates: [135.7681, 35.0116] },
   ],
 
-  // Индия
   India: [
     { name: "New Delhi", coordinates: [77.209, 28.6139] },
     { name: "Mumbai", coordinates: [72.8777, 19.076] },
@@ -3351,7 +2624,6 @@ const CITIES_BY_COUNTRY: Record<
     { name: "Hyderabad", coordinates: [78.4867, 17.385] },
   ],
 
-  // Австралия
   Australia: [
     { name: "Sydney", coordinates: [151.2093, -33.8688] },
     { name: "Melbourne", coordinates: [144.9631, -37.8136] },
@@ -3360,7 +2632,6 @@ const CITIES_BY_COUNTRY: Record<
     { name: "Adelaide", coordinates: [138.6007, -34.9285] },
   ],
 
-  // Израиль
   Israel: [
     { name: "Tel Aviv", coordinates: [34.7818, 32.0853] },
     { name: "Jerusalem", coordinates: [35.2137, 31.7683] },
@@ -3368,7 +2639,6 @@ const CITIES_BY_COUNTRY: Record<
     { name: "Beer Sheva", coordinates: [34.7913, 31.2518] },
   ],
 
-  // Бразилия
   Brazil: [
     { name: "Sao Paulo", coordinates: [-46.6333, -23.5505] },
     { name: "Rio de Janeiro", coordinates: [-43.1729, -22.9068] },
@@ -3377,7 +2647,6 @@ const CITIES_BY_COUNTRY: Record<
     { name: "Fortaleza", coordinates: [-38.5267, -3.7172] },
   ],
 
-  // Италия
   Italy: [
     { name: "Rome", coordinates: [12.4964, 41.9028] },
     { name: "Milan", coordinates: [9.19, 45.4642] },
@@ -3386,7 +2655,6 @@ const CITIES_BY_COUNTRY: Record<
     { name: "Florence", coordinates: [11.2558, 43.7696] },
   ],
 
-  // Испания
   Spain: [
     { name: "Madrid", coordinates: [-3.7038, 40.4168] },
     { name: "Barcelona", coordinates: [2.1734, 41.3851] },
@@ -3395,7 +2663,6 @@ const CITIES_BY_COUNTRY: Record<
     { name: "Bilbao", coordinates: [-2.9253, 43.263] },
   ],
 
-  // Нидерланды
   Netherlands: [
     { name: "Amsterdam", coordinates: [4.9041, 52.3676] },
     { name: "Rotterdam", coordinates: [4.4777, 51.9244] },
@@ -3403,7 +2670,6 @@ const CITIES_BY_COUNTRY: Record<
     { name: "Utrecht", coordinates: [5.1214, 52.0907] },
   ],
 
-  // Польша
   Poland: [
     { name: "Warsaw", coordinates: [21.0122, 52.2297] },
     { name: "Krakow", coordinates: [19.945, 50.0647] },
@@ -3411,7 +2677,6 @@ const CITIES_BY_COUNTRY: Record<
     { name: "Wroclaw", coordinates: [17.0385, 51.1079] },
   ],
 
-  // Турция
   Turkey: [
     { name: "Istanbul", coordinates: [28.9784, 41.0082] },
     { name: "Ankara", coordinates: [32.8597, 39.9334] },
@@ -3419,21 +2684,18 @@ const CITIES_BY_COUNTRY: Record<
     { name: "Antalya", coordinates: [30.7133, 36.8969] },
   ],
 
-  // ОАЭ
   "United Arab Emirates": [
     { name: "Dubai", coordinates: [55.2708, 25.2048] },
     { name: "Abu Dhabi", coordinates: [54.3773, 24.4539] },
     { name: "Sharjah", coordinates: [55.4033, 25.3463] },
   ],
 
-  // Саудовская Аравия
   "Saudi Arabia": [
     { name: "Riyadh", coordinates: [46.6753, 24.7136] },
     { name: "Jeddah", coordinates: [39.1925, 21.4858] },
     { name: "Mecca", coordinates: [39.8579, 21.3891] },
   ],
 
-  // Южная Корея
   "South Korea": [
     { name: "Seoul", coordinates: [126.978, 37.5665] },
     { name: "Busan", coordinates: [129.0756, 35.1796] },
@@ -3441,7 +2703,6 @@ const CITIES_BY_COUNTRY: Record<
     { name: "Daegu", coordinates: [128.6014, 35.8714] },
   ],
 
-  // Мексика
   Mexico: [
     { name: "Mexico City", coordinates: [-99.1332, 19.4326] },
     { name: "Guadalajara", coordinates: [-103.3496, 20.6597] },
@@ -3449,56 +2710,48 @@ const CITIES_BY_COUNTRY: Record<
     { name: "Cancun", coordinates: [-86.8515, 21.1619] },
   ],
 
-  // Иран
   Iran: [
     { name: "Tehran", coordinates: [51.3891, 35.6892] },
     { name: "Isfahan", coordinates: [51.6675, 32.6546] },
     { name: "Shiraz", coordinates: [52.5311, 29.5918] },
   ],
 
-  // Египет
   Egypt: [
     { name: "Cairo", coordinates: [31.2357, 30.0444] },
     { name: "Alexandria", coordinates: [29.9187, 31.2001] },
     { name: "Giza", coordinates: [31.2089, 30.0131] },
   ],
 
-  // ЮАР
   "South Africa": [
     { name: "Johannesburg", coordinates: [28.0473, -26.2041] },
     { name: "Cape Town", coordinates: [18.4241, -33.9249] },
     { name: "Durban", coordinates: [31.0218, -29.8587] },
   ],
 
-  // Аргентина
   Argentina: [
     { name: "Buenos Aires", coordinates: [-58.3816, -34.6037] },
     { name: "Cordoba", coordinates: [-64.1888, -31.4201] },
     { name: "Mendoza", coordinates: [-68.8272, -32.8908] },
   ],
 
-  // Швейцария
   Switzerland: [
     { name: "Zurich", coordinates: [8.5417, 47.3769] },
     { name: "Geneva", coordinates: [6.1432, 46.2044] },
     { name: "Bern", coordinates: [7.4474, 46.948] },
   ],
 
-  // Ирландия
   Ireland: [
     { name: "Dublin", coordinates: [-6.2603, 53.3498] },
     { name: "Cork", coordinates: [-8.4863, 51.8969] },
     { name: "Galway", coordinates: [-9.0568, 53.2707] },
   ],
 
-  // Сингапур (город-государство)
   Singapore: [
     { name: "Singapore Central", coordinates: [103.8198, 1.3521] },
     { name: "Jurong", coordinates: [103.7436, 1.3329] },
     { name: "Changi", coordinates: [103.9915, 1.3644] },
   ],
 
-  // Коста-Рика
   "Costa Rica": [
     { name: "San José", coordinates: [-84.0907, 9.9281] },
     { name: "Alajuela", coordinates: [-84.2115, 10.0162] },
@@ -3507,7 +2760,6 @@ const CITIES_BY_COUNTRY: Record<
     { name: "Limón", coordinates: [-83.0359, 9.9907] },
   ],
 
-  // Колумбия
   Colombia: [
     { name: "Bogotá", coordinates: [-74.0721, 4.711] },
     { name: "Medellín", coordinates: [-75.5636, 6.2442] },
@@ -3515,59 +2767,50 @@ const CITIES_BY_COUNTRY: Record<
     { name: "Barranquilla", coordinates: [-74.7889, 10.9639] },
   ],
 
-  // Чили
   Chile: [
     { name: "Santiago", coordinates: [-70.6693, -33.4489] },
     { name: "Valparaíso", coordinates: [-71.6273, -33.0472] },
     { name: "Concepción", coordinates: [-73.0498, -36.8282] },
   ],
 
-  // Перу
   Peru: [
     { name: "Lima", coordinates: [-77.0428, -12.0464] },
     { name: "Arequipa", coordinates: [-71.537, -16.409] },
     { name: "Cusco", coordinates: [-71.9675, -13.532] },
   ],
 
-  // Эквадор
   Ecuador: [
     { name: "Quito", coordinates: [-78.4678, -0.1807] },
     { name: "Guayaquil", coordinates: [-79.8891, -2.1894] },
     { name: "Cuenca", coordinates: [-79.0053, -2.9001] },
   ],
 
-  // Венесуэла
   Venezuela: [
     { name: "Caracas", coordinates: [-66.9036, 10.4806] },
     { name: "Maracaibo", coordinates: [-71.6561, 10.6666] },
     { name: "Valencia", coordinates: [-68.0076, 10.1579] },
   ],
 
-  // Панама
   Panama: [
     { name: "Panama City", coordinates: [-79.5199, 8.9824] },
     { name: "Colón", coordinates: [-79.9014, 9.3547] },
   ],
 
-  // Сальвадор
   El_Salvador: [
     { name: "San Salvador", coordinates: [-89.1872, 13.6929] },
     { name: "Santa Ana", coordinates: [-89.5569, 13.9942] },
   ],
 
-  // Гватемала
   Guatemala: [
     { name: "Guatemala City", coordinates: [-90.5069, 14.6349] },
     { name: "Antigua", coordinates: [-90.7295, 14.5586] },
   ],
 
-  // Гондурас
   Honduras: [
     { name: "Tegucigalpa", coordinates: [-87.2068, 14.0723] },
     { name: "San Pedro Sula", coordinates: [-88.0259, 15.504] },
   ],
 
-  // Португалия
   Portugal: [
     { name: "Lisbon", coordinates: [-9.1393, 38.7223] },
     { name: "Porto", coordinates: [-8.6291, 41.1579] },
@@ -3576,49 +2819,42 @@ const CITIES_BY_COUNTRY: Record<
     { name: "Braga", coordinates: [-8.42, 41.5454] },
   ],
 
-  // Греция
   Greece: [
     { name: "Athens", coordinates: [23.7275, 37.9838] },
     { name: "Thessaloniki", coordinates: [22.9444, 40.6401] },
     { name: "Patras", coordinates: [21.7346, 38.2466] },
   ],
 
-  // Австрия
   Austria: [
     { name: "Vienna", coordinates: [16.3738, 48.2082] },
     { name: "Salzburg", coordinates: [13.055, 47.8095] },
     { name: "Graz", coordinates: [15.4395, 47.0707] },
   ],
 
-  // Бельгия
   Belgium: [
     { name: "Brussels", coordinates: [4.3517, 50.8503] },
     { name: "Antwerp", coordinates: [4.4025, 51.2194] },
     { name: "Ghent", coordinates: [3.7174, 51.0543] },
   ],
 
-  // Швеция
   Sweden: [
     { name: "Stockholm", coordinates: [18.0686, 59.3293] },
     { name: "Gothenburg", coordinates: [11.9746, 57.7089] },
     { name: "Malmö", coordinates: [13.0038, 55.604] },
   ],
 
-  // Норвегия
   Norway: [
     { name: "Oslo", coordinates: [10.7522, 59.9139] },
     { name: "Bergen", coordinates: [5.3221, 60.3913] },
     { name: "Trondheim", coordinates: [10.3951, 63.4305] },
   ],
 
-  // Дания
   Denmark: [
     { name: "Copenhagen", coordinates: [12.5683, 55.6761] },
     { name: "Aarhus", coordinates: [10.2039, 56.1629] },
     { name: "Odense", coordinates: [10.3883, 55.4038] },
   ],
 
-  // Финляндия
   Finland: [
     { name: "Helsinki", coordinates: [24.9384, 60.1699] },
     { name: "Tampere", coordinates: [23.7871, 61.4978] },
@@ -3626,7 +2862,6 @@ const CITIES_BY_COUNTRY: Record<
   ],
 };
 
-// Алиасы для нормализации названий стран
 const COUNTRY_ALIASES: Record<string, string> = {
   us: "United States",
   usa: "United States",
@@ -3718,26 +2953,21 @@ const COUNTRY_ALIASES: Record<string, string> = {
   pt: "Portugal",
 };
 
-// Дефолтная локация если страна не найдена
-const DEFAULT_LOCATION: [number, number] = [-74.006, 40.7128]; // New York
+const DEFAULT_LOCATION: [number, number] = [-74.006, 40.7128];
 
-// Счётчики для ротации городов по странам
 const countryCityIndex: Record<string, number> = {};
 
-// Нормализовать название страны
 function normalizeCountry(country: string): string {
   if (!country) return "United States";
   const lower = country.toLowerCase().trim();
   return COUNTRY_ALIASES[lower] || country;
 }
 
-// Получить следующий город в стране с ротацией
 function getNextCityInCountry(country: string, seed: number): [number, number] {
   const normalizedCountry = normalizeCountry(country);
   const cities = CITIES_BY_COUNTRY[normalizedCountry];
 
   if (!cities || cities.length === 0) {
-    // Если страна не найдена - вернуть дефолт с небольшим сдвигом
     const random1 = Math.sin(seed * 12.9898) * 43758.5453;
     const random2 = Math.cos(seed * 78.233) * 43758.5453;
     return [
@@ -3746,14 +2976,11 @@ function getNextCityInCountry(country: string, seed: number): [number, number] {
     ];
   }
 
-  // Получить индекс и инкрементировать
   const currentIndex = countryCityIndex[normalizedCountry] || 0;
   countryCityIndex[normalizedCountry] = currentIndex + 1;
 
-  // Выбрать город по индексу (с ротацией)
   const city = cities[currentIndex % cities.length];
 
-  // Добавить небольшой случайный сдвиг чтобы маркеры не накладывались
   const random1 = Math.sin(seed * 12.9898) * 43758.5453;
   const random2 = Math.cos(seed * 78.233) * 43758.5453;
   const offsetLng = (random1 - Math.floor(random1) - 0.5) * 0.5;
@@ -3765,13 +2992,11 @@ function getNextCityInCountry(country: string, seed: number): [number, number] {
 export function convertGdeltArticlesToMapMarkers(
   articles: GdeltArticle[],
 ): MapMarker[] {
-  // Сброс счётчиков для свежего распределения
   Object.keys(countryCityIndex).forEach((key) => {
     countryCityIndex[key] = 0;
   });
 
   return articles.map((article, index) => {
-    // Распределяем по городам ВНУТРИ страны источника
     const seed = hashCode(article.url + article.title + index);
     const coordinates = getNextCityInCountry(article.sourcecountry, seed);
 
@@ -3801,7 +3026,7 @@ export function convertGdeltArticlesToMapMarkers(
       seendate: article.seendate,
     };
   });
-} // Keywords to match news with markets
+}
 const NEWS_MARKET_KEYWORDS: Record<string, string[]> = {
   ukraine: [
     "ukraine",
@@ -4048,7 +3273,6 @@ const NEWS_MARKET_KEYWORDS: Record<string, string[]> = {
   ],
 };
 
-// Geographic context mapping - which topics are related to which regions
 const GEOGRAPHIC_CONTEXT: Record<string, string[]> = {
   us_election: [
     "us",
@@ -4083,28 +3307,7 @@ const GEOGRAPHIC_CONTEXT: Record<string, string[]> = {
   latin_america: ["latin america", "south america", "central america"],
 };
 
-// Conflicting geographic contexts - topics that should NOT be matched together
-// const CONFLICTING_CONTEXTS: [string, string][] = [
-//   ["us_election", "asia"],
-//   ["us_election", "middle_east"],
-//   ["us_election", "africa"],
-//   ["us_election", "latin_america"],
-//   ["us_election", "europe"],
-//   ["us_politicians", "asia"],
-//   ["us_politicians", "middle_east"],
-//   ["us_politicians", "africa"],
-//   ["trump", "asia"],
-//   ["biden", "asia"],
-//   ["israel", "asia"],
-//   ["iran", "asia"],
-//   ["ukraine", "asia"],
-//   ["russia", "latin_america"],
-//   ["china", "latin_america"],
-//   ["north_korea", "europe"],
-//   ["north_korea", "latin_america"],
-// ];
 
-// Find matching keywords between news and market
 function findMatchingKeywords(text1: string, text2: string): string[] {
   const lower1 = text1.toLowerCase();
   const lower2 = text2.toLowerCase();
@@ -4122,57 +3325,24 @@ function findMatchingKeywords(text1: string, text2: string): string[] {
   return matches;
 }
 
-// Check if texts have conflicting geographic contexts
-// function hasConflictingContext(text1: string, text2: string): boolean {
-//   const lower1 = text1.toLowerCase();
-//   const lower2 = text2.toLowerCase();
 
-//   // Find which topics each text belongs to
-//   const topics1: string[] = [];
-//   const topics2: string[] = [];
 
-//   for (const [topic, keywords] of Object.entries(NEWS_MARKET_KEYWORDS)) {
-//     for (const keyword of keywords) {
-//       if (lower1.includes(keyword) && !topics1.includes(topic)) {
-//         topics1.push(topic);
-//       }
-//       if (lower2.includes(keyword) && !topics2.includes(topic)) {
-//         topics2.push(topic);
-//       }
-//     }
-//   }
 
-//   // Check for conflicting contexts
-//   for (const [ctx1, ctx2] of CONFLICTING_CONTEXTS) {
-//     if (
-//       (topics1.includes(ctx1) && topics2.includes(ctx2)) ||
-//       (topics1.includes(ctx2) && topics2.includes(ctx1))
-//     ) {
-//       return true;
-//     }
-//   }
 
-//   return false;
-// }
 
-// Check if both texts share the same geographic region
 function hasMatchingGeographicContext(text1: string, text2: string): boolean {
   const lower1 = text1.toLowerCase();
   const lower2 = text2.toLowerCase();
 
-  // Check each geographic context
   for (const [topic, regions] of Object.entries(GEOGRAPHIC_CONTEXT)) {
-    // Check if text1 is about this topic
     const text1HasTopic = NEWS_MARKET_KEYWORDS[topic]?.some((kw) =>
       lower1.includes(kw),
     );
     if (!text1HasTopic) continue;
 
-    // If text1 is about this topic, check if text2 mentions the related region
     const text2HasRegion = regions.some((region) => lower2.includes(region));
     if (text2HasRegion) return true;
 
-    // Also check if text2 has the same topic keywords
     const text2HasTopic = NEWS_MARKET_KEYWORDS[topic]?.some((kw) =>
       lower2.includes(kw),
     );
@@ -4182,7 +3352,6 @@ function hasMatchingGeographicContext(text1: string, text2: string): boolean {
   return false;
 }
 
-// Get person names mentioned in text for precise matching
 function extractPersonNames(text: string): string[] {
   const lower = text.toLowerCase();
   const names: string[] = [];
@@ -4218,7 +3387,6 @@ function extractPersonNames(text: string): string[] {
   return names;
 }
 
-// Извлечь значимые слова из текста (убираем стоп-слова)
 function extractSignificantWords(text: string): string[] {
   const stopWords = new Set([
     "the",
@@ -4352,22 +3520,16 @@ function extractSignificantWords(text: string): string[] {
     .filter((word) => word.length > 2 && !stopWords.has(word));
 }
 
-// Вычислить score связи между двумя текстами
 function calculateRelationScore(text1: string, text2: string): number {
   const words1 = extractSignificantWords(text1);
   const words2 = extractSignificantWords(text2);
 
   if (words1.length === 0 || words2.length === 0) return 0;
 
-  // TEMPORARILY DISABLED: Conflicting context check was too aggressive
-  // if (hasConflictingContext(text1, text2)) {
-  //   return 0; // Immediately reject if contexts conflict
-  // }
 
   const set1 = new Set(words1);
   const set2 = new Set(words2);
 
-  // Считаем совпадающие слова
   let matchCount = 0;
   for (const word of set1) {
     if (set2.has(word)) {
@@ -4375,21 +3537,17 @@ function calculateRelationScore(text1: string, text2: string): number {
     }
   }
 
-  // Бонус за совпадение по ключевым темам
   const keywordMatches = findMatchingKeywords(text1, text2);
-  const keywordBonus = keywordMatches.length * 12; // Reduced from 15
+  const keywordBonus = keywordMatches.length * 12;
 
-  // BONUS: Extra points for matching person names (very specific)
   const names1 = extractPersonNames(text1);
   const names2 = extractPersonNames(text2);
   const matchingNames = names1.filter((n) => names2.includes(n));
-  const nameBonus = matchingNames.length * 25; // High bonus for name matches
+  const nameBonus = matchingNames.length * 25;
 
-  // BONUS: Extra points for matching geographic context
   const geoBonus = hasMatchingGeographicContext(text1, text2) ? 15 : 0;
 
-  // Нормализуем score (0-100)
-  const baseScore = (matchCount / Math.min(set1.size, set2.size)) * 40; // Reduced from 60
+  const baseScore = (matchCount / Math.min(set1.size, set2.size)) * 40;
   const totalScore = Math.min(
     100,
     baseScore + keywordBonus + nameBonus + geoBonus,
@@ -4398,82 +3556,26 @@ function calculateRelationScore(text1: string, text2: string): number {
   return Math.round(totalScore);
 }
 
-// Topic to location mapping for markets
-// const TOPIC_LOCATION_MAP: Record<string, [number, number]> = {
-//   ukraine: [30.5234, 50.4501], // Kyiv
-//   russia: [37.6173, 55.7558], // Moscow
-//   china: [116.4074, 39.9042], // Beijing
-//   taiwan: [121.5654, 25.033], // Taipei
-//   israel: [35.2137, 31.7683], // Jerusalem
-//   iran: [51.389, 35.6892], // Tehran
-//   trump: [-80.0364, 26.6774], // Mar-a-Lago
-//   biden: [-77.0369, 38.9072], // Washington DC
-//   election: [-77.0369, 38.9072], // Washington DC
-//   crypto: [103.8198, 1.3521], // Singapore
-//   nato: [4.3517, 50.8503], // Brussels
-// };
 
-// Get location for market based on its content
-// function getMarketLocation(title: string): [number, number] | null {
-//   const lowerTitle = title.toLowerCase();
 
-//   // === STEP 1: Check KEYWORD_CITY_MAP FIRST (specific countries/regions) ===
-//   // This ensures "US strikes Iran" goes to IRAN, not somewhere else
-//   for (const { keyword, city } of KEYWORD_CITY_MAP) {
-//     if (lowerTitle.includes(keyword)) {
-//       return city.coordinates;
-//     }
-//   }
 
-//   // === STEP 2: Special conflict logic (only if no specific country found) ===
 
-//   // Ukraine war/conflict - only if explicitly about Ukraine
-//   const isAboutUkraine =
-//     lowerTitle.includes("ukraine") ||
-//     lowerTitle.includes("ukrainian") ||
-//     lowerTitle.includes("kyiv") ||
-//     lowerTitle.includes("kiev") ||
-//     lowerTitle.includes("zelensky");
 
-//   if (isAboutUkraine) {
-//     const ukraineCities: [number, number][] = [
-//       [30.5234, 50.4501], // Kyiv
-//       [36.2304, 49.9935], // Kharkiv
-//       [30.7233, 46.4825], // Odessa
-//       [24.0297, 49.8397], // Lviv
-//       [35.1396, 47.8388], // Zaporizhzhia
-//     ];
-//     return ukraineCities[Math.floor(Math.random() * ukraineCities.length)];
-//   }
 
-//   // === STEP 3: Check topic keywords ===
-//   for (const [topic, keywords] of Object.entries(NEWS_MARKET_KEYWORDS)) {
-//     for (const keyword of keywords) {
-//       if (lowerTitle.includes(keyword) && TOPIC_LOCATION_MAP[topic]) {
-//         return TOPIC_LOCATION_MAP[topic];
-//       }
-//     }
-//   }
 
-//   return null;
-// }
 
-// Link markets to nearby news and adjust their positions
 export function linkMarketsToNews(
   marketMarkers: MapMarker[],
   newsMarkers: MapMarker[],
 ): { markets: MapMarker[]; news: MapMarker[] } {
-  // Минимальный score для установления связи (lowered from 30 for better matching)
   const MIN_RELATION_SCORE = 20;
 
-  // Создаём копии для модификации
   const linkedMarkets = marketMarkers.map((market) => ({ ...market }));
   const linkedNews = newsMarkers.map((news) => ({
     ...news,
     relatedMarketIds: [] as string[],
   }));
 
-  // Для каждого маркета находим связанные новости
   for (const market of linkedMarkets) {
     const relatedNews: { newsId: string; score: number }[] = [];
 
@@ -4488,7 +3590,6 @@ export function linkMarketsToNews(
       }
     }
 
-    // Сортируем по score и берём топ-5
     relatedNews.sort((a, b) => b.score - a.score);
     const topRelated = relatedNews.slice(0, 5);
 
@@ -4497,7 +3598,6 @@ export function linkMarketsToNews(
       market.relatedNewsIds = topRelated.map((r) => r.newsId);
       market.relationScore = topRelated[0].score;
 
-      // Добавляем обратную связь к новостям
       for (const related of topRelated) {
         const newsItem = linkedNews.find((n) => n.id === related.newsId);
         if (newsItem && !newsItem.relatedMarketIds?.includes(market.id)) {
@@ -4508,7 +3608,6 @@ export function linkMarketsToNews(
     }
   }
 
-  // Устанавливаем максимальный score для каждой новости
   for (const news of linkedNews) {
     if (news.relatedMarketIds && news.relatedMarketIds.length > 0) {
       const maxScore = Math.max(
@@ -4559,7 +3658,6 @@ export function createGeoJSONFromMarkers(
         language: marker.language,
         sourcecountry: marker.sourcecountry,
         seendate: marker.seendate,
-        // Связи между маркетами и новостями
         relatedNewsId: marker.relatedNewsId,
         relatedNewsIds: marker.relatedNewsIds
           ? JSON.stringify(marker.relatedNewsIds)

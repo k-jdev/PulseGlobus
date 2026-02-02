@@ -40,6 +40,7 @@ export function useTokenGate({
   chainId = mainnet.id,
 }: UseTokenGateOptions): UseTokenGateResult {
   const { address, isConnected } = useAccount();
+  console.log(address)
 
   const { data: decimals } = useReadContract({
     address: tokenAddress,
@@ -62,7 +63,7 @@ export function useTokenGate({
 
   const balance =
     balanceRaw && decimals ? parseFloat(formatUnits(balanceRaw, decimals)) : 0;
-
+   console.log(balance)
   const hasAccess = balance >= requiredAmount;
 
   const isLoading = isContractLoading && !hasAccess;

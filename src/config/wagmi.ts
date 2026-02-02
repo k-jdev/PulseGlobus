@@ -22,7 +22,7 @@ export const config = createConfig({
     walletConnect({
       projectId,
       metadata,
-      showQrModal: false, // Web3Modal will handle the modal
+      showQrModal: false,
     }),
   ],
   transports: {
@@ -31,7 +31,6 @@ export const config = createConfig({
   },
 });
 
-// Create Web3Modal
 createWeb3Modal({
   wagmiConfig: config,
   projectId,

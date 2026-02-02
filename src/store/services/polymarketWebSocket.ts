@@ -1,24 +1,21 @@
-// Polymarket WebSocket Live Trades Service
-// WebSocket URL: wss://ws-live-data.polymarket.com
-
 export interface LiveTradeMessage {
   asset: string;
   conditionId: string;
   eventSlug: string;
   icon: string;
-  name: string; // Trader username
+  name: string;
   outcome: string;
   outcomeIndex: number;
   bio?: string;
   price?: string;
   side?: string;
   size?: string;
-  timestamp?: number; // Unix timestamp in seconds
-  market?: string; // Market question/title
-  question?: string; // Alternative field for market question
-  transactionHash?: string; // Polygon transaction hash
-  txHash?: string; // Alternative field for transaction hash
-  hash?: string; // Another alternative
+  timestamp?: number;
+  market?: string;
+  question?: string;
+  transactionHash?: string;
+  txHash?: string;
+  hash?: string;
 }
 
 export interface WebSocketMessage {
@@ -53,7 +50,7 @@ class PolymarketWebSocketService {
 
       this.ws.onopen = () => {
         console.log(
-          "[LIVE] WebSocket OPEN - wss://ws-live-data.polymarket.com"
+          "[LIVE] WebSocket OPEN - wss://ws-live-data.polymarket.com",
         );
         this.isConnecting = false;
         this.reconnectAttempts = 0;
@@ -107,7 +104,6 @@ class PolymarketWebSocketService {
 
     this.ws.send(JSON.stringify(subscriptionMessage));
     console.log("[LIVE] Sending subscription:", subscriptionMessage);
-    console.log("[LIVE] ✓ Subscription sent");
   }
 
   private attemptReconnect() {
@@ -118,7 +114,7 @@ class PolymarketWebSocketService {
 
     this.reconnectAttempts++;
     console.log(
-      `[LIVE] Reconnecting in ${this.reconnectDelay}ms (attempt ${this.reconnectAttempts})`
+      `[LIVE] Reconnecting in ${this.reconnectDelay}ms (attempt ${this.reconnectAttempts})`,
     );
 
     setTimeout(() => {
@@ -144,7 +140,7 @@ class PolymarketWebSocketService {
     this.connectionCallbacks.push(callback);
     return () => {
       this.connectionCallbacks = this.connectionCallbacks.filter(
-        (cb) => cb !== callback
+        (cb) => cb !== callback,
       );
     };
   }

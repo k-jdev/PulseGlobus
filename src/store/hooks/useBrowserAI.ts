@@ -93,17 +93,9 @@ export function useBrowserAI(
       setError(null);
 
       try {
-        const startTime = performance.now();
         const classified = await classifyNews(articles, batchSize);
-        const duration = performance.now() - startTime;
-
-        console.log(
-          `✅ Классифицировано ${classified.length} новостей за ${duration.toFixed(0)}ms`,
-        );
-
         setClassifiedNews(classified);
       } catch (err) {
-        console.error("Ошибка классификации новостей:", err);
         setError(String(err));
       } finally {
         setIsLoading(false);
@@ -120,17 +112,9 @@ export function useBrowserAI(
       setError(null);
 
       try {
-        const startTime = performance.now();
         const classified = await classifyMarkets(markets, batchSize);
-        const duration = performance.now() - startTime;
-
-        console.log(
-          `✅ Классифицировано ${classified.length} маркетов за ${duration.toFixed(0)}ms`,
-        );
-
         setClassifiedMarkets(classified);
       } catch (err) {
-        console.error("Ошибка классификации маркетов:", err);
         setError(String(err));
       } finally {
         setIsLoading(false);
@@ -144,8 +128,6 @@ export function useBrowserAI(
 
     const map = matchNewsToMarkets(classifiedNews, classifiedMarkets);
     setNewsToMarketsMap(map);
-
-    console.log(`🔗 Сопоставлено ${map.size} маркетов с новостями`);
   }, [classifiedNews, classifiedMarkets]);
 
   const reset = useCallback(() => {

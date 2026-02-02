@@ -125,35 +125,15 @@ const GlobusMapbox = ({
     return filteredMarkers;
   }, [events, newsArticles, timeFilter, showNews]);
 
-  const {
-    enhancedMarkers,
-    isAIAvailable,
-    method: aiMethod,
-  } = useAIEnhancedMarkers(mapMarkers, {
+  const { enhancedMarkers } = useAIEnhancedMarkers(mapMarkers, {
     enabled: true,
-    enhanceCoordinates: false, // Координаты уже хорошо расставляются в geoLocation
+    enhanceCoordinates: false,
   });
-
-  useEffect(() => {
-    if (aiMethod !== "none") {
-      console.log(
-        `🗺️ AI геоклассификация: ${aiMethod} (доступен: ${isAIAvailable})`,
-      );
-    }
-  }, [aiMethod, isAIAvailable]);
 
   const { visibleMarkers } = useProgressiveMarkers(enhancedMarkers);
 
   const handleMarkerClick = useCallback(
     ({ marker, screenPosition }: MarkerClickEvent) => {
-      console.log(
-        "🔍 Marker clicked:",
-        marker.id,
-        "type:",
-        marker.type,
-        "at:",
-        screenPosition,
-      );
       setSelectedMarket(marker);
 
       const isMobile = window.innerWidth < 768;
@@ -230,11 +210,8 @@ const GlobusMapbox = ({
     clearConnections();
   };
 
-  // Draw connection lines when selectedMarket changes
   useEffect(() => {
     if (selectedMarket) {
-      // Find the marker in mapMarkers to get the latest relatedIds
-      // (visibleMarkers may not have them due to filtering/progressive loading)
       const markerWithRelations =
         mapMarkers.find((m) => m.id === selectedMarket.id) || selectedMarket;
       drawConnections(markerWithRelations);
@@ -283,8 +260,7 @@ const GlobusMapbox = ({
     };
   }, [selectedMarket, projectCoordinates, mapRef]);
 
-  const handleNewsClick = (newsId: string, coordinates: [number, number]) => {
-    console.log("📍 Flying to news location:", newsId, coordinates);
+  const handleNewsClick = (_newsId: string, coordinates: [number, number]) => {
     flyToLocation(coordinates, 4);
   };
 
@@ -292,8 +268,6 @@ const GlobusMapbox = ({
     marketId: string,
     coordinates: [number, number],
   ) => {
-    console.log("📍 Flying to market location:", marketId, coordinates);
-    // Find the market in mapMarkers and select it
     const market = mapMarkers.find((m) => m.id === marketId);
     if (market) {
       setSelectedMarket(market);
@@ -326,13 +300,11 @@ const GlobusMapbox = ({
       }));
   }, [selectedMarket, mapMarkers]);
 
-  // Get related markets for news popup
   const relatedMarkets = useMemo(() => {
     if (!selectedMarket || selectedMarket.type !== "news") {
       return [];
     }
 
-    // Find the news in mapMarkers to get relatedMarketIds (they are set there)
     const newsInMapMarkers = mapMarkers.find((m) => m.id === selectedMarket.id);
     const relatedMarketIds =
       newsInMapMarkers?.relatedMarketIds || selectedMarket.relatedMarketIds;

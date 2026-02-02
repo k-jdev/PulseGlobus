@@ -185,7 +185,6 @@ export const polymarketApi = createApi({
       providesTags: ["Events"],
     }),
 
-    // Get recent trades from activity feed
     getRecentTrades: builder.query<
       Array<{
         id: string;
@@ -205,7 +204,6 @@ export const polymarketApi = createApi({
         fetchWithBQ,
       ) {
         try {
-          // First get active markets sorted by recent activity
           const marketsResult = await fetchWithBQ(
             `/markets?limit=100&active=true&closed=false&order=volume24hr&ascending=false`,
           );
@@ -216,14 +214,11 @@ export const polymarketApi = createApi({
 
           const markets = marketsResult.data as Market[];
 
-          // Simulate recent trades based on market activity
-          // In production, this would use WebSocket or CLOB API
           const trades = markets.slice(0, limit).map((market, index) => {
             const outcomes = JSON.parse(market.outcomes || '["Yes", "No"]');
             const prices = JSON.parse(market.outcomePrices || '["0.5", "0.5"]');
             const outcomeIndex = Math.random() > 0.5 ? 0 : 1;
 
-            // Calculate realistic trade size based on market volume
             const avgTradeSize =
               market.volume24hr > 0
                 ? Math.min(market.volume24hr / 100, 500)
@@ -240,11 +235,10 @@ export const polymarketApi = createApi({
               size: Math.round(tradeSize),
               price: parseFloat(prices[outcomeIndex]) || 0.5,
               outcome: outcomes[outcomeIndex] || "Yes",
-              timestamp: Date.now() - Math.floor(Math.random() * 30000), // Last 30 seconds
+              timestamp: Date.now() - Math.floor(Math.random() * 30000),
             };
           });
 
-          // Sort by timestamp (most recent first)
           trades.sort((a, b) => b.timestamp - a.timestamp);
 
           return { data: trades };

@@ -1,12 +1,10 @@
 import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
 
-// Список CORS прокси для обхода блокировки GDELT API (с фолбэком)
 const CORS_PROXIES = [
   "https://corsproxy.io/?",
   "https://api.codetabs.com/v1/proxy?quest=",
 ];
 
-// Функция для запроса через прокси с фолбэком
 async function fetchWithProxy(url: string): Promise<Response> {
   let lastError: Error | null = null;
 
@@ -23,7 +21,6 @@ async function fetchWithProxy(url: string): Promise<Response> {
     }
   }
 
-  // Если все прокси не работают, пробуем напрямую (на случай если CORS разрешён)
   try {
     return await fetch(url);
   } catch {

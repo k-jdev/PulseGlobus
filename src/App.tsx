@@ -9,12 +9,10 @@ import { Theme } from "./components/GlobusMapbox/constants/mapConfig";
 
 export type TimeFilter = "1h" | "6h" | "24h";
 
-// ⚠️ ЗАМЕНИ НА РЕАЛЬНЫЙ АДРЕС $PULSE ТОКЕНА!
 const PULSE_TOKEN_ADDRESS =
-  "0x0000000000000000000000000000000000000000" as `0x${string}`;
+  "0xF9877901a3D8c8D26078703004E748E66A4009b5" as `0x${string}`;
 const REQUIRED_TOKENS = 1000;
 
-// Check if mobile on initial load
 const isMobileDevice = () => window.innerWidth < 768;
 
 function App() {
@@ -28,7 +26,6 @@ function App() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [closePopups, setClosePopups] = useState<(() => void) | null>(null);
 
-  // Close all popups when mobile menu opens
   const handleMobileMenuChange = (isOpen: boolean) => {
     setIsMobileMenuOpen(isOpen);
     if (isOpen && closePopups) {
@@ -36,7 +33,6 @@ function App() {
     }
   };
 
-  // Close all popups when search is focused
   const handleSearchFocus = () => {
     if (closePopups) {
       closePopups();

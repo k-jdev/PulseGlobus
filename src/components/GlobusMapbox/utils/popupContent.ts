@@ -39,7 +39,7 @@ const formatNewsDate = (dateStr?: string): string => {
 };
 
 export const createNewsPopupContent = (
-  properties: Record<string, any>
+  properties: Record<string, any>,
 ): string => {
   const title = properties.title || "Untitled News";
   const image = properties.image;
@@ -133,7 +133,7 @@ export const createNewsPopupContent = (
               <polyline points="12 6 12 12 16 14"/>
             </svg>
             <span style="color: #1452f0; font-size: 14px; font-weight: 500;">${formatNewsDate(
-              seendate
+              seendate,
             )}</span>
           </div>
         `
@@ -166,7 +166,7 @@ export const createNewsPopupContent = (
 };
 
 export const createMarketPopupContent = (
-  properties: Record<string, any>
+  properties: Record<string, any>,
 ): string => {
   const isMultiMarket =
     properties.isMultiMarket === true || properties.isMultiMarket === "true";
@@ -225,10 +225,10 @@ export const createMarketPopupContent = (
     outcomesData.some((o: any) => o.name.toLowerCase() === "no");
 
   const yesOutcome = outcomesData.find(
-    (o: any) => o.name.toLowerCase() === "yes"
+    (o: any) => o.name.toLowerCase() === "yes",
   );
   const noOutcome = outcomesData.find(
-    (o: any) => o.name.toLowerCase() === "no"
+    (o: any) => o.name.toLowerCase() === "no",
   );
 
   const marketUrl =
@@ -303,7 +303,7 @@ export const createMarketPopupContent = (
               </div>
             </div>
           </div>
-        `
+        `,
           )
           .join("")}
       </div>
@@ -450,13 +450,13 @@ export const createPopupContent = (properties: Record<string, any>): string => {
       ">
         <span style="color: #a0aec0; font-size: 13px;">Code</span>
         <span style="font-size: 15px; font-weight: 600;">${String(
-          properties.abbrev || properties.iata_code || "N/A"
+          properties.abbrev || properties.iata_code || "N/A",
         )}</span>
       </div>
 
       ${Object.entries(properties)
         .filter(
-          ([key]) => key !== "name" && key !== "abbrev" && key !== "iata_code"
+          ([key]) => key !== "name" && key !== "abbrev" && key !== "iata_code",
         )
         .slice(0, 5)
         .map(
@@ -470,10 +470,10 @@ export const createPopupContent = (properties: Record<string, any>): string => {
           ">
             <span style="color: #a0aec0;">${key}</span>
             <span style="color: #ffffff; font-weight: 500;">${String(
-              value
+              value,
             )}</span>
           </div>
-        `
+        `,
         )
         .join("")}
     </div>

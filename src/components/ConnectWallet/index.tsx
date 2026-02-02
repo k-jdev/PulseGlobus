@@ -36,7 +36,6 @@ const useWeb3ModalMobileFix = () => {
       }
     };
 
-    // Try to inject immediately and also observe for modal appearance
     injectStyles();
 
     const observer = new MutationObserver(() => {
@@ -63,7 +62,6 @@ export const ConnectWallet = ({ className, isMobile }: ConnectWalletProps) => {
   const { open } = useWeb3Modal();
   const { disconnect } = useDisconnect();
 
-  // Apply mobile centering fix for Web3Modal
   useWeb3ModalMobileFix();
 
   const handleConnect = () => {
@@ -74,21 +72,17 @@ export const ConnectWallet = ({ className, isMobile }: ConnectWalletProps) => {
     disconnect();
   };
 
-  // Base classes that are always applied
   const baseClasses =
     "px-5 py-3 rounded-full font-semibold text-[16px] flex items-center gap-3 cursor-pointer";
 
-  // Default classes (can be overridden by className)
   const defaultClasses =
     "bg-[#1452F0] text-white hover:bg-[#0d3cb8] justify-between";
 
-  // If className contains bg- it means custom styling, skip default colors
   const hasCustomBg = className?.includes("bg-");
   const buttonClasses = `${baseClasses} ${hasCustomBg ? "" : defaultClasses} ${
     className || ""
   }`;
 
-  // Icon style - invert for light backgrounds
   const iconStyle = hasCustomBg ? { filter: "invert(1)" } : {};
 
   if (isConnected && address) {

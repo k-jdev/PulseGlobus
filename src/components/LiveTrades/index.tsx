@@ -45,14 +45,12 @@ const getTimeAgo = (timestampMs: number): string => {
 };
 
 const convertLiveTradeToItem = (trade: LiveTradeMessage): TradeItem => {
-  // Timestamp comes in seconds, convert to milliseconds
   const timestampMs = trade.timestamp
     ? trade.timestamp > 1e12
       ? trade.timestamp
       : trade.timestamp * 1000
     : Date.now();
 
-  // Get transaction hash from various possible fields
   const txHash = trade.transactionHash || trade.txHash || trade.hash;
 
   return {
@@ -85,7 +83,6 @@ export const LiveTrades = ({ isOpen }: LiveTradesProps) => {
     const tradeItem = convertLiveTradeToItem(trade);
 
     setTrades((prev) => {
-      // Add new trade at the beginning, keep max 20 trades
       const newTrades = [tradeItem, ...prev].slice(0, 20);
       return newTrades;
     });
@@ -94,26 +91,22 @@ export const LiveTrades = ({ isOpen }: LiveTradesProps) => {
   useEffect(() => {
     if (!isOpen) return;
 
-    // Connect to WebSocket
     polymarketWS.connect();
 
-    // Subscribe to trades
     const unsubscribeTrade = polymarketWS.onTrade(handleNewTrade);
 
-    // Subscribe to connection changes
     const unsubscribeConnection = polymarketWS.onConnectionChange(
       (connected) => {
         setIsConnected(connected);
-      }
+      },
     );
 
-    // Update time ago every 5 seconds
     const timeInterval = setInterval(() => {
       setTrades((prev) =>
         prev.map((trade) => ({
           ...trade,
           timeAgo: getTimeAgo(trade.timestamp),
-        }))
+        })),
       );
     }, 5000);
 
@@ -140,7 +133,6 @@ export const LiveTrades = ({ isOpen }: LiveTradesProps) => {
         }}
         className="absolute top-[144px] md:top-[160px] left-4 md:left-8 bg-white rounded-[14px] w-[calc(100vw-32px)] md:w-[502px] max-h-[calc(100vh-180px)] md:max-h-[70vh] border-t-[6px] border-[#53BB33] overflow-hidden z-50 shadow-[0px_22px_32px_0px_rgba(20,82,240,0.25)]"
       >
-        {/* Header */}
         <div className="px-6 pt-7 pb-4">
           <div className="flex flex-col gap-3">
             <div className="flex items-start justify-between gap-4">
@@ -152,71 +144,13 @@ export const LiveTrades = ({ isOpen }: LiveTradesProps) => {
                   Streaming Pulse globe markets.
                 </p>
               </div>
-              {/* Desktop controls */}
-              <div className="hidden md:flex items-center gap-1.5">
-                {/* <div className="px-3 py-1 bg-[#f5f5f5] rounded-full text-[#808080] text-[14px] font-medium tracking-[-0.28px]">
-                {tradesCount} Trades
-              </div> */}
-                {/* Chart icon */}
-                {/* <svg
-                width="16"
-                height="16"
-                viewBox="0 0 16 16"
-                fill="none"
-                xmlns="http://www.w3.org/2000/svg"
-              >
-                <path
-                  d="M2 11L5.5 7.5L8 10L14 4"
-                  stroke="#808080"
-                  strokeWidth="1.5"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
-                <path
-                  d="M10 4H14V8"
-                  stroke="#808080"
-                  strokeWidth="1.5"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
-              </svg> */}
-              </div>
+              <div className="hidden md:flex items-center gap-1.5"></div>
             </div>
-            {/* Mobile controls */}
-            {/* <div className="flex md:hidden items-center gap-1.5">
-            <div className="px-3 py-1 bg-[#f5f5f5] rounded-full text-[#808080] text-[13px] font-medium tracking-[-0.28px]">
-              {tradesCount} Trades
-            </div>
-            <svg
-              width="16"
-              height="16"
-              viewBox="0 0 16 16"
-              fill="none"
-              xmlns="http://www.w3.org/2000/svg"
-            >
-              <path
-                d="M2 11L5.5 7.5L8 10L14 4"
-                stroke="#808080"
-                strokeWidth="1.5"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-              <path
-                d="M10 4H14V8"
-                stroke="#808080"
-                strokeWidth="1.5"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-            </svg>
-          </div> */}
           </div>
         </div>
 
-        {/* Divider */}
         <div className="mx-6 h-px bg-[#e4e4e4]" />
 
-        {/* Coming Soon Overlay */}
         <div className="px-6 py-4 overflow-y-auto max-h-[calc(100vh-380px)] md:max-h-[calc(70vh-140px)]">
           <div className="flex flex-col items-center justify-center py-12 gap-4">
             <div className="w-16 h-16 bg-[#f5f5f5] rounded-full flex items-center justify-center">
@@ -247,7 +181,6 @@ export const LiveTrades = ({ isOpen }: LiveTradesProps) => {
           </div>
         </div>
 
-        {/* Hidden: Original Trades List (logic preserved) */}
         <div className="hidden">
           {!isConnected && trades.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-8 gap-3">
@@ -287,18 +220,15 @@ const TradeRow = ({ trade }: { trade: TradeItem }) => {
   const actionBgColor = isBuy ? "bg-[#f1f7ff]" : "bg-[#ffebeb]";
   const actionTextColor = isBuy ? "text-[#1452F0]" : "text-[#EE1616]";
 
-  // Link to Polygonscan transaction if available, otherwise to Polymarket event
   const tradeLink = trade.transactionHash
     ? `https://polygonscan.com/tx/${trade.transactionHash}`
     : trade.eventSlug && trade.eventSlug !== trade.slug
-    ? `https://polymarket.com/event/${trade.eventSlug}/${trade.slug}`
-    : `https://polymarket.com/event/${trade.slug}`;
+      ? `https://polymarket.com/event/${trade.eventSlug}/${trade.slug}`
+      : `https://polymarket.com/event/${trade.slug}`;
 
   return (
     <div className="flex flex-col gap-4">
-      {/* Main row: Image + Event/Market name + Price */}
       <div className="flex items-center gap-4">
-        {/* Image */}
         {trade.image && (
           <div className="w-9 h-9 rounded-[4.8px] overflow-hidden flex-shrink-0">
             <img
@@ -309,12 +239,10 @@ const TradeRow = ({ trade }: { trade: TradeItem }) => {
           </div>
         )}
 
-        {/* Event/Market name */}
         <p className="flex-1 text-[#1B2430] font-semibold text-[19px] leading-[30px] tracking-[-0.4px] line-clamp-2">
           {trade.question}
         </p>
 
-        {/* Price + Amount */}
         <div className="flex flex-col items-end gap-2">
           <p
             className={`${priceColor} font-semibold text-[20px] tracking-[-0.4px]`}
@@ -327,7 +255,6 @@ const TradeRow = ({ trade }: { trade: TradeItem }) => {
         </div>
       </div>
 
-      {/* Tags row: Buy/Sell, Outcome, Time, Trader - left | View tx - right */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-1.5 flex-wrap">
           <span
@@ -348,7 +275,6 @@ const TradeRow = ({ trade }: { trade: TradeItem }) => {
           )}
         </div>
 
-        {/* View transaction button */}
         <a
           href={tradeLink}
           target="_blank"
@@ -371,7 +297,6 @@ const TradeRow = ({ trade }: { trade: TradeItem }) => {
         </a>
       </div>
 
-      {/* Divider */}
       <div className="h-px bg-[#e4e4e4]" />
     </div>
   );

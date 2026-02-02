@@ -1,19 +1,10 @@
-/**
- * Модуль геолокации с использованием NLP (compromise.js)
- * Определяет страны и города из текста новостей и маркетов
- */
-
 import nlp from "compromise";
-
-// ============================================
-// ТИПЫ
-// ============================================
 
 export interface GeoLocation {
   country: string;
   city: string;
   coordinates: [number, number];
-  confidence: number; // 0-1, насколько уверены в определении
+  confidence: number;
 }
 
 export interface DetectionResult {
@@ -23,16 +14,10 @@ export interface DetectionResult {
   keywords: string[];
 }
 
-// ============================================
-// БАЗА ДАННЫХ КООРДИНАТ
-// ============================================
-
-// Координаты стран (столицы или основные города)
 export const COUNTRY_COORDINATES: Record<
   string,
   { name: string; city: string; coordinates: [number, number] }
 > = {
-  // Северная Америка (все USA маркеры идут в Вашингтон DC)
   "united states": {
     name: "United States",
     city: "Washington DC",
@@ -58,18 +43,12 @@ export const COUNTRY_COORDINATES: Record<
     city: "Washington DC",
     coordinates: [-77.0369, 38.9072],
   },
-  canada: {
-    name: "Canada",
-    city: "Ottawa",
-    coordinates: [-75.6972, 45.4215],
-  },
+  canada: { name: "Canada", city: "Ottawa", coordinates: [-75.6972, 45.4215] },
   mexico: {
     name: "Mexico",
     city: "Mexico City",
     coordinates: [-99.1332, 19.4326],
   },
-
-  // Европа
   "united kingdom": {
     name: "United Kingdom",
     city: "London",
@@ -114,11 +93,7 @@ export const COUNTRY_COORDINATES: Record<
     city: "Zurich",
     coordinates: [8.5417, 47.3769],
   },
-  austria: {
-    name: "Austria",
-    city: "Vienna",
-    coordinates: [16.3738, 48.2082],
-  },
+  austria: { name: "Austria", city: "Vienna", coordinates: [16.3738, 48.2082] },
   poland: { name: "Poland", city: "Warsaw", coordinates: [21.0122, 52.2297] },
   sweden: {
     name: "Sweden",
@@ -136,11 +111,7 @@ export const COUNTRY_COORDINATES: Record<
     city: "Helsinki",
     coordinates: [24.9384, 60.1699],
   },
-  ireland: {
-    name: "Ireland",
-    city: "Dublin",
-    coordinates: [-6.2603, 53.3498],
-  },
+  ireland: { name: "Ireland", city: "Dublin", coordinates: [-6.2603, 53.3498] },
   greece: { name: "Greece", city: "Athens", coordinates: [23.7275, 37.9838] },
   czech: {
     name: "Czech Republic",
@@ -168,11 +139,7 @@ export const COUNTRY_COORDINATES: Record<
     coordinates: [23.3219, 42.6977],
   },
   croatia: { name: "Croatia", city: "Zagreb", coordinates: [15.9819, 45.815] },
-  serbia: {
-    name: "Serbia",
-    city: "Belgrade",
-    coordinates: [20.4651, 44.8176],
-  },
+  serbia: { name: "Serbia", city: "Belgrade", coordinates: [20.4651, 44.8176] },
   ukraine: { name: "Ukraine", city: "Kyiv", coordinates: [30.5234, 50.4501] },
   russia: { name: "Russia", city: "Moscow", coordinates: [37.6173, 55.7558] },
   belarus: { name: "Belarus", city: "Minsk", coordinates: [27.5615, 53.9006] },
@@ -181,8 +148,6 @@ export const COUNTRY_COORDINATES: Record<
     city: "Chișinău",
     coordinates: [28.8353, 47.0105],
   },
-
-  // Азия
   china: { name: "China", city: "Beijing", coordinates: [116.4074, 39.9042] },
   japan: { name: "Japan", city: "Tokyo", coordinates: [139.6917, 35.6895] },
   "south korea": {
@@ -200,11 +165,7 @@ export const COUNTRY_COORDINATES: Record<
     city: "Pyongyang",
     coordinates: [125.7625, 39.0392],
   },
-  india: {
-    name: "India",
-    city: "New Delhi",
-    coordinates: [77.209, 28.6139],
-  },
+  india: { name: "India", city: "New Delhi", coordinates: [77.209, 28.6139] },
   pakistan: {
     name: "Pakistan",
     city: "Islamabad",
@@ -230,11 +191,7 @@ export const COUNTRY_COORDINATES: Record<
     city: "Bangkok",
     coordinates: [100.5018, 13.7563],
   },
-  vietnam: {
-    name: "Vietnam",
-    city: "Hanoi",
-    coordinates: [105.8342, 21.0278],
-  },
+  vietnam: { name: "Vietnam", city: "Hanoi", coordinates: [105.8342, 21.0278] },
   philippines: {
     name: "Philippines",
     city: "Manila",
@@ -246,13 +203,7 @@ export const COUNTRY_COORDINATES: Record<
     city: "Hong Kong",
     coordinates: [114.1694, 22.3193],
   },
-
-  // Ближний Восток
-  israel: {
-    name: "Israel",
-    city: "Tel Aviv",
-    coordinates: [34.7818, 32.0853],
-  },
+  israel: { name: "Israel", city: "Tel Aviv", coordinates: [34.7818, 32.0853] },
   palestine: {
     name: "Palestine",
     city: "Gaza",
@@ -281,14 +232,8 @@ export const COUNTRY_COORDINATES: Record<
     coordinates: [47.9783, 29.3759],
   },
   yemen: { name: "Yemen", city: "Sanaa", coordinates: [44.2067, 15.3694] },
-  turkey: {
-    name: "Turkey",
-    city: "Istanbul",
-    coordinates: [28.9784, 41.0082],
-  },
+  turkey: { name: "Turkey", city: "Istanbul", coordinates: [28.9784, 41.0082] },
   egypt: { name: "Egypt", city: "Cairo", coordinates: [31.2357, 30.0444] },
-
-  // Африка
   "south africa": {
     name: "South Africa",
     city: "Cape Town",
@@ -306,16 +251,10 @@ export const COUNTRY_COORDINATES: Record<
     city: "Casablanca",
     coordinates: [-7.5898, 33.5731],
   },
-  algeria: {
-    name: "Algeria",
-    city: "Algiers",
-    coordinates: [3.0588, 36.7538],
-  },
+  algeria: { name: "Algeria", city: "Algiers", coordinates: [3.0588, 36.7538] },
   tunisia: { name: "Tunisia", city: "Tunis", coordinates: [10.1658, 36.8065] },
   libya: { name: "Libya", city: "Tripoli", coordinates: [13.1875, 32.8872] },
   sudan: { name: "Sudan", city: "Khartoum", coordinates: [32.5599, 15.5007] },
-
-  // Южная Америка
   brazil: {
     name: "Brazil",
     city: "Brasília",
@@ -336,15 +275,9 @@ export const COUNTRY_COORDINATES: Record<
     city: "Caracas",
     coordinates: [-66.9036, 10.4806],
   },
-  chile: {
-    name: "Chile",
-    city: "Santiago",
-    coordinates: [-70.6693, -33.4489],
-  },
+  chile: { name: "Chile", city: "Santiago", coordinates: [-70.6693, -33.4489] },
   peru: { name: "Peru", city: "Lima", coordinates: [-77.0428, -12.0464] },
   cuba: { name: "Cuba", city: "Havana", coordinates: [-82.3666, 23.1136] },
-
-  // Центральная Америка
   "costa rica": {
     name: "Costa Rica",
     city: "San José",
@@ -375,11 +308,7 @@ export const COUNTRY_COORDINATES: Record<
     city: "Managua",
     coordinates: [-86.2362, 12.1364],
   },
-  ecuador: {
-    name: "Ecuador",
-    city: "Quito",
-    coordinates: [-78.4678, -0.1807],
-  },
+  ecuador: { name: "Ecuador", city: "Quito", coordinates: [-78.4678, -0.1807] },
   bolivia: {
     name: "Bolivia",
     city: "La Paz",
@@ -415,8 +344,6 @@ export const COUNTRY_COORDINATES: Record<
     city: "Port-au-Prince",
     coordinates: [-72.3074, 18.5944],
   },
-
-  // Океания
   australia: {
     name: "Australia",
     city: "Sydney",
@@ -429,12 +356,10 @@ export const COUNTRY_COORDINATES: Record<
   },
 };
 
-// Координаты городов
 export const CITY_COORDINATES: Record<
   string,
   { name: string; country: string; coordinates: [number, number] }
 > = {
-  // США
   "washington dc": {
     name: "Washington DC",
     country: "United States",
@@ -540,7 +465,6 @@ export const CITY_COORDINATES: Record<
     country: "United States",
     coordinates: [-96.797, 32.7767],
   },
-  // Дополнительные города США
   "san diego": {
     name: "San Diego",
     country: "United States",
@@ -701,8 +625,6 @@ export const CITY_COORDINATES: Record<
     country: "United States",
     coordinates: [-149.9003, 61.2181],
   },
-
-  // Канада
   toronto: {
     name: "Toronto",
     country: "Canada",
@@ -723,8 +645,6 @@ export const CITY_COORDINATES: Record<
     country: "Canada",
     coordinates: [-75.6972, 45.4215],
   },
-
-  // Европа
   london: {
     name: "London",
     country: "United Kingdom",
@@ -822,7 +742,6 @@ export const CITY_COORDINATES: Record<
   },
   milan: { name: "Milan", country: "Italy", coordinates: [9.19, 45.4642] },
 
-  // Восточная Европа
   kyiv: { name: "Kyiv", country: "Ukraine", coordinates: [30.5234, 50.4501] },
   kiev: { name: "Kyiv", country: "Ukraine", coordinates: [30.5234, 50.4501] },
   kharkiv: {
@@ -856,7 +775,6 @@ export const CITY_COORDINATES: Record<
     coordinates: [27.5615, 53.9006],
   },
 
-  // Азия
   beijing: {
     name: "Beijing",
     country: "China",
@@ -941,7 +859,6 @@ export const CITY_COORDINATES: Record<
     coordinates: [105.8342, 21.0278],
   },
 
-  // Ближний Восток
   "tel aviv": {
     name: "Tel Aviv",
     country: "Israel",
@@ -997,7 +914,6 @@ export const CITY_COORDINATES: Record<
     coordinates: [32.8597, 39.9334],
   },
 
-  // Африка
   cairo: { name: "Cairo", country: "Egypt", coordinates: [31.2357, 30.0444] },
   lagos: { name: "Lagos", country: "Nigeria", coordinates: [3.3792, 6.5244] },
   nairobi: {
@@ -1021,7 +937,6 @@ export const CITY_COORDINATES: Record<
     coordinates: [-7.5898, 33.5731],
   },
 
-  // Южная Америка
   "são paulo": {
     name: "São Paulo",
     country: "Brazil",
@@ -1075,7 +990,6 @@ export const CITY_COORDINATES: Record<
   },
   havana: { name: "Havana", country: "Cuba", coordinates: [-82.3666, 23.1136] },
 
-  // Океания
   sydney: {
     name: "Sydney",
     country: "Australia",
@@ -1093,16 +1007,10 @@ export const CITY_COORDINATES: Record<
   },
 };
 
-// ============================================
-// КЛЮЧЕВЫЕ СЛОВА ДЛЯ РАСШИРЕННОГО ПОИСКА
-// ============================================
-
-// Политические лидеры и их локации
 export const POLITICAL_KEYWORDS: Record<
   string,
   { country: string; city: string; coordinates: [number, number] }
 > = {
-  // США (все идут в район Вашингтона DC)
   trump: {
     country: "United States",
     city: "Washington DC",
@@ -1134,7 +1042,6 @@ export const POLITICAL_KEYWORDS: Record<
     coordinates: [-77.0569, 38.8719],
   },
 
-  // Россия
   putin: {
     country: "Russia",
     city: "Moscow",
@@ -1146,7 +1053,6 @@ export const POLITICAL_KEYWORDS: Record<
     coordinates: [37.6173, 55.7558],
   },
 
-  // Украина
   zelensky: {
     country: "Ukraine",
     city: "Kyiv",
@@ -1158,7 +1064,6 @@ export const POLITICAL_KEYWORDS: Record<
     coordinates: [30.5234, 50.4501],
   },
 
-  // Китай
   "xi jinping": {
     country: "China",
     city: "Beijing",
@@ -1166,7 +1071,6 @@ export const POLITICAL_KEYWORDS: Record<
   },
   xi: { country: "China", city: "Beijing", coordinates: [116.4074, 39.9042] },
 
-  // Европа
   macron: {
     country: "France",
     city: "Paris",
@@ -1190,7 +1094,6 @@ export const POLITICAL_KEYWORDS: Record<
     coordinates: [19.0402, 47.4979],
   },
 
-  // Ближний Восток
   netanyahu: {
     country: "Israel",
     city: "Tel Aviv",
@@ -1212,7 +1115,6 @@ export const POLITICAL_KEYWORDS: Record<
     coordinates: [32.8597, 39.9334],
   },
 
-  // Латинская Америка
   milei: {
     country: "Argentina",
     city: "Buenos Aires",
@@ -1229,21 +1131,18 @@ export const POLITICAL_KEYWORDS: Record<
     coordinates: [-66.9036, 10.4806],
   },
 
-  // Канада
   trudeau: {
     country: "Canada",
     city: "Ottawa",
     coordinates: [-75.6972, 45.4215],
   },
 
-  // Индия
   modi: {
     country: "India",
     city: "New Delhi",
     coordinates: [77.209, 28.6139],
   },
 
-  // Северная Корея
   "kim jong": {
     country: "North Korea",
     city: "Pyongyang",
@@ -1251,12 +1150,10 @@ export const POLITICAL_KEYWORDS: Record<
   },
 };
 
-// Организации и их локации
 export const ORGANIZATION_KEYWORDS: Record<
   string,
   { country: string; city: string; coordinates: [number, number] }
 > = {
-  // Международные организации
   nato: {
     country: "Belgium",
     city: "Brussels",
@@ -1314,7 +1211,6 @@ export const ORGANIZATION_KEYWORDS: Record<
     coordinates: [6.6323, 46.5197],
   },
 
-  // Финансы
   "federal reserve": {
     country: "United States",
     city: "Washington DC",
@@ -1341,7 +1237,6 @@ export const ORGANIZATION_KEYWORDS: Record<
     coordinates: [-0.1276, 51.5074],
   },
 
-  // Технологии
   openai: {
     country: "United States",
     city: "San Francisco",
@@ -1393,14 +1288,12 @@ export const ORGANIZATION_KEYWORDS: Record<
     coordinates: [-121.9552, 37.3541],
   },
 
-  // Космос
   nasa: {
     country: "United States",
     city: "Cape Canaveral",
     coordinates: [-80.6077, 28.3922],
   },
 
-  // Спортивные лиги и события
   "premier league": {
     country: "United Kingdom",
     city: "London",
@@ -1492,7 +1385,6 @@ export const ORGANIZATION_KEYWORDS: Record<
     coordinates: [13.405, 52.52],
   },
 
-  // Британские клубы (для более точного определения)
   manchester: {
     country: "United Kingdom",
     city: "Manchester",
@@ -1530,16 +1422,10 @@ export const ORGANIZATION_KEYWORDS: Record<
   },
 };
 
-// ============================================
-// СИСТЕМА РАСПРЕДЕЛЕНИЯ ПО ГОРОДАМ СТРАНЫ
-// ============================================
-
-// Множество городов для каждой страны для равномерного распределения маркеров
 export const COUNTRY_CITIES: Record<
   string,
   Array<{ name: string; coordinates: [number, number] }>
 > = {
-  // США - распределяются по всей стране
   "United States": [
     { name: "Washington DC", coordinates: [-77.0369, 38.9072] },
     { name: "New York", coordinates: [-74.006, 40.7128] },
@@ -1837,12 +1723,8 @@ export const COUNTRY_CITIES: Record<
   ],
 };
 
-// Счётчик для ротации городов внутри страны
 const countryRotationIndex: Record<string, number> = {};
 
-/**
- * Получает город из списка городов страны с ротацией
- */
 export function getRotatedCityForCountry(
   country: string,
   id: string,
@@ -1850,44 +1732,30 @@ export function getRotatedCityForCountry(
   const cities = COUNTRY_CITIES[country];
   if (!cities || cities.length === 0) return null;
 
-  // Используем хеш ID для детерминированного выбора + ротация
   const hash = hashCode(id);
   const rotationOffset = countryRotationIndex[country] || 0;
   const cityIndex = (hash + rotationOffset) % cities.length;
 
-  // Увеличиваем счётчик ротации
   countryRotationIndex[country] = (rotationOffset + 1) % cities.length;
 
   return cities[cityIndex];
 }
 
-/**
- * Сбрасывает счётчики ротации (вызывать при новой загрузке данных)
- */
 export function resetCityRotation(): void {
   Object.keys(countryRotationIndex).forEach((key) => {
     countryRotationIndex[key] = 0;
   });
 }
 
-// ============================================
-// ОСНОВНЫЕ ФУНКЦИИ
-// ============================================
-
-/**
- * Извлекает страны и города из текста с помощью compromise.js
- */
 export function extractLocationsWithNLP(text: string): DetectionResult {
   const doc = nlp(text);
 
-  // Извлекаем места с помощью NLP
   const places = doc.places().out("array") as string[];
   const countries: string[] = [];
   const cities: string[] = [];
   const regions: string[] = [];
   const keywords: string[] = [];
 
-  // Разделяем места на страны и города
   for (const place of places) {
     const placeLower = place.toLowerCase();
 
@@ -1903,9 +1771,6 @@ export function extractLocationsWithNLP(text: string): DetectionResult {
   return { countries, cities, regions, keywords };
 }
 
-/**
- * Ищет ключевые слова в тексте
- */
 export function findKeywordsInText(text: string): {
   keyword: string;
   location: { country: string; city: string; coordinates: [number, number] };
@@ -1916,21 +1781,18 @@ export function findKeywordsInText(text: string): {
     location: { country: string; city: string; coordinates: [number, number] };
   }[] = [];
 
-  // Поиск по политическим ключевым словам
   for (const [keyword, location] of Object.entries(POLITICAL_KEYWORDS)) {
     if (textLower.includes(keyword)) {
       found.push({ keyword, location });
     }
   }
 
-  // Поиск по организациям
   for (const [keyword, location] of Object.entries(ORGANIZATION_KEYWORDS)) {
     if (textLower.includes(keyword)) {
       found.push({ keyword, location });
     }
   }
 
-  // Поиск по странам
   for (const [keyword, location] of Object.entries(COUNTRY_COORDINATES)) {
     if (textLower.includes(keyword)) {
       found.push({
@@ -1944,7 +1806,6 @@ export function findKeywordsInText(text: string): {
     }
   }
 
-  // Поиск по городам
   for (const [keyword, location] of Object.entries(CITY_COORDINATES)) {
     if (textLower.includes(keyword)) {
       found.push({
@@ -1958,13 +1819,9 @@ export function findKeywordsInText(text: string): {
     }
   }
 
-  // Сортируем по длине ключевого слова (длинные = более точные)
   return found.sort((a, b) => b.keyword.length - a.keyword.length);
 }
 
-/**
- * Подсчитывает частоту упоминания стран
- */
 export function countCountryMentions(
   text: string,
 ): Map<string, { count: number; coordinates: [number, number]; city: string }> {
@@ -1974,7 +1831,6 @@ export function countCountryMentions(
     { count: number; coordinates: [number, number]; city: string }
   >();
 
-  // Считаем упоминания стран
   for (const [keyword, location] of Object.entries(COUNTRY_COORDINATES)) {
     const regex = new RegExp(`\\b${keyword}\\b`, "gi");
     const matches = textLower.match(regex);
@@ -1992,7 +1848,6 @@ export function countCountryMentions(
     }
   }
 
-  // Считаем упоминания политиков и организаций
   for (const [keyword, location] of Object.entries(POLITICAL_KEYWORDS)) {
     const regex = new RegExp(`\\b${keyword}\\b`, "gi");
     const matches = textLower.match(regex);
@@ -2013,11 +1868,6 @@ export function countCountryMentions(
   return countryMentions;
 }
 
-/**
- * Определяет основную геолокацию текста
- * Приоритет: город > страна > ключевое слово > категория
- * При нахождении страны - использует ротацию по городам
- */
 export function detectGeoLocation(
   text: string,
   sourcecountry?: string,
@@ -2026,7 +1876,6 @@ export function detectGeoLocation(
 ): GeoLocation | null {
   const textLower = text.toLowerCase();
 
-  // 1. Сначала ищем конкретные города
   for (const [cityKey, cityData] of Object.entries(CITY_COORDINATES)) {
     if (textLower.includes(cityKey)) {
       return {
@@ -2038,7 +1887,6 @@ export function detectGeoLocation(
     }
   }
 
-  // 2. Ищем политиков и организации (высокая точность)
   const keywordMatches = findKeywordsInText(text);
   if (keywordMatches.length > 0) {
     const best = keywordMatches[0];
@@ -2050,10 +1898,8 @@ export function detectGeoLocation(
     };
   }
 
-  // 3. Ищем страны и считаем частоту
   const countryMentions = countCountryMentions(text);
   if (countryMentions.size > 0) {
-    // Берём страну с максимальным количеством упоминаний
     let maxCountry = "";
     let maxData = {
       count: 0,
@@ -2069,7 +1915,6 @@ export function detectGeoLocation(
     }
 
     if (maxCountry) {
-      // Используем ротацию по городам если есть ID
       if (id) {
         const rotatedCity = getRotatedCityForCountry(maxCountry, id);
         if (rotatedCity) {
@@ -2091,12 +1936,10 @@ export function detectGeoLocation(
     }
   }
 
-  // 4. Используем sourcecountry из метаданных новости
   if (sourcecountry) {
     const countryLower = sourcecountry.toLowerCase();
     for (const [key, data] of Object.entries(COUNTRY_COORDINATES)) {
       if (countryLower.includes(key) || key.includes(countryLower)) {
-        // Используем ротацию по городам если есть ID
         if (id && COUNTRY_CITIES[data.name]) {
           const rotatedCity = getRotatedCityForCountry(data.name, id);
           if (rotatedCity) {
@@ -2119,7 +1962,6 @@ export function detectGeoLocation(
     }
   }
 
-  // 5. Используем категорию
   if (category) {
     const categoryLocations: Record<
       string,
@@ -2172,21 +2014,16 @@ export function detectGeoLocation(
   return null;
 }
 
-/**
- * Добавляет случайное смещение к координатам в пределах региона
- */
 export function addRandomOffset(
   coordinates: [number, number],
   id: string,
   index: number = 0,
 ): [number, number] {
-  // Используем хеш для детерминированного, но случайного смещения
   const hash = hashCode(id + index.toString());
   const hash2 = hashCode(id + index.toString() + "salt");
 
-  // Смещение в пределах ~1 градуса (около 100 км)
-  const lngOffset = ((hash % 200) - 100) / 100; // -1.0 до +1.0
-  const latOffset = ((hash2 % 200) - 100) / 100; // -1.0 до +1.0
+  const lngOffset = ((hash % 200) - 100) / 100;
+  const latOffset = ((hash2 % 200) - 100) / 100;
 
   return [coordinates[0] + lngOffset, coordinates[1] + latOffset];
 }
@@ -2201,10 +2038,6 @@ function hashCode(str: string): number {
   return Math.abs(hash);
 }
 
-// ============================================
-// ЭКСПОРТ ОСНОВНОЙ ФУНКЦИИ
-// ============================================
-
 export interface GeoLocationInput {
   id: string;
   title: string;
@@ -2214,9 +2047,6 @@ export interface GeoLocationInput {
   index?: number;
 }
 
-/**
- * Главная функция - определяет координаты для элемента (новости/маркета)
- */
 export function getGeoCoordinates(input: GeoLocationInput): {
   coordinates: [number, number];
   location: GeoLocation | null;
@@ -2239,7 +2069,6 @@ export function getGeoCoordinates(input: GeoLocationInput): {
     return { coordinates, location };
   }
 
-  // Fallback - Лондон как нейтральная глобальная точка
   const fallbackCoords: [number, number] = [-0.1276, 51.5074];
   return {
     coordinates: addRandomOffset(fallbackCoords, input.id, input.index || 0),

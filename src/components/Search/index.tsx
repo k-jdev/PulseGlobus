@@ -81,23 +81,20 @@ export function Search({ isMobile = false, onFocus, onClose }: SearchProps) {
       active: true,
     });
 
-  // Events data - для дополнительных результатов
   const { data: allEvents, isFetching: isFetchingEvents } = useGetEventsQuery({
     limit: 300,
     active: true,
   });
 
-  // News data - поиск по запросу пользователя
   const { data: searchedNews, isFetching: isFetchingNews } =
     useGetNewsByQueryQuery(
       debouncedQuery.length >= 2 ? debouncedQuery : "politics OR economy",
       {
         skip:
           debouncedQuery.length < 2 || selectedCategories.includes("markets"),
-      }
+      },
     );
 
-  // Также загружаем общие новости для локального поиска как fallback
   const { data: generalNews } = useGetNewsQuery({
     maxrecords: 300,
     timespan: "1d",
@@ -105,9 +102,8 @@ export function Search({ isMobile = false, onFocus, onClose }: SearchProps) {
 
   const isFetching = isFetchingMarkets || isFetchingNews || isFetchingEvents;
 
-  // Search in markets
   const marketResults = useMemo(() => {
-    if (selectedCategories.includes("news")) return []; // Skip markets if only news selected
+    if (selectedCategories.includes("news")) return [];
 
     const searchQuery = debouncedQuery.toLowerCase().trim();
     if (searchQuery.length < 2) return [];
@@ -115,7 +111,6 @@ export function Search({ isMobile = false, onFocus, onClose }: SearchProps) {
     const results: Market[] = [];
     const seenIds = new Set<string>();
 
-    // Search in markets
     if (allMarkets) {
       for (const market of allMarkets) {
         if (seenIds.has(market.id)) continue;
@@ -131,7 +126,6 @@ export function Search({ isMobile = false, onFocus, onClose }: SearchProps) {
 
         if (!matchesSearch) continue;
 
-        // Filter by category if selected
         if (
           selectedCategories.length > 0 &&
           !selectedCategories.includes("markets")
@@ -140,7 +134,7 @@ export function Search({ isMobile = false, onFocus, onClose }: SearchProps) {
             (cat) =>
               cat !== "news" &&
               cat !== "markets" &&
-              (category.includes(cat) || question.includes(cat))
+              (category.includes(cat) || question.includes(cat)),
           );
           if (!matchesCategory) continue;
         }
@@ -150,7 +144,6 @@ export function Search({ isMobile = false, onFocus, onClose }: SearchProps) {
       }
     }
 
-    // Also search in events markets
     if (allEvents) {
       for (const event of allEvents) {
         const eventTitle = event.title?.toLowerCase() || "";
@@ -160,13 +153,11 @@ export function Search({ isMobile = false, onFocus, onClose }: SearchProps) {
           eventTitle.includes(searchQuery) ||
           eventDesc.includes(searchQuery)
         ) {
-          // Add event markets
           if (event.markets) {
             for (const market of event.markets) {
               if (seenIds.has(market.id)) continue;
               seenIds.add(market.id);
 
-              // Convert EventMarket to Market-like object
               results.push({
                 ...market,
                 events: [event],
@@ -184,9 +175,8 @@ export function Search({ isMobile = false, onFocus, onClose }: SearchProps) {
     return results.slice(0, 15);
   }, [allMarkets, allEvents, debouncedQuery, selectedCategories]);
 
-  // Search in news - комбинируем API поиск и локальный поиск
   const newsResults = useMemo(() => {
-    if (selectedCategories.includes("markets")) return []; // Skip news if only markets selected
+    if (selectedCategories.includes("markets")) return [];
 
     const searchQuery = debouncedQuery.toLowerCase().trim();
     if (searchQuery.length < 2) return [];
@@ -194,20 +184,18 @@ export function Search({ isMobile = false, onFocus, onClose }: SearchProps) {
     const results: GdeltArticle[] = [];
     const seenUrls = new Set<string>();
 
-    // Сначала добавляем результаты API поиска
     if (searchedNews) {
       for (const article of searchedNews) {
         if (seenUrls.has(article.url)) continue;
 
         const title = article.title?.toLowerCase() || "";
 
-        // Filter by category if selected
         if (
           selectedCategories.length > 0 &&
           !selectedCategories.includes("news")
         ) {
           const matchesCategory = selectedCategories.some(
-            (cat) => cat !== "news" && cat !== "markets" && title.includes(cat)
+            (cat) => cat !== "news" && cat !== "markets" && title.includes(cat),
           );
           if (!matchesCategory) continue;
         }
@@ -217,7 +205,6 @@ export function Search({ isMobile = false, onFocus, onClose }: SearchProps) {
       }
     }
 
-    // Дополняем локальным поиском по общим новостям
     if (generalNews && results.length < 15) {
       for (const article of generalNews) {
         if (seenUrls.has(article.url)) continue;
@@ -225,17 +212,15 @@ export function Search({ isMobile = false, onFocus, onClose }: SearchProps) {
         const title = article.title?.toLowerCase() || "";
         const domain = article.domain?.toLowerCase() || "";
 
-        // Проверяем совпадение с поисковым запросом
         if (!title.includes(searchQuery) && !domain.includes(searchQuery))
           continue;
 
-        // Filter by category if selected
         if (
           selectedCategories.length > 0 &&
           !selectedCategories.includes("news")
         ) {
           const matchesCategory = selectedCategories.some(
-            (cat) => cat !== "news" && cat !== "markets" && title.includes(cat)
+            (cat) => cat !== "news" && cat !== "markets" && title.includes(cat),
           );
           if (!matchesCategory) continue;
         }
@@ -250,7 +235,6 @@ export function Search({ isMobile = false, onFocus, onClose }: SearchProps) {
     return results;
   }, [searchedNews, generalNews, debouncedQuery, selectedCategories]);
 
-  // Combine and filter results
   const filteredResults = useMemo(() => {
     const markets = marketResults.map((m) => ({
       type: "market" as const,
@@ -258,7 +242,6 @@ export function Search({ isMobile = false, onFocus, onClose }: SearchProps) {
     }));
     const news = newsResults.map((n) => ({ type: "news" as const, data: n }));
 
-    // Interleave results
     const combined: Array<{
       type: "market" | "news";
       data: Market | GdeltArticle;
@@ -292,7 +275,7 @@ export function Search({ isMobile = false, onFocus, onClose }: SearchProps) {
         handleClose();
       }
     },
-    [handleClose]
+    [handleClose],
   );
 
   useEffect(() => {
@@ -309,7 +292,7 @@ export function Search({ isMobile = false, onFocus, onClose }: SearchProps) {
       setSelectedCategories((prev) =>
         prev.includes(value)
           ? prev.filter((c) => c !== value)
-          : [...prev, value]
+          : [...prev, value],
       );
     }
   };
@@ -337,7 +320,6 @@ export function Search({ isMobile = false, onFocus, onClose }: SearchProps) {
 
   return (
     <div ref={containerRef} className={`relative ${isOpen ? "z-[100]" : ""}`}>
-      {/* Search Input */}
       <div
         className={`flex items-center gap-6 bg-[#f5f7f9] border border-[#ebebec] rounded-full px-6 py-3 ${
           isMobile ? "h-12" : ""
@@ -372,7 +354,6 @@ export function Search({ isMobile = false, onFocus, onClose }: SearchProps) {
         )}
       </div>
 
-      {/* Dropdown */}
       <AnimatePresence>
         {isOpen && (
           <motion.div
@@ -391,12 +372,10 @@ export function Search({ isMobile = false, onFocus, onClose }: SearchProps) {
                 : "top-[70px] left-0 right-0 px-6 py-5"
             }`}
           >
-            {/* Searching For */}
             <p className="font-semibold text-[16px] leading-[30px] tracking-[-0.4px] text-[#1b2430]">
               Searching For
             </p>
 
-            {/* Categories */}
             <div
               className={`flex gap-2 items-center ${
                 isMobile
@@ -425,15 +404,12 @@ export function Search({ isMobile = false, onFocus, onClose }: SearchProps) {
               })}
             </div>
 
-            {/* Divider */}
             <div className="h-px w-full bg-[#e4e4e4]" />
 
-            {/* Recent / Results */}
             <p className="font-semibold text-[16px] leading-[30px] tracking-[-0.4px] text-[#1b2430]">
               {debouncedQuery.length >= 2 ? "Results" : "Recent"}
             </p>
 
-            {/* Results List */}
             <div
               className={`flex flex-col gap-4 overflow-y-auto ${
                 isMobile ? "max-h-[200px]" : "max-h-[300px]"
@@ -463,7 +439,6 @@ export function Search({ isMobile = false, onFocus, onClose }: SearchProps) {
                           rel="noopener noreferrer"
                           className="flex gap-4 items-center w-full hover:bg-gray-50 rounded-lg transition-colors cursor-pointer py-1"
                         >
-                          {/* Image */}
                           <div className="w-9 h-9 rounded-[4.8px] overflow-hidden flex-shrink-0">
                             {market.image ? (
                               <img
@@ -479,14 +454,12 @@ export function Search({ isMobile = false, onFocus, onClose }: SearchProps) {
                             )}
                           </div>
 
-                          {/* Title */}
                           <p
                             className={`flex-1 font-semibold text-[17px] leading-[26px] tracking-[-0.4px] text-[#1b2430] truncate`}
                           >
                             {market.question}
                           </p>
 
-                          {/* Outcome */}
                           {topOutcome && (
                             <div className="flex flex-col gap-1 items-end flex-shrink-0">
                               <p className="font-semibold text-[18px] tracking-[-0.4px] text-[#1b2430] text-right leading-[1.14]">
@@ -500,7 +473,6 @@ export function Search({ isMobile = false, onFocus, onClose }: SearchProps) {
                         </a>
                       );
                     } else {
-                      // News result
                       const article = result.data as GdeltArticle;
                       return (
                         <a
@@ -510,7 +482,6 @@ export function Search({ isMobile = false, onFocus, onClose }: SearchProps) {
                           rel="noopener noreferrer"
                           className="flex gap-4 items-center w-full hover:bg-gray-50 rounded-lg transition-colors cursor-pointer py-1"
                         >
-                          {/* Image */}
                           <div className="w-9 h-9 rounded-[4.8px] overflow-hidden flex-shrink-0">
                             {article.socialimage ? (
                               <img
@@ -544,20 +515,13 @@ export function Search({ isMobile = false, onFocus, onClose }: SearchProps) {
                             )}
                           </div>
 
-                          {/* Title */}
                           <p
                             className={`flex-1 font-semibold text-[17px] leading-[26px] tracking-[-0.4px] text-[#1b2430] truncate`}
                           >
                             {article.title}
                           </p>
 
-                          {/* News badge */}
                           <div className="flex flex-col gap-1 items-end flex-shrink-0">
-                            {/* <div className="px-2 py-1 bg-[#1452f0] rounded-full">
-                            <span className="text-white text-[11px] font-semibold">
-                              NEWS
-                            </span>
-                          </div> */}
                             <p className="font-medium text-[12px] tracking-[-0.28px] text-[#bbbdc1] leading-[1.14]">
                               {article.domain}
                             </p>

@@ -411,10 +411,9 @@ export const useMapbox = (
         userInteractingRef.current = true;
       });
 
-      // Mobile: stop spinning on touch and allow interaction
       map.on("touchstart", () => {
         userInteractingRef.current = true;
-        // On mobile, stop spinning when user touches the globe
+
         if (window.innerWidth < 768 && !isPausedRef.current) {
           setIsPaused(true);
         }
