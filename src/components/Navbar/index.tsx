@@ -5,7 +5,7 @@ import { Button } from "@/components/ui";
 import { Search } from "@/components/Search";
 import { Theme } from "@/components/GlobusMapbox/constants/mapConfig";
 import { TimeFilter } from "@/App";
-import { ConnectWallet } from "@/components/ConnectWallet";
+// import { ConnectWallet } from "@/components/ConnectWallet";
 
 import sunIcon from "@/assets/svgs/mainNavigation/sun.svg";
 import moonIcon from "@/assets/svgs/mainNavigation/moon.svg";
@@ -54,7 +54,7 @@ function Navbar({
         </div>
         <div className="flex items-center gap-2">
           <Button variant="secondary">$PULSE</Button>
-          <ConnectWallet />
+          {/* <ConnectWallet /> */}
         </div>
       </nav>
 
@@ -312,10 +312,10 @@ function Navbar({
                   <h2 className="text-[48px] font-bold text-black tracking-[-0.96px] uppercase leading-none mb-5">
                     Wallet
                   </h2>
-                  <ConnectWallet
+                  {/* <ConnectWallet
                     isMobile={true}
                     className="bg-black/5 text-black hover:bg-black/10"
-                  />
+                  /> */}
                 </motion.div>
               </div>
 

@@ -1,7 +1,9 @@
-import { FC, ReactNode } from "react";
-import { useWeb3Modal } from "@web3modal/wagmi/react";
+import { FC, ReactNode, useState } from "react";
+// import { useWeb3Modal } from "@web3modal/wagmi/react";
 import { useTokenGate } from "@/hooks/useTokenGate";
 import modalHeader from "@/assets/images/tokenModal/modal-header.png";
+
+const DEV_MODE = true;
 
 const DEFAULT_TOKEN_ADDRESS =
   "0xF9877901a3D8c8D26078703004E748E66A4009b5" as `0x${string}`;
@@ -20,11 +22,16 @@ export const TokenGate: FC<TokenGateProps> = ({
   requiredAmount = DEFAULT_REQUIRED_AMOUNT,
   tokenSymbol = "$PULSE",
 }) => {
-  const { open } = useWeb3Modal();
+  // const { open } = useWeb3Modal();
   const { isConnected, hasAccess, isLoading, balance } = useTokenGate({
     tokenAddress,
     requiredAmount,
   });
+  const [devBypassed, setDevBypassed] = useState(false);
+
+  if (DEV_MODE && devBypassed) {
+    return <>{children}</>;
+  }
 
   const hasInsufficientBalance = isConnected && !isLoading && !hasAccess;
 
@@ -97,7 +104,7 @@ export const TokenGate: FC<TokenGateProps> = ({
             )}
 
             {/* Connect Wallet Button */}
-            <button
+            {/* <button
               onClick={() => open()}
               disabled={isLoading}
               className="bg-[#1452f0] hover:bg-[#1040d0] transition-colors flex items-center justify-between min-h-[48px] sm:min-h-[56px] overflow-hidden px-4 sm:px-6 py-3 sm:py-4 rounded-full w-full disabled:opacity-70"
@@ -125,7 +132,18 @@ export const TokenGate: FC<TokenGateProps> = ({
                   />
                 </svg>
               )}
-            </button>
+            </button> */}
+
+            {DEV_MODE && (
+              <button
+                onClick={() => setDevBypassed(true)}
+                className="bg-gray-200 hover:bg-gray-300 transition-colors flex items-center justify-center min-h-[48px] sm:min-h-[56px] overflow-hidden px-4 sm:px-6 py-3 sm:py-4 rounded-full w-full"
+              >
+                <span className="font-semibold text-[14px] sm:text-[16px] text-gray-600 tracking-[-0.32px]">
+                  Continue without wallet
+                </span>
+              </button>
+            )}
           </div>
         </div>
       </div>
