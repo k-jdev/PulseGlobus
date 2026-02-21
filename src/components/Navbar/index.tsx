@@ -5,6 +5,7 @@ import { Button } from "@/components/ui";
 import { Search } from "@/components/Search";
 import { Theme } from "@/components/GlobusMapbox/constants/mapConfig";
 import { TimeFilter } from "@/App";
+import type { ViewMode } from "@/App";
 // import { ConnectWallet } from "@/components/ConnectWallet";
 
 import sunIcon from "@/assets/svgs/mainNavigation/sun.svg";
@@ -16,6 +17,8 @@ interface NavbarProps {
   onThemeChange?: ((theme: Theme) => void) | null;
   timeFilter?: TimeFilter;
   onTimeFilterChange?: (filter: TimeFilter) => void;
+  viewMode?: ViewMode;
+  onViewModeChange?: (mode: ViewMode) => void;
   onMobileMenuChange?: (isOpen: boolean) => void;
   onSearchFocus?: () => void;
 }
@@ -25,6 +28,8 @@ function Navbar({
   onThemeChange,
   timeFilter = "24h",
   onTimeFilterChange,
+  viewMode = "globe",
+  onViewModeChange,
   onMobileMenuChange,
   onSearchFocus,
 }: NavbarProps) {
@@ -53,6 +58,58 @@ function Navbar({
           </div>
         </div>
         <div className="flex items-center gap-2">
+          {/* Globe / Bubble toggle */}
+          <div className="flex items-center bg-gray-100 rounded-full p-1 mr-2">
+            <button
+              onClick={() => onViewModeChange?.("globe")}
+              className={`flex items-center gap-1.5 h-8 px-4 rounded-full text-[13px] font-semibold transition-all duration-200 ${
+                viewMode === "globe"
+                  ? "bg-white text-black shadow-sm"
+                  : "text-gray-500 hover:text-gray-700"
+              }`}
+            >
+              <svg
+                width="16"
+                height="16"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <circle cx="12" cy="12" r="10" />
+                <path d="M2 12h20" />
+                <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" />
+              </svg>
+              Globe
+            </button>
+            <button
+              onClick={() => onViewModeChange?.("bubble")}
+              className={`flex items-center gap-1.5 h-8 px-4 rounded-full text-[13px] font-semibold transition-all duration-200 ${
+                viewMode === "bubble"
+                  ? "bg-[#2563EB] text-white shadow-sm"
+                  : "text-gray-500 hover:text-gray-700"
+              }`}
+            >
+              <svg
+                width="16"
+                height="16"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <circle cx="7.5" cy="7.5" r="5.5" />
+                <circle cx="17" cy="17" r="5" />
+                <circle cx="18" cy="7" r="3" />
+                <circle cx="7" cy="18" r="2" />
+              </svg>
+              Bubble
+            </button>
+          </div>
           <Button variant="secondary">$PULSE</Button>
           {/* <ConnectWallet /> */}
         </div>
