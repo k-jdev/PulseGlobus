@@ -1,223 +1,195 @@
-import { useRef, useEffect, useState, useCallback } from "react";
+import { useRef, useEffect, useCallback } from "react";
+import * as d3 from "d3-force";
 import type { PositionedBubble } from "../types";
 
-interface PhysicsBubble {
+export interface PhysicsNode extends d3.SimulationNodeDatum {
   id: string;
-  x: number;
-  y: number;
-  vx: number;
-  vy: number;
   radius: number;
   isDragging: boolean;
+  wanderAngle: number;
 }
 
-const BASE_SPEED = 0.35;
-const DAMPING = 0.998;
-const COLLISION_DAMPING = 0.7;
-const PADDING = 4;
+const PADDING = 5;
+// how fast bubbles float on their own
+const FLOAT_SPEED = 0.45;
+// how often a bubble randomly changes direction
+const WANDER_INTERVAL = 2800; //ms
 
 export function useBubblePhysics(
   initialBubbles: PositionedBubble[],
   containerWidth: number,
   containerHeight: number,
 ) {
-  const physicsRef = useRef<Map<string, PhysicsBubble>>(new Map());
-  const rafRef = useRef<number>(0);
-  const [positions, setPositions] = useState<
-    Map<string, { x: number; y: number }>
-  >(new Map());
+  const simRef = useRef<d3.Simulation<PhysicsNode, never> | null>(null);
+  const nodesRef = useRef<Map<string, PhysicsNode>>(new Map());
+  const domRefsMap = useRef<Map<string, HTMLElement>>(new Map());
+  const wanderTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  const registerDom = useCallback((id: string, el: HTMLElement | null) => {
+    if (el) {
+      domRefsMap.current.set(id, el);
+    } else {
+      domRefsMap.current.delete(id);
+    }
+  }, []);
 
   useEffect(() => {
-    const existing = physicsRef.current;
-    const newMap = new Map<string, PhysicsBubble>();
+    if (containerWidth === 0 || containerHeight === 0) return;
+
+    const cx = containerWidth / 2;
+    const cy = containerHeight / 2;
+
+    const prevNodes = nodesRef.current;
+    const newNodes = new Map<string, PhysicsNode>();
 
     for (const b of initialBubbles) {
-      const prev = existing.get(b.id);
+      const prev = prevNodes.get(b.id);
       if (prev) {
-        // Keep existing velocity & position, update radius
-        newMap.set(b.id, { ...prev, radius: b.radius });
+        prev.radius = b.radius;
+        newNodes.set(b.id, prev);
       } else {
-        // New bubble — random velocity
+        const spawnX = b.x ?? containerWidth * (0.1 + Math.random() * 0.8);
+        const spawnY = b.y ?? containerHeight * (0.1 + Math.random() * 0.8);
         const angle = Math.random() * Math.PI * 2;
-        const speed = BASE_SPEED * (0.5 + Math.random() * 0.8);
-        newMap.set(b.id, {
+        newNodes.set(b.id, {
           id: b.id,
-          x: b.x,
-          y: b.y,
-          vx: Math.cos(angle) * speed,
-          vy: Math.sin(angle) * speed,
           radius: b.radius,
+          x: spawnX,
+          y: spawnY,
+          vx: Math.cos(angle) * FLOAT_SPEED * (0.6 + Math.random() * 0.8),
+          vy: Math.sin(angle) * FLOAT_SPEED * (0.6 + Math.random() * 0.8),
           isDragging: false,
+          wanderAngle: angle,
         });
       }
     }
 
-    physicsRef.current = newMap;
-  }, [initialBubbles]);
+    nodesRef.current = newNodes;
+    const nodesArray = Array.from(newNodes.values());
 
-  // Main physics loop
-  useEffect(() => {
-    if (containerWidth === 0 || containerHeight === 0) return;
+    if (simRef.current) simRef.current.stop();
+    if (wanderTimerRef.current) clearInterval(wanderTimerRef.current);
 
-    let lastTime = performance.now();
+    const sim = d3
+      .forceSimulation<PhysicsNode>(nodesArray)
 
-    const tick = (now: number) => {
-      const dt = Math.min(now - lastTime, 32); // cap delta to ~30fps minimum
-      lastTime = now;
+      .force(
+        "collide",
+        d3
+          .forceCollide<PhysicsNode>()
+          .radius((d) => d.radius + PADDING)
+          .strength(0.85)
+          .iterations(2),
+      )
 
-      const bodies = physicsRef.current;
-      const arr = Array.from(bodies.values());
+      .velocityDecay(0.08)
+      .alphaDecay(0)
+      .alphaMin(0)
+      .alpha(1)
+      .on("tick", () => {
+        const nodes = nodesRef.current;
+        const doms = domRefsMap.current;
 
-      // Update positions
-      for (const b of arr) {
-        if (b.isDragging) continue;
+        for (const node of nodes.values()) {
+          if (node.isDragging) continue;
 
-        b.x += b.vx * dt;
-        b.y += b.vy * dt;
+          const r = node.radius;
 
-        // Apply gentle damping
-        b.vx *= DAMPING;
-        b.vy *= DAMPING;
+          if ((node.x ?? 0) - r < 0) {
+            node.x = r;
+            node.vx = Math.abs(node.vx ?? 0) * 0.8;
+          } else if ((node.x ?? 0) + r > containerWidth) {
+            node.x = containerWidth - r;
+            node.vx = -Math.abs(node.vx ?? 0) * 0.8;
+          }
 
-        // Keep minimum speed so they keep floating
-        const speed = Math.sqrt(b.vx * b.vx + b.vy * b.vy);
-        if (speed < BASE_SPEED * 0.3) {
-          const angle = Math.atan2(b.vy, b.vx);
-          const targetSpeed = BASE_SPEED * (0.4 + Math.random() * 0.3);
-          b.vx = Math.cos(angle) * targetSpeed;
-          b.vy = Math.sin(angle) * targetSpeed;
-        }
+          if ((node.y ?? 0) - r < 0) {
+            node.y = r;
+            node.vy = Math.abs(node.vy ?? 0) * 0.8;
+          } else if ((node.y ?? 0) + r > containerHeight) {
+            node.y = containerHeight - r;
+            node.vy = -Math.abs(node.vy ?? 0) * 0.8;
+          }
 
-        // Bounce off walls
-        if (b.x - b.radius < 0) {
-          b.x = b.radius;
-          b.vx = Math.abs(b.vx) * COLLISION_DAMPING;
-        }
-        if (b.x + b.radius > containerWidth) {
-          b.x = containerWidth - b.radius;
-          b.vx = -Math.abs(b.vx) * COLLISION_DAMPING;
-        }
-        if (b.y - b.radius < 0) {
-          b.y = b.radius;
-          b.vy = Math.abs(b.vy) * COLLISION_DAMPING;
-        }
-        if (b.y + b.radius > containerHeight) {
-          b.y = containerHeight - b.radius;
-          b.vy = -Math.abs(b.vy) * COLLISION_DAMPING;
-        }
-      }
+          // Keep minimum speed — nudge if too slow
+          const spd = Math.sqrt((node.vx ?? 0) ** 2 + (node.vy ?? 0) ** 2);
+          if (spd < FLOAT_SPEED * 0.25) {
+            const a = node.wanderAngle;
+            node.vx = Math.cos(a) * FLOAT_SPEED * 0.5;
+            node.vy = Math.sin(a) * FLOAT_SPEED * 0.5;
+          }
 
-      // Collision detection between bubbles
-      for (let i = 0; i < arr.length; i++) {
-        for (let j = i + 1; j < arr.length; j++) {
-          const a = arr[i];
-          const b = arr[j];
-          const dx = b.x - a.x;
-          const dy = b.y - a.y;
-          const dist = Math.sqrt(dx * dx + dy * dy);
-          const minDist = a.radius + b.radius + PADDING;
-
-          if (dist < minDist && dist > 0) {
-            // Separate overlapping bubbles
-            const nx = dx / dist;
-            const ny = dy / dist;
-            const overlap = (minDist - dist) / 2;
-
-            if (!a.isDragging) {
-              a.x -= nx * overlap;
-              a.y -= ny * overlap;
-            }
-            if (!b.isDragging) {
-              b.x += nx * overlap;
-              b.y += ny * overlap;
-            }
-
-            // Exchange velocities along collision normal
-            if (!a.isDragging && !b.isDragging) {
-              const dvx = a.vx - b.vx;
-              const dvy = a.vy - b.vy;
-              const dvDotN = dvx * nx + dvy * ny;
-
-              if (dvDotN > 0) {
-                // Mass proportional to area
-                const mA = a.radius * a.radius;
-                const mB = b.radius * b.radius;
-                const totalMass = mA + mB;
-
-                a.vx -=
-                  ((2 * mB) / totalMass) * dvDotN * nx * COLLISION_DAMPING;
-                a.vy -=
-                  ((2 * mB) / totalMass) * dvDotN * ny * COLLISION_DAMPING;
-                b.vx +=
-                  ((2 * mA) / totalMass) * dvDotN * nx * COLLISION_DAMPING;
-                b.vy +=
-                  ((2 * mA) / totalMass) * dvDotN * ny * COLLISION_DAMPING;
-              }
-            } else if (a.isDragging && !b.isDragging) {
-              // Push b away from dragged a
-              b.vx += nx * 1.5;
-              b.vy += ny * 1.5;
-            } else if (!a.isDragging && b.isDragging) {
-              a.vx -= nx * 1.5;
-              a.vy -= ny * 1.5;
-            }
+          const el = doms.get(node.id);
+          if (el) {
+            el.style.transform = `translate(${(node.x ?? cx) - r}px, ${(node.y ?? cy) - r}px)`;
           }
         }
-      }
+      });
 
-      // Update React state (throttled to ~60fps via rAF)
-      const newPositions = new Map<string, { x: number; y: number }>();
-      for (const b of arr) {
-        newPositions.set(b.id, { x: b.x, y: b.y });
-      }
-      setPositions(newPositions);
+    simRef.current = sim;
 
-      rafRef.current = requestAnimationFrame(tick);
+    wanderTimerRef.current = setInterval(
+      () => {
+        for (const node of nodesRef.current.values()) {
+          if (node.isDragging) continue;
+
+          node.wanderAngle += (Math.random() - 0.5) * (Math.PI / 1.5);
+          const nudge = FLOAT_SPEED * 0.35;
+          node.vx = (node.vx ?? 0) + Math.cos(node.wanderAngle) * nudge;
+          node.vy = (node.vy ?? 0) + Math.sin(node.wanderAngle) * nudge;
+
+          const spd = Math.sqrt((node.vx ?? 0) ** 2 + (node.vy ?? 0) ** 2);
+          if (spd > FLOAT_SPEED * 2.5) {
+            node.vx = ((node.vx ?? 0) / spd) * FLOAT_SPEED * 2.5;
+            node.vy = ((node.vy ?? 0) / spd) * FLOAT_SPEED * 2.5;
+          }
+        }
+
+        simRef.current?.alpha(1).restart();
+      },
+      WANDER_INTERVAL + Math.random() * 600,
+    );
+
+    return () => {
+      sim.stop();
+      if (wanderTimerRef.current) clearInterval(wanderTimerRef.current);
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [initialBubbles, containerWidth, containerHeight]);
 
-    rafRef.current = requestAnimationFrame(tick);
-    return () => cancelAnimationFrame(rafRef.current);
-  }, [containerWidth, containerHeight]);
-
-  // Drag handlers
   const startDrag = useCallback((id: string) => {
-    const b = physicsRef.current.get(id);
-    if (b) {
-      b.isDragging = true;
-      b.vx = 0;
-      b.vy = 0;
-    }
+    const node = nodesRef.current.get(id);
+    if (!node) return;
+    node.isDragging = true;
+    node.fx = node.x;
+    node.fy = node.y;
+    simRef.current?.alpha(0.4).restart();
   }, []);
 
   const updateDrag = useCallback((id: string, x: number, y: number) => {
-    const b = physicsRef.current.get(id);
-    if (b && b.isDragging) {
-      b.x = x;
-      b.y = y;
+    const node = nodesRef.current.get(id);
+    if (!node || !node.isDragging) return;
+    node.fx = x;
+    node.fy = y;
+    const el = domRefsMap.current.get(id);
+    if (el) {
+      el.style.transform = `translate(${x - node.radius}px, ${y - node.radius}px)`;
     }
   }, []);
 
-  const endDrag = useCallback(
-    (id: string, velocityX?: number, velocityY?: number) => {
-      const b = physicsRef.current.get(id);
-      if (b) {
-        b.isDragging = false;
-        // Apply throw velocity (clamped)
-        if (velocityX !== undefined && velocityY !== undefined) {
-          const maxThrowSpeed = 2;
-          b.vx = Math.max(
-            -maxThrowSpeed,
-            Math.min(maxThrowSpeed, velocityX * 0.003),
-          );
-          b.vy = Math.max(
-            -maxThrowSpeed,
-            Math.min(maxThrowSpeed, velocityY * 0.003),
-          );
-        }
-      }
-    },
-    [],
-  );
+  const endDrag = useCallback((id: string, vx?: number, vy?: number) => {
+    const node = nodesRef.current.get(id);
+    if (!node) return;
+    node.isDragging = false;
+    node.fx = null;
+    node.fy = null;
+    if (vx !== undefined && vy !== undefined) {
+      const maxSpeed = 4;
+      node.vx = Math.max(-maxSpeed, Math.min(maxSpeed, vx * 0.003));
+      node.vy = Math.max(-maxSpeed, Math.min(maxSpeed, vy * 0.003));
+    }
+    simRef.current?.alpha(0.5).restart();
+  }, []);
 
-  return { positions, startDrag, updateDrag, endDrag };
+  return { registerDom, startDrag, updateDrag, endDrag };
 }

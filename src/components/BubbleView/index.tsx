@@ -1,5 +1,4 @@
 import { useState, useMemo, useRef, useEffect, useCallback } from "react";
-import { motion } from "framer-motion";
 import { useGetEventsWithMarketsQuery } from "@/store/services/polymarketApi";
 import type { PolymarketEvent } from "@/store/services/polymarketApi";
 import Bubble from "./components/Bubble";
@@ -9,6 +8,129 @@ import { useBubblePhysics } from "./hooks/useBubblePhysics";
 import type { BubbleData, PositionedBubble } from "./types";
 import type { TimeFilter } from "@/App";
 import type { Category } from "@/components/SubNavigation";
+
+const CATEGORY_TAG_SLUGS: Record<string, string[]> = {
+  Politics: [
+    "politics",
+    "elections",
+    "global-elections",
+    "world-elections",
+    "primaries",
+    "us-presidential-election",
+    "president",
+    "trump",
+    "trump-presidency",
+    "trump-machado",
+    "world",
+  ],
+  Sports: [
+    "sports",
+    "soccer",
+    "basketball",
+    "football",
+    "baseball",
+    "hockey",
+    "nba",
+    "nfl",
+    "mlb",
+    "nhl",
+    "ufc",
+    "golf",
+    "tennis",
+    "olympics",
+    "winter-games",
+    "esports",
+    "games",
+    "dota-2",
+    "league-of-legends",
+    "premier-league",
+    "EPL",
+    "champions-league",
+    "ucl",
+    "la-liga",
+    "bundesliga",
+    "2026-fifa-world-cup",
+    "fifa-world-cup",
+    "nba-champion",
+    "nba-finals",
+    "stanley-cup",
+    "pga-tour",
+    "the-masters",
+    "mvp",
+    "medal-count",
+    "mens-winter-olympics-hockey",
+  ],
+  Crypto: [
+    "crypto",
+    "crypto-prices",
+    "bitcoin",
+    "ethereum",
+    "solana",
+    "defi",
+    "web3",
+    "blockchain",
+  ],
+  Finance: [
+    "finance",
+    "economy",
+    "economic-policy",
+    "stocks",
+    "equities",
+    "fed",
+    "fed-rates",
+    "business",
+    "ipo",
+    "ipos",
+    "commodities",
+    "comex-silver-futures",
+    "silver",
+    "pltr",
+    "hit-price",
+    "macro-election-1",
+    "finance-rewards-300",
+  ],
+  Geopolitics: [
+    "geopolitics",
+    "middle-east",
+    "iran",
+    "israel",
+    "world",
+    "venezuela",
+    "maduro",
+    "hungary",
+    "netherlands",
+    "dutch-election",
+  ],
+  Tech: ["tech", "big-tech", "ai", "science", "openai", "sam-altman", "aliens"],
+  Culture: ["pop-culture", "awards", "tweets-markets"],
+};
+
+const SLUG_TO_CATEGORY: Record<string, string> = {};
+for (const [cat, slugs] of Object.entries(CATEGORY_TAG_SLUGS)) {
+  for (const slug of slugs) {
+    if (!SLUG_TO_CATEGORY[slug]) {
+      SLUG_TO_CATEGORY[slug] = cat;
+    }
+  }
+}
+
+function resolveCategoryFromTags(
+  tags?: Array<{ slug: string; forceShow?: boolean }>,
+): string {
+  if (!tags || tags.length === 0) return "other";
+
+  for (const tag of tags) {
+    const cat = SLUG_TO_CATEGORY[tag.slug];
+    if (cat && tag.forceShow) return cat;
+  }
+
+  for (const tag of tags) {
+    const cat = SLUG_TO_CATEGORY[tag.slug];
+    if (cat) return cat;
+  }
+
+  return "other";
+}
 
 interface BubbleViewProps {
   timeFilter?: TimeFilter;
@@ -29,13 +151,17 @@ function eventToBubble(event: PolymarketEvent): BubbleData | null {
     /* ignore */
   }
 
+  const category = resolveCategoryFromTags(event.tags as any);
+
   return {
     id: event.id,
     title: event.title,
     image: event.image || primaryMarket.image || "",
     volume: event.volume || 0,
     volume24hr: event.volume24hr || 0,
-    category: (event.category || "other").toLowerCase(),
+    volume1wk: event.volume1wk || 0,
+    volume1mo: event.volume1mo || 0,
+    category,
     slug: primaryMarket.slug || "",
     eventSlug: event.slug || "",
     outcomes,
@@ -51,19 +177,20 @@ export default function BubbleView({
   activeCategory = "All Markets",
 }: BubbleViewProps) {
   const containerRef = useRef<HTMLDivElement>(null);
-  const [containerSize, setContainerSize] = useState({ width: 0, height: 0 });
+  const [containerSize, setContainerSize] = useState(() => ({
+    width: window.innerWidth,
+    height: Math.max(window.innerHeight - 120, 400),
+  }));
   const [selectedBubble, setSelectedBubble] = useState<PositionedBubble | null>(
     null,
   );
 
-  // Fetch polymarket events
   const { data: events, isLoading } = useGetEventsWithMarketsQuery({
     limit: 200,
     active: true,
     order: "volume24hr",
   });
 
-  // Measure container
   useEffect(() => {
     const el = containerRef.current;
     if (!el) return;
@@ -80,7 +207,6 @@ export default function BubbleView({
     return () => ro.disconnect();
   }, []);
 
-  // Convert events to bubble data
   const allBubbles = useMemo<BubbleData[]>(() => {
     if (!events) return [];
     return events
@@ -88,37 +214,40 @@ export default function BubbleView({
       .filter((b): b is BubbleData => b !== null && b.volume > 0);
   }, [events]);
 
-  // Filter by category
   const filteredBubbles = useMemo(() => {
     let bubbles = allBubbles;
 
     if (activeCategory !== "All Markets") {
-      bubbles = bubbles.filter(
-        (b) => b.category.toLowerCase() === activeCategory.toLowerCase(),
-      );
+      bubbles = bubbles.filter((b) => b.category === activeCategory);
     }
 
-    // Filter by time
     switch (timeFilter) {
       case "1h":
-        return bubbles.sort((a, b) => b.volume24hr - a.volume24hr).slice(0, 30);
+        return [...bubbles]
+          .sort((a, b) => b.volume24hr - a.volume24hr)
+          .slice(0, 30);
       case "6h":
-        return bubbles.sort((a, b) => b.volume24hr - a.volume24hr).slice(0, 50);
+        return [...bubbles]
+          .sort(
+            (a, b) =>
+              (b.volume1wk || b.volume24hr) - (a.volume1wk || a.volume24hr),
+          )
+          .slice(0, 50);
       case "24h":
       default:
-        return bubbles.sort((a, b) => b.volume - a.volume).slice(0, 80);
+        return [...bubbles]
+          .sort((a, b) => (b.volume1mo || b.volume) - (a.volume1mo || a.volume))
+          .slice(0, 80);
     }
   }, [allBubbles, activeCategory, timeFilter]);
 
-  // Layout bubbles (initial positions)
   const positionedBubbles = useBubbleLayout(
     filteredBubbles,
     containerSize.width,
     containerSize.height,
   );
 
-  // Physics simulation
-  const { positions, startDrag, updateDrag, endDrag } = useBubblePhysics(
+  const { registerDom, startDrag, updateDrag, endDrag } = useBubblePhysics(
     positionedBubbles,
     containerSize.width,
     containerSize.height,
@@ -153,34 +282,24 @@ export default function BubbleView({
       >
         {isLoading && (
           <div className="absolute inset-0 flex items-center justify-center">
-            <motion.div
-              animate={{ rotate: 360 }}
-              transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
-              className="w-10 h-10 border-3 border-white/30 border-t-white rounded-full"
-            />
+            <div className="w-10 h-10 border-4 border-white/30 border-t-white rounded-full animate-spin" />
           </div>
         )}
 
-        {/* Render positioned bubbles */}
-        {positionedBubbles.map((bubble, i) => {
-          const pos = positions.get(bubble.id);
-          return (
-            <Bubble
-              key={bubble.id}
-              bubble={bubble}
-              px={pos?.x ?? bubble.x}
-              py={pos?.y ?? bubble.y}
-              index={i}
-              onClick={handleBubbleClick}
-              onDragStart={handleDragStart}
-              onDrag={handleDrag}
-              onDragEnd={handleDragEnd}
-            />
-          );
-        })}
+        {positionedBubbles.map((bubble, i) => (
+          <Bubble
+            key={bubble.id}
+            bubble={bubble}
+            index={i}
+            onClick={handleBubbleClick}
+            onDragStart={handleDragStart}
+            onDrag={handleDrag}
+            onDragEnd={handleDragEnd}
+            registerDom={registerDom}
+          />
+        ))}
       </div>
 
-      {/* Popup */}
       <BubblePopup
         bubble={selectedBubble}
         onClose={() => setSelectedBubble(null)}

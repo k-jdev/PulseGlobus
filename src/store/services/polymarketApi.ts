@@ -76,6 +76,7 @@ export interface PolymarketEvent {
   volume1wk: number;
   volume1mo: number;
   imageOptimized?: ImageOptimized;
+  tags?: Tag[];
 
   markets?: EventMarket[];
   negRisk?: boolean;

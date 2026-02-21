@@ -1,14 +1,9 @@
 import { useMemo } from "react";
 import type { BubbleData, PositionedBubble } from "../types";
 
-const MIN_RADIUS = 32;
-const MAX_RADIUS = 140;
+const MIN_RADIUS = 48;
+const MAX_RADIUS = 200;
 
-/**
- * Simple circle-packing using a spiral placement algorithm.
- * Places bubbles from largest to smallest, spiraling outward
- * from center, checking for overlaps.
- */
 function packCircles(
   bubbles: BubbleData[],
   containerWidth: number,
@@ -17,12 +12,10 @@ function packCircles(
   if (bubbles.length === 0 || containerWidth === 0 || containerHeight === 0)
     return [];
 
-  // Calculate radii based on volume
   const maxVol = Math.max(...bubbles.map((b) => b.volume), 1);
   const minVol = Math.min(...bubbles.map((b) => b.volume), 0);
   const volRange = maxVol - minVol || 1;
 
-  // Determine scale factor based on container size
   const area = containerWidth * containerHeight;
   const scaleFactor = Math.sqrt(area) / 1800;
 
@@ -39,7 +32,6 @@ function packCircles(
     return { ...b, radius };
   });
 
-  // Sort: largest first for better packing
   withRadius.sort((a, b) => b.radius - a.radius);
 
   const placed: PositionedBubble[] = [];
@@ -57,7 +49,6 @@ function packCircles(
       continue;
     }
 
-    // Spiral outward from center
     const maxDist = Math.max(containerWidth, containerHeight);
     const step = 3;
     const angleStep = 0.15;
@@ -83,7 +74,6 @@ function packCircles(
           continue;
         }
 
-        // Check overlap with all placed bubbles
         let overlaps = false;
         for (const p of placed) {
           const dx = testX - p.x;

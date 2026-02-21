@@ -467,18 +467,21 @@ export const useMapbox = (
     };
   }, [containerRef, theme]);
 
-  const changeTheme = (newTheme: Theme) => {
-    const themeConfig = THEME_CONFIGS[newTheme];
-    if (mapRef.current) {
-      mapRef.current.setStyle(themeConfig.style);
-      setTheme(newTheme);
-      if (onThemeChange) {
-        onThemeChange(newTheme);
+  const changeTheme = useCallback(
+    (newTheme: Theme) => {
+      const themeConfig = THEME_CONFIGS[newTheme];
+      if (mapRef.current) {
+        mapRef.current.setStyle(themeConfig.style);
+        setTheme(newTheme);
+        if (onThemeChange) {
+          onThemeChange(newTheme);
+        }
       }
-    }
-  };
+    },
+    [onThemeChange],
+  );
 
-  const toggleSpin = () => {
+  const toggleSpin = useCallback(() => {
     isPausedRef.current = !isPausedRef.current;
     setIsPaused(isPausedRef.current);
 
@@ -497,7 +500,7 @@ export const useMapbox = (
         }
       }
     }
-  };
+  }, []);
 
   // const handleMarketClick = (
   //   map: mapboxgl.Map,

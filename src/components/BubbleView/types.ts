@@ -4,6 +4,8 @@ export interface BubbleData {
   image: string;
   volume: number;
   volume24hr: number;
+  volume1wk: number;
+  volume1mo: number;
   category: string;
   slug: string;
   eventSlug?: string;

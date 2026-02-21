@@ -331,13 +331,19 @@ const GlobusMapbox = ({
       }));
   }, [selectedMarket, mapMarkers]);
 
-  if (onThemeChange) {
-    onThemeChange(theme, changeTheme);
-  }
+  // Notify parent about theme and spin handlers when they change
+  useEffect(() => {
+    if (onThemeChange) {
+      onThemeChange(theme, changeTheme);
+    }
+    // only trigger when theme or changeTheme reference changes
+  }, [onThemeChange, theme, changeTheme]);
 
-  if (onSpinStateChange) {
-    onSpinStateChange(isPaused, toggleSpin);
-  }
+  useEffect(() => {
+    if (onSpinStateChange) {
+      onSpinStateChange(isPaused, toggleSpin);
+    }
+  }, [onSpinStateChange, isPaused, toggleSpin]);
 
   return (
     <>

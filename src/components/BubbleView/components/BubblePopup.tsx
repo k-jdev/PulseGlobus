@@ -29,13 +29,19 @@ export default function BubblePopup({ bubble, onClose }: BubblePopupProps) {
             onClick={onClose}
           />
 
-          {/* Popup */}
           <motion.div
-            initial={{ opacity: 0, scale: 0.9, y: 20 }}
-            animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.9, y: 20 }}
-            transition={{ type: "spring", stiffness: 300, damping: 25 }}
-            className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-[61] w-[380px] max-w-[calc(100vw-32px)] bg-white rounded-2xl shadow-2xl overflow-hidden"
+            initial={{ opacity: 0, y: -24, scale: 0.96 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: -16, scale: 0.96 }}
+            transition={{ type: "spring", stiffness: 340, damping: 28 }}
+            className="fixed z-[61] bg-white rounded-2xl shadow-2xl overflow-hidden"
+            style={{
+              top: 136,
+              left: "50%",
+              marginLeft: -210,
+              width: 420,
+              maxWidth: "calc(100vw - 32px)",
+            }}
           >
             {/* Header */}
             <div className="relative p-5 pb-3">
