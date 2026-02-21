@@ -2,10 +2,11 @@ import { useState } from "react";
 import {
   GlobusMapboxComponent,
   NavbarComponent,
-  MainNavigationComponent,
   BubbleViewComponent,
   // TokenGate,
 } from "./components";
+import SubNavigation from "./components/SubNavigation";
+import type { Category } from "./components/SubNavigation";
 import { Theme } from "./components/GlobusMapbox/constants/mapConfig";
 
 export type TimeFilter = "1h" | "6h" | "24h";
@@ -26,6 +27,7 @@ function App() {
   const [toggleSpin, setToggleSpin] = useState<(() => void) | null>(null);
   const [timeFilter, setTimeFilter] = useState<TimeFilter>("24h");
   const [viewMode, setViewMode] = useState<ViewMode>("globe");
+  const [activeCategory, setActiveCategory] = useState<Category>("All Markets");
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [closePopups, setClosePopups] = useState<(() => void) | null>(null);
 
@@ -51,41 +53,20 @@ function App() {
     <div className="relative w-full h-screen overflow-hidden">
       <NavbarComponent
         theme={viewMode === "bubble" ? "light" : theme}
-        onThemeChange={changeTheme}
-        timeFilter={timeFilter}
-        onTimeFilterChange={setTimeFilter}
-        viewMode={viewMode}
-        onViewModeChange={setViewMode}
         onMobileMenuChange={handleMobileMenuChange}
         onSearchFocus={handleSearchFocus}
       />
-      {viewMode === "globe" ? (
-        <GlobusMapboxComponent
-          timeFilter={timeFilter}
-          isMobileMenuOpen={isMobileMenuOpen}
-          onThemeChange={(currentTheme, changeThemeFn) => {
-            setTheme(currentTheme);
-            if (!changeTheme) {
-              setChangeTheme(() => changeThemeFn);
-            }
-          }}
-          onSpinStateChange={(pausedState, toggleSpinFn) => {
-            setIsPaused(pausedState);
-            if (!toggleSpin) {
-              setToggleSpin(() => toggleSpinFn);
-            }
-          }}
-        />
-      ) : (
-        <BubbleViewComponent timeFilter={timeFilter} />
-      )}
-      <MainNavigationComponent
+      <SubNavigation
+        viewMode={viewMode}
+        onViewModeChange={setViewMode}
         theme={theme}
         onThemeChange={changeTheme}
         isPaused={isPaused}
         onToggleSpin={toggleSpin}
         timeFilter={timeFilter}
         onTimeFilterChange={setTimeFilter}
+        activeCategory={activeCategory}
+        onCategoryChange={setActiveCategory}
         isMobileMenuOpen={isMobileMenuOpen}
         onClosePopups={(closeFn) => {
           if (!closePopups) {
@@ -93,6 +74,25 @@ function App() {
           }
         }}
       />
+      {viewMode === "globe" ? (
+        <GlobusMapboxComponent
+          timeFilter={timeFilter}
+          isMobileMenuOpen={isMobileMenuOpen}
+          onThemeChange={(currentTheme, changeThemeFn) => {
+            setTheme(currentTheme);
+            setChangeTheme(() => changeThemeFn);
+          }}
+          onSpinStateChange={(pausedState, toggleSpinFn) => {
+            setIsPaused(pausedState);
+            setToggleSpin(() => toggleSpinFn);
+          }}
+        />
+      ) : (
+        <BubbleViewComponent
+          timeFilter={timeFilter}
+          activeCategory={activeCategory}
+        />
+      )}
     </div>
     // </TokenGate>
   );

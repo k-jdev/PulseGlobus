@@ -3,36 +3,15 @@ import { motion, AnimatePresence } from "framer-motion";
 import logo from "@/assets/images/navbar/logo.png";
 import { Button } from "@/components/ui";
 import { Search } from "@/components/Search";
-import { Theme } from "@/components/GlobusMapbox/constants/mapConfig";
-import { TimeFilter } from "@/App";
-import type { ViewMode } from "@/App";
 // import { ConnectWallet } from "@/components/ConnectWallet";
 
-import sunIcon from "@/assets/svgs/mainNavigation/sun.svg";
-import moonIcon from "@/assets/svgs/mainNavigation/moon.svg";
-import moonBlueIcon from "@/assets/svgs/mainNavigation/moon-blue.svg";
-
 interface NavbarProps {
-  theme?: Theme;
-  onThemeChange?: ((theme: Theme) => void) | null;
-  timeFilter?: TimeFilter;
-  onTimeFilterChange?: (filter: TimeFilter) => void;
-  viewMode?: ViewMode;
-  onViewModeChange?: (mode: ViewMode) => void;
+  theme?: string;
   onMobileMenuChange?: (isOpen: boolean) => void;
   onSearchFocus?: () => void;
 }
 
-function Navbar({
-  theme = "light",
-  onThemeChange,
-  timeFilter = "24h",
-  onTimeFilterChange,
-  viewMode = "globe",
-  onViewModeChange,
-  onMobileMenuChange,
-  onSearchFocus,
-}: NavbarProps) {
+function Navbar({ onMobileMenuChange, onSearchFocus }: NavbarProps) {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isMobileSearchOpen, setIsMobileSearchOpen] = useState(false);
 
@@ -45,8 +24,6 @@ function Navbar({
     }
   };
 
-  const timeFilters: TimeFilter[] = ["1h", "6h", "24h"];
-
   return (
     <>
       {/* Desktop Navbar */}
@@ -58,58 +35,6 @@ function Navbar({
           </div>
         </div>
         <div className="flex items-center gap-2">
-          {/* Globe / Bubble toggle */}
-          <div className="flex items-center bg-gray-100 rounded-full p-1 mr-2">
-            <button
-              onClick={() => onViewModeChange?.("globe")}
-              className={`flex items-center gap-1.5 h-8 px-4 rounded-full text-[13px] font-semibold transition-all duration-200 ${
-                viewMode === "globe"
-                  ? "bg-white text-black shadow-sm"
-                  : "text-gray-500 hover:text-gray-700"
-              }`}
-            >
-              <svg
-                width="16"
-                height="16"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              >
-                <circle cx="12" cy="12" r="10" />
-                <path d="M2 12h20" />
-                <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" />
-              </svg>
-              Globe
-            </button>
-            <button
-              onClick={() => onViewModeChange?.("bubble")}
-              className={`flex items-center gap-1.5 h-8 px-4 rounded-full text-[13px] font-semibold transition-all duration-200 ${
-                viewMode === "bubble"
-                  ? "bg-[#2563EB] text-white shadow-sm"
-                  : "text-gray-500 hover:text-gray-700"
-              }`}
-            >
-              <svg
-                width="16"
-                height="16"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              >
-                <circle cx="7.5" cy="7.5" r="5.5" />
-                <circle cx="17" cy="17" r="5" />
-                <circle cx="18" cy="7" r="3" />
-                <circle cx="7" cy="18" r="2" />
-              </svg>
-              Bubble
-            </button>
-          </div>
           <Button variant="secondary">$PULSE</Button>
           {/* <ConnectWallet /> */}
         </div>
@@ -209,106 +134,13 @@ function Navbar({
               className="flex-1 flex flex-col justify-between p-5 overflow-y-auto"
             >
               <div className="flex flex-col gap-5">
-                {/* Theme Section */}
-                <motion.div
-                  initial={{ x: -30, opacity: 0 }}
-                  animate={{ x: 0, opacity: 1 }}
-                  transition={{
-                    duration: 0.4,
-                    delay: 0.2,
-                    type: "spring",
-                    stiffness: 300,
-                    damping: 25,
-                  }}
-                  className="border-l border-t border-black/25 pl-5 pt-5"
-                >
-                  <p className="text-[16px] font-medium text-black/55 tracking-[-0.64px] mb-5">
-                    0.001
-                  </p>
-                  <div className="flex items-center justify-between">
-                    <h2 className="text-[48px] font-bold text-black tracking-[-0.96px] uppercase leading-none">
-                      Theme
-                    </h2>
-                    <div className="flex gap-2">
-                      <button
-                        onClick={() => onThemeChange?.("light")}
-                        className={`w-12 h-12 rounded-full flex items-center justify-center ${
-                          theme === "light"
-                            ? "bg-[#1452f0] border border-black/10"
-                            : "bg-black/5"
-                        }`}
-                      >
-                        <img
-                          src={sunIcon}
-                          alt="Light"
-                          className={`w-6 h-6 ${
-                            theme === "light" ? "brightness-0 invert" : ""
-                          }`}
-                        />
-                      </button>
-                      <button
-                        onClick={() => onThemeChange?.("dark")}
-                        className={`w-12 h-12 rounded-full flex items-center justify-center ${
-                          theme === "dark"
-                            ? "bg-[#1452f0] border border-black/10"
-                            : "bg-black/5"
-                        }`}
-                      >
-                        <img
-                          src={theme === "dark" ? moonBlueIcon : moonIcon}
-                          alt="Dark"
-                          className={`w-6 h-6 ${
-                            theme === "dark" ? "brightness-0 invert" : ""
-                          }`}
-                        />
-                      </button>
-                    </div>
-                  </div>
-                </motion.div>
-
-                {/* Markets Section */}
-                <motion.div
-                  initial={{ x: -30, opacity: 0 }}
-                  animate={{ x: 0, opacity: 1 }}
-                  transition={{
-                    duration: 0.4,
-                    delay: 0.3,
-                    type: "spring",
-                    stiffness: 300,
-                    damping: 25,
-                  }}
-                  className="border-l border-t border-black/25 pl-5 pt-5"
-                >
-                  <p className="text-[16px] font-medium text-black/55 tracking-[-0.64px] mb-5">
-                    0.002
-                  </p>
-                  <h2 className="text-[48px] font-bold text-black tracking-[-0.96px] uppercase leading-none mb-5">
-                    Markets
-                  </h2>
-                  <div className="flex gap-2">
-                    {timeFilters.map((filter) => (
-                      <button
-                        key={filter}
-                        onClick={() => onTimeFilterChange?.(filter)}
-                        className={`h-12 px-6 rounded-full text-[15px] font-medium tracking-[-0.3px] ${
-                          timeFilter === filter
-                            ? "bg-[#1452f0] text-white border border-black/10"
-                            : "bg-black/5 text-black"
-                        }`}
-                      >
-                        {filter}
-                      </button>
-                    ))}
-                  </div>
-                </motion.div>
-
                 {/* Docs Section */}
                 <motion.a
                   initial={{ x: -30, opacity: 0 }}
                   animate={{ x: 0, opacity: 1 }}
                   transition={{
                     duration: 0.4,
-                    delay: 0.4,
+                    delay: 0.2,
                     type: "spring",
                     stiffness: 300,
                     damping: 25,
@@ -319,7 +151,7 @@ function Navbar({
                   className="border-l border-t border-black/25 pl-5 pt-5 block"
                 >
                   <p className="text-[16px] font-medium text-black/55 tracking-[-0.64px] mb-5">
-                    0.003
+                    0.001
                   </p>
                   <h2 className="text-[48px] font-bold text-black tracking-[-0.96px] uppercase leading-none">
                     Docs
@@ -332,7 +164,7 @@ function Navbar({
                   animate={{ x: 0, opacity: 1 }}
                   transition={{
                     duration: 0.4,
-                    delay: 0.5,
+                    delay: 0.3,
                     type: "spring",
                     stiffness: 300,
                     damping: 25,
@@ -343,7 +175,7 @@ function Navbar({
                   className="border-l border-t border-black/25 pl-5 pt-5 block"
                 >
                   <p className="text-[16px] font-medium text-black/55 tracking-[-0.64px] mb-5">
-                    0.004
+                    0.002
                   </p>
                   <h2 className="text-[48px] font-bold text-black tracking-[-0.96px] uppercase leading-none">
                     $PULSE
@@ -356,7 +188,7 @@ function Navbar({
                   animate={{ x: 0, opacity: 1 }}
                   transition={{
                     duration: 0.4,
-                    delay: 0.6,
+                    delay: 0.4,
                     type: "spring",
                     stiffness: 300,
                     damping: 25,
@@ -364,7 +196,7 @@ function Navbar({
                   className="border-l border-t border-black/25 pl-5 pt-5"
                 >
                   <p className="text-[16px] font-medium text-black/55 tracking-[-0.64px] mb-5">
-                    0.005
+                    0.003
                   </p>
                   <h2 className="text-[48px] font-bold text-black tracking-[-0.96px] uppercase leading-none mb-5">
                     Wallet
@@ -382,7 +214,7 @@ function Navbar({
                 animate={{ y: 0, opacity: 1 }}
                 transition={{
                   duration: 0.4,
-                  delay: 0.7,
+                  delay: 0.5,
                   type: "spring",
                   stiffness: 300,
                   damping: 25,

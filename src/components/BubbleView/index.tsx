@@ -8,22 +8,11 @@ import { useBubbleLayout } from "./hooks/useBubbleLayout";
 import { useBubblePhysics } from "./hooks/useBubblePhysics";
 import type { BubbleData, PositionedBubble } from "./types";
 import type { TimeFilter } from "@/App";
-
-const ALL_CATEGORIES = [
-  "All Markets",
-  "Politics",
-  "Sports",
-  "Crypto",
-  "Finance",
-  "Geopolitics",
-  "Tech",
-  "Culture",
-] as const;
-
-type Category = (typeof ALL_CATEGORIES)[number];
+import type { Category } from "@/components/SubNavigation";
 
 interface BubbleViewProps {
   timeFilter?: TimeFilter;
+  activeCategory?: Category;
 }
 
 function eventToBubble(event: PolymarketEvent): BubbleData | null {
@@ -57,13 +46,15 @@ function eventToBubble(event: PolymarketEvent): BubbleData | null {
   };
 }
 
-export default function BubbleView({ timeFilter = "24h" }: BubbleViewProps) {
+export default function BubbleView({
+  timeFilter = "24h",
+  activeCategory = "All Markets",
+}: BubbleViewProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const [containerSize, setContainerSize] = useState({ width: 0, height: 0 });
   const [selectedBubble, setSelectedBubble] = useState<PositionedBubble | null>(
     null,
   );
-  const [activeCategory, setActiveCategory] = useState<Category>("All Markets");
 
   // Fetch polymarket events
   const { data: events, isLoading } = useGetEventsWithMarketsQuery({
@@ -154,26 +145,7 @@ export default function BubbleView({ timeFilter = "24h" }: BubbleViewProps) {
 
   return (
     <div className="absolute inset-0 z-0 overflow-hidden bg-[#2563EB]">
-      {/* Category filters - rendered below navbar area */}
-      <div className="absolute top-[72px] left-0 w-full z-20 pointer-events-none">
-        <div className="flex items-center gap-2 px-4 md:px-8 py-3 overflow-x-auto scrollbar-hide pointer-events-auto">
-          {ALL_CATEGORIES.map((cat) => (
-            <button
-              key={cat}
-              onClick={() => setActiveCategory(cat)}
-              className={`flex-shrink-0 h-9 px-5 rounded-full text-[13px] font-semibold tracking-[-0.26px] transition-all duration-200 ${
-                activeCategory === cat
-                  ? "bg-white text-[#2563EB] shadow-md"
-                  : "bg-white/15 text-white hover:bg-white/25 backdrop-blur-sm"
-              }`}
-            >
-              {cat}
-            </button>
-          ))}
-        </div>
-      </div>
-
-      {/* Bubble container */}
+      {/* Bubble container — starts below navbar + sub-nav */}
       <div
         ref={containerRef}
         className="absolute inset-0 top-[120px]"
