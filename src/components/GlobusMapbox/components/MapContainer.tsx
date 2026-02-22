@@ -7,10 +7,13 @@ interface MapContainerProps {
   onThemeChange: (theme: Theme) => void;
 }
 
+const NAV_HEIGHT = 140; // Navbar (72px) + SubNavigation (~68px)
+
 const lightContainerStyle: CSSProperties = {
   position: "relative",
   width: "100%",
-  height: "100vh",
+  height: `calc(100vh - ${NAV_HEIGHT}px)`,
+  marginTop: NAV_HEIGHT,
   background: "radial-gradient(circle at center, #0048FF 0%, #001D68 100%)",
   overflow: "hidden",
 };
@@ -18,7 +21,8 @@ const lightContainerStyle: CSSProperties = {
 const darkContainerStyle: CSSProperties = {
   position: "relative",
   width: "100%",
-  height: "100vh",
+  height: `calc(100vh - ${NAV_HEIGHT}px)`,
+  marginTop: NAV_HEIGHT,
   background: "radial-gradient(circle at center, #1a1a2e 0%, #0d0d14 100%)",
   overflow: "hidden",
 };

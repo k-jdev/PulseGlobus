@@ -469,6 +469,7 @@ export const useMapbox = (
 
   const changeTheme = useCallback(
     (newTheme: Theme) => {
+      if (newTheme === theme) return;
       const themeConfig = THEME_CONFIGS[newTheme];
       if (mapRef.current) {
         mapRef.current.setStyle(themeConfig.style);
@@ -478,7 +479,7 @@ export const useMapbox = (
         }
       }
     },
-    [onThemeChange],
+    [onThemeChange, theme],
   );
 
   const toggleSpin = useCallback(() => {

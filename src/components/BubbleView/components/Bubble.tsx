@@ -33,7 +33,8 @@ const Bubble = memo(function Bubble({
   });
 
   const isLarge = radius > 70;
-  const isMedium = radius > 50;
+  const isMobile = typeof window !== "undefined" && window.innerWidth < 768;
+  const isMedium = isMobile ? radius > 30 : radius > 50;
 
   useEffect(() => {
     const el = wrapperRef.current;
@@ -130,8 +131,12 @@ const Bubble = memo(function Bubble({
       }}
     >
       <div
-        className="w-full h-full rounded-full bg-white shadow-lg flex flex-col items-center justify-center overflow-hidden"
-        style={{ padding: radius * 0.12 }}
+        className="w-full h-full rounded-full shadow-lg flex flex-col items-center justify-center overflow-hidden"
+        style={{
+          padding: radius * 0.12,
+          backgroundColor:
+            isLarge || isMedium ? "white" : "rgba(255, 255, 255, 0.37)",
+        }}
       >
         {image && (
           <div

@@ -273,11 +273,18 @@ export default function BubbleView({
   );
 
   return (
-    <div className="absolute inset-0 z-0 overflow-hidden bg-[#2563EB]">
+    <div
+      className="absolute inset-0 z-0 overflow-hidden bg-[#2563EB]"
+      style={{
+        backgroundImage:
+          "radial-gradient(circle, rgba(255,255,255,0.18) 1px, transparent 1px)",
+        backgroundSize: "24px 24px",
+      }}
+    >
       {/* Bubble container — starts below navbar + sub-nav */}
       <div
         ref={containerRef}
-        className="absolute inset-0 top-[120px]"
+        className="absolute inset-0 top-[140px]"
         data-bubble-container
       >
         {isLoading && (
