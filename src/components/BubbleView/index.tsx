@@ -153,26 +153,21 @@ export default function BubbleView({
   return (
     <div
       className="absolute inset-0 z-0 overflow-hidden"
-      style={{
-        background:
-          "radial-gradient(circle at center, #0048FF 0%, #001D68 100%)",
-      }}
+      style={{ background: "#1452F0" }}
     >
       {/* Dots overlay */}
       <div
         className="absolute inset-0 pointer-events-none"
         style={{
           backgroundImage:
-            "radial-gradient(circle, rgba(255, 255, 255, 0.10) 1.5px, transparent 1.5px)",
-          backgroundSize: "20px 20px",
-          zIndex: 1,
+            "radial-gradient(circle, rgba(255,255,255,0.18) 1.5px, transparent 1.5px)",
+          backgroundSize: "28px 28px",
         }}
       />
       {/* Bubble container — starts below navbar + sub-nav */}
       <div
         ref={containerRef}
         className="absolute inset-0 top-[140px]"
-        style={{ zIndex: 2 }}
         data-bubble-container
       >
         {isLoading && (
