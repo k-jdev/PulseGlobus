@@ -7,13 +7,12 @@ interface MapContainerProps {
   onThemeChange: (theme: Theme) => void;
 }
 
-const NAV_HEIGHT = 140; // Navbar (72px) + SubNavigation (~68px)
+const DESKTOP_NAV_HEIGHT = 140; // Navbar (72px) + SubNavigation (~68px)
+const MOBILE_NAV_HEIGHT = 128; // Navbar (72px) + Mobile SubNavigation (~56px)
 
 const lightContainerStyle: CSSProperties = {
   position: "relative",
   width: "100%",
-  height: `calc(100vh - ${NAV_HEIGHT}px)`,
-  marginTop: NAV_HEIGHT,
   background: "radial-gradient(circle at center, #0048FF 0%, #001D68 100%)",
   overflow: "hidden",
 };
@@ -21,11 +20,22 @@ const lightContainerStyle: CSSProperties = {
 const darkContainerStyle: CSSProperties = {
   position: "relative",
   width: "100%",
-  height: `calc(100vh - ${NAV_HEIGHT}px)`,
-  marginTop: NAV_HEIGHT,
   background: "radial-gradient(circle at center, #1a1a2e 0%, #0d0d14 100%)",
   overflow: "hidden",
 };
+
+const responsiveContainerStyle = `
+  .globe-map-container {
+    margin-top: ${MOBILE_NAV_HEIGHT}px;
+    height: calc(100vh - ${MOBILE_NAV_HEIGHT}px);
+  }
+  @media (min-width: 768px) {
+    .globe-map-container {
+      margin-top: ${DESKTOP_NAV_HEIGHT}px;
+      height: calc(100vh - ${DESKTOP_NAV_HEIGHT}px);
+    }
+  }
+`;
 
 const mapStyle: CSSProperties = {
   width: "100%",
@@ -90,8 +100,11 @@ export const MapContainer = ({ mapContainerRef, theme }: MapContainerProps) => {
     theme === "light" ? lightPopupOverrideStyle : darkPopupOverrideStyle;
 
   return (
-    <div style={containerStyle}>
-      <style>{popupStyle}</style>
+    <div className="globe-map-container" style={containerStyle}>
+      <style>
+        {responsiveContainerStyle}
+        {popupStyle}
+      </style>
       <div style={dotsStyle} />
       <div ref={mapContainerRef} style={mapStyle} />
     </div>
