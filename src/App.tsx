@@ -77,6 +77,7 @@ function App() {
       {viewMode === "globe" ? (
         <GlobusMapboxComponent
           timeFilter={timeFilter}
+          activeCategory={activeCategory}
           isMobileMenuOpen={isMobileMenuOpen}
           onThemeChange={(currentTheme, changeThemeFn) => {
             setTheme(currentTheme);

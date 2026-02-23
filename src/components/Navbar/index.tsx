@@ -27,23 +27,28 @@ function Navbar({ onMobileMenuChange, onSearchFocus }: NavbarProps) {
   return (
     <>
       {/* Desktop Navbar */}
-      <nav className="hidden md:flex absolute top-0 left-0 w-full z-20 bg-white px-8 py-3 justify-between items-center">
-        <div className="flex justify-between items-center">
+      <nav className="hidden md:flex absolute top-0 left-0 w-full z-20 bg-white px-8 py-3 items-center gap-6">
+        {/* Left: Logo */}
+        <div className="flex items-center flex-shrink-0">
           <img src={logo} alt="Logo" className="h-8 w-auto" />
-          <div className="ml-6">
+        </div>
+        {/* Center: Search */}
+        <div className="flex-1 min-w-0">
+          <div className="w-full max-w-[600px]">
             <Search onFocus={onSearchFocus} />
           </div>
         </div>
-        <div className="flex items-center gap-2">
+        {/* Right: Actions */}
+        <div className="flex items-center gap-2 flex-shrink-0 ml-auto">
           <Button variant="secondary">$PULSE</Button>
           {/* <ConnectWallet /> */}
         </div>
       </nav>
 
       {/* Mobile Navbar */}
-      <nav className="flex md:hidden absolute top-0 left-0 w-full z-20 bg-white border-b border-[#ebebec] px-4 py-3 items-center gap-4 h-[72px]">
+      <nav className="flex md:hidden absolute top-0 left-0 w-full z-20 bg-white border-b border-[#ebebec] px-4 py-3 items-center gap-3 h-[72px]">
         {/* Search Input */}
-        <div className="flex-1">
+        <div className="flex-1 min-w-0">
           <Search
             isMobile={true}
             onFocus={() => setIsMobileSearchOpen(true)}
@@ -55,7 +60,7 @@ function Navbar({ onMobileMenuChange, onSearchFocus }: NavbarProps) {
         {!isMobileSearchOpen && (
           <button
             onClick={() => handleMobileMenuToggle(!isMobileMenuOpen)}
-            className="flex items-center gap-3 flex-shrink-0"
+            className="flex items-center gap-2 flex-shrink-0"
           >
             <svg
               xmlns="http://www.w3.org/2000/svg"

@@ -15,12 +15,14 @@ import {
   MapMarker,
 } from "./utils/marketMappers";
 import { TimeFilter } from "../../App";
+import type { Category } from "@/components/SubNavigation";
 
 import "mapbox-gl/dist/mapbox-gl.css";
 import "./styles.css";
 
 interface GlobusMapboxProps {
   timeFilter?: TimeFilter;
+  activeCategory?: Category;
   isMobileMenuOpen?: boolean;
   onThemeChange?: (theme: any, changeTheme: any) => void;
   onSpinStateChange?: (isPaused: boolean, toggleSpin: () => void) => void;
@@ -29,6 +31,7 @@ interface GlobusMapboxProps {
 
 const GlobusMapbox = ({
   timeFilter = "24h",
+  activeCategory = "All Markets",
   isMobileMenuOpen = false,
   onThemeChange,
   onSpinStateChange,
@@ -122,8 +125,20 @@ const GlobusMapbox = ({
         break;
     }
 
+    // Filter by category
+    if (activeCategory !== "All Markets") {
+      const categoryLower = activeCategory.toLowerCase();
+      filteredMarkers = filteredMarkers.filter((marker) => {
+        if (marker.type === "news") return true; // always show news
+        return (
+          marker.category?.toLowerCase() === categoryLower ||
+          marker.category?.toLowerCase().includes(categoryLower)
+        );
+      });
+    }
+
     return filteredMarkers;
-  }, [events, newsArticles, timeFilter, showNews]);
+  }, [events, newsArticles, timeFilter, showNews, activeCategory]);
 
   const { enhancedMarkers } = useAIEnhancedMarkers(mapMarkers, {
     enabled: true,

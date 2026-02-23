@@ -372,21 +372,25 @@ function SubNavigation({
                 onClick={() => theme !== "light" && onThemeChange("light")}
                 disabled={theme === "light"}
                 className={`w-12 h-12 flex items-center justify-center rounded-full border border-[rgba(0,0,0,0.12)] transition-all ${
-                  theme === "light" ? "bg-white" : "bg-[rgba(255,255,255,0.2)]"
+                  theme === "light"
+                    ? "bg-white"
+                    : "bg-[#002175]/40 hover:bg-[#002175]/60"
                 }`}
                 title="Light theme"
               >
                 <img
                   src={sunIcon}
                   alt="Sun"
-                  className={`w-5 h-5 ${theme === "light" ? "" : "brightness-0 invert"}`}
+                  className={`w-5 h-5 ${theme !== "light" ? "brightness-0 invert" : ""}`}
                 />
               </button>
               <button
                 onClick={() => theme !== "dark" && onThemeChange("dark")}
                 disabled={theme === "dark"}
                 className={`w-12 h-12 flex items-center justify-center rounded-full border border-[rgba(0,0,0,0.12)] transition-all ${
-                  theme === "dark" ? "bg-white" : "bg-[#002175]/40"
+                  theme === "dark"
+                    ? "bg-white"
+                    : "bg-[#002175]/40 hover:bg-[#002175]/60"
                 }`}
                 title="Dark theme"
               >
@@ -524,20 +528,24 @@ function SubNavigation({
               onClick={() => theme !== "light" && onThemeChange("light")}
               disabled={theme === "light"}
               className={`flex-shrink-0 w-10 h-10 flex items-center justify-center rounded-full border border-[rgba(0,0,0,0.12)] transition-all ${
-                theme === "light" ? "bg-white" : "bg-[rgba(255,255,255,0.2)]"
+                theme === "light"
+                  ? "bg-white"
+                  : "bg-[#002175]/40 hover:bg-[#002175]/60"
               }`}
             >
               <img
                 src={sunIcon}
                 alt="Sun"
-                className={`w-4 h-4 ${theme === "light" ? "" : "brightness-0 invert"}`}
+                className={`w-4 h-4 ${theme !== "light" ? "brightness-0 invert" : ""}`}
               />
             </button>
             <button
               onClick={() => theme !== "dark" && onThemeChange("dark")}
               disabled={theme === "dark"}
               className={`flex-shrink-0 w-10 h-10 flex items-center justify-center rounded-full border border-[rgba(0,0,0,0.12)] transition-all ${
-                theme === "dark" ? "bg-white" : "bg-[#002175]/40"
+                theme === "dark"
+                  ? "bg-white"
+                  : "bg-[#002175]/40 hover:bg-[#002175]/60"
               }`}
             >
               <img

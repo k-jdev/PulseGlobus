@@ -134,8 +134,11 @@ const Bubble = memo(function Bubble({
         className="w-full h-full rounded-full shadow-lg flex flex-col items-center justify-center overflow-hidden"
         style={{
           padding: radius * 0.12,
-          backgroundColor:
-            isLarge || isMedium ? "white" : "rgba(255, 255, 255, 0.37)",
+          backgroundColor: isLarge
+            ? "#fefeff"
+            : isMedium
+              ? "rgba(255, 255, 255, 0.92)"
+              : "rgba(255, 255, 255, 0.37)",
         }}
       >
         {image && (
