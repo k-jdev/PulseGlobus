@@ -319,16 +319,19 @@ export function Search({ isMobile = false, onFocus, onClose }: SearchProps) {
   };
 
   return (
-    <div ref={containerRef} className={`relative ${isOpen ? "z-[100]" : ""}`}>
+    <div
+      ref={containerRef}
+      className={`relative w-full ${isOpen ? "z-[100]" : ""}`}
+    >
       <div
-        className={`flex items-center gap-6 bg-[#f5f7f9] border border-[#ebebec] rounded-full px-6 py-3 ${
+        className={`flex items-center gap-3 bg-[#f5f7f9] border border-[#ebebec] rounded-full px-4 py-3 w-full ${
           isMobile ? "h-12" : ""
         }`}
       >
         <img
           src={searchIcon}
           alt="Search"
-          className="h-6 w-6"
+          className="h-6 w-6 flex-shrink-0"
           style={{
             filter:
               "invert(31%) sepia(96%) saturate(2448%) hue-rotate(213deg) brightness(97%) contrast(93%)",
@@ -336,9 +339,7 @@ export function Search({ isMobile = false, onFocus, onClose }: SearchProps) {
         />
         <input
           ref={inputRef}
-          className={`bg-transparent outline-none text-[16px] font-medium text-black placeholder:text-black placeholder:opacity-50 tracking-[-0.64px] leading-[1.2] ${
-            isMobile ? "flex-1 min-w-0" : "w-[700px]"
-          }`}
+          className="bg-transparent outline-none text-[16px] font-medium text-black placeholder:text-black placeholder:opacity-50 tracking-[-0.64px] leading-[1.2] flex-1 min-w-0"
           type="text"
           placeholder={
             isMobile
@@ -369,7 +370,7 @@ export function Search({ isMobile = false, onFocus, onClose }: SearchProps) {
             className={`absolute mt-2 bg-white rounded-[14px] border border-[#e9edf8] shadow-[0px_22px_32px_0px_rgba(20,82,240,0.25)] z-[100] flex flex-col gap-4 ${
               isMobile
                 ? "left-0 right-0 px-5 py-4 max-w-[calc(100vw-32px)]"
-                : "top-[70px] left-0 right-0 px-6 py-5"
+                : "top-full left-0 right-0 px-6 py-5"
             }`}
           >
             <p className="font-semibold text-[16px] leading-[30px] tracking-[-0.4px] text-[#1b2430]">

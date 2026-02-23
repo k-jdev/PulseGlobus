@@ -8,129 +8,7 @@ import { useBubblePhysics } from "./hooks/useBubblePhysics";
 import type { BubbleData, PositionedBubble } from "./types";
 import type { TimeFilter } from "@/App";
 import type { Category } from "@/components/SubNavigation";
-
-const CATEGORY_TAG_SLUGS: Record<string, string[]> = {
-  Politics: [
-    "politics",
-    "elections",
-    "global-elections",
-    "world-elections",
-    "primaries",
-    "us-presidential-election",
-    "president",
-    "trump",
-    "trump-presidency",
-    "trump-machado",
-    "world",
-  ],
-  Sports: [
-    "sports",
-    "soccer",
-    "basketball",
-    "football",
-    "baseball",
-    "hockey",
-    "nba",
-    "nfl",
-    "mlb",
-    "nhl",
-    "ufc",
-    "golf",
-    "tennis",
-    "olympics",
-    "winter-games",
-    "esports",
-    "games",
-    "dota-2",
-    "league-of-legends",
-    "premier-league",
-    "EPL",
-    "champions-league",
-    "ucl",
-    "la-liga",
-    "bundesliga",
-    "2026-fifa-world-cup",
-    "fifa-world-cup",
-    "nba-champion",
-    "nba-finals",
-    "stanley-cup",
-    "pga-tour",
-    "the-masters",
-    "mvp",
-    "medal-count",
-    "mens-winter-olympics-hockey",
-  ],
-  Crypto: [
-    "crypto",
-    "crypto-prices",
-    "bitcoin",
-    "ethereum",
-    "solana",
-    "defi",
-    "web3",
-    "blockchain",
-  ],
-  Finance: [
-    "finance",
-    "economy",
-    "economic-policy",
-    "stocks",
-    "equities",
-    "fed",
-    "fed-rates",
-    "business",
-    "ipo",
-    "ipos",
-    "commodities",
-    "comex-silver-futures",
-    "silver",
-    "pltr",
-    "hit-price",
-    "macro-election-1",
-    "finance-rewards-300",
-  ],
-  Geopolitics: [
-    "geopolitics",
-    "middle-east",
-    "iran",
-    "israel",
-    "world",
-    "venezuela",
-    "maduro",
-    "hungary",
-    "netherlands",
-    "dutch-election",
-  ],
-  Tech: ["tech", "big-tech", "ai", "science", "openai", "sam-altman", "aliens"],
-  Culture: ["pop-culture", "awards", "tweets-markets"],
-};
-
-const SLUG_TO_CATEGORY: Record<string, string> = {};
-for (const [cat, slugs] of Object.entries(CATEGORY_TAG_SLUGS)) {
-  for (const slug of slugs) {
-    if (!SLUG_TO_CATEGORY[slug]) {
-      SLUG_TO_CATEGORY[slug] = cat;
-    }
-  }
-}
-
-function resolveCategoryFromTags(
-  tags?: Array<{ slug: string; forceShow?: boolean }>,
-): string {
-  if (!tags || tags.length === 0) return "other";
-
-  for (const tag of tags) {
-    const cat = SLUG_TO_CATEGORY[tag.slug];
-    if (cat && tag.forceShow) return cat;
-  }
-
-  for (const tag of tags) {
-    const cat = SLUG_TO_CATEGORY[tag.slug];
-    if (cat) return cat;
-  }
-
-  return "other";
-}
+import { resolveCategoryFromTags } from "@/utils/categoryResolver";
 
 interface BubbleViewProps {
   timeFilter?: TimeFilter;
@@ -274,17 +152,27 @@ export default function BubbleView({
 
   return (
     <div
-      className="absolute inset-0 z-0 overflow-hidden bg-[#2563EB]"
+      className="absolute inset-0 z-0 overflow-hidden"
       style={{
-        backgroundImage:
-          "radial-gradient(circle, rgba(255,255,255,0.18) 1px, transparent 1px)",
-        backgroundSize: "24px 24px",
+        background:
+          "radial-gradient(circle at center, #0048FF 0%, #001D68 100%)",
       }}
     >
+      {/* Dots overlay */}
+      <div
+        className="absolute inset-0 pointer-events-none"
+        style={{
+          backgroundImage:
+            "radial-gradient(circle, rgba(255, 255, 255, 0.10) 1.5px, transparent 1.5px)",
+          backgroundSize: "20px 20px",
+          zIndex: 1,
+        }}
+      />
       {/* Bubble container — starts below navbar + sub-nav */}
       <div
         ref={containerRef}
         className="absolute inset-0 top-[140px]"
+        style={{ zIndex: 2 }}
         data-bubble-container
       >
         {isLoading && (

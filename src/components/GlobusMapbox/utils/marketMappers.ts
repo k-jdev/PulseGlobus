@@ -1,6 +1,7 @@
 import { Market, PolymarketEvent } from "@/store/services/polymarketApi";
 import { GdeltArticle } from "@/store/services/gdeltApi";
 import { getGeoCoordinates } from "@/utils/geoLocation";
+import { resolveCategoryFromTags } from "@/utils/categoryResolver";
 
 export interface OutcomeData {
   name: string;
@@ -2471,7 +2472,7 @@ export function convertEventsWithMarketsToMapMarkers(
         id: event.id,
         title: event.title,
         description: event.description || event.subtitle || "",
-        category: event.category || "general",
+        category: resolveCategoryFromTags(event.tags as any, event.category),
         volume: event.volume || 0,
         liquidity: event.liquidity || 0,
         image: event.imageOptimized?.imageUrlOptimized || event.image || "",
