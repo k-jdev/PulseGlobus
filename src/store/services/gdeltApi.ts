@@ -1,3 +1,4 @@
+import type { FetchBaseQueryError } from "@reduxjs/toolkit/query";
 import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
 
 const CORS_PROXIES = [
@@ -26,6 +27,10 @@ async function fetchWithProxy(url: string): Promise<Response> {
   } catch {
     throw lastError || new Error("All proxies failed");
   }
+}
+
+function fetchError(error: unknown): FetchBaseQueryError {
+  return { status: "FETCH_ERROR", error: String(error) };
 }
 
 const GDELT_DOC_API_BASE = "https://api.gdeltproject.org/api/v2/doc";
@@ -151,12 +156,10 @@ export const gdeltApi = createApi({
       GdeltArticleWithCoords[],
       GdeltQueryParams
     >({
-      async queryFn(
-        { query = POLYMARKET_RELEVANT_QUERY, timespan = "1d" } = {},
-        _queryApi,
-        _extraOptions,
-        _fetchWithBQ,
-      ) {
+      async queryFn({
+        query = POLYMARKET_RELEVANT_QUERY,
+        timespan = "1d",
+      } = {}) {
         try {
           const geoParams = new URLSearchParams({
             query: `${query} sourcelang:english`,
@@ -241,12 +244,7 @@ export const gdeltApi = createApi({
 
             return { data: diversified as GdeltArticleWithCoords[] };
           } catch (fallbackError) {
-            return {
-              error: {
-                status: "FETCH_ERROR",
-                error: String(fallbackError),
-              } as any,
-            };
+            return { error: fetchError(fallbackError) };
           }
         }
       },
@@ -269,7 +267,7 @@ export const gdeltApi = createApi({
             timespan,
           });
 
-          let queryParts: string[] = [];
+          const queryParts: string[] = [];
           if (query) queryParts.push(query);
           queryParts.push("sourcelang:english");
           if (sourcecountry) queryParts.push(`sourcecountry:${sourcecountry}`);
@@ -288,9 +286,7 @@ export const gdeltApi = createApi({
           const deduplicated = deduplicateArticles(articles);
           return { data: diversifyArticlesByCountry(deduplicated, 12) };
         } catch (error) {
-          return {
-            error: { status: "FETCH_ERROR", error: String(error) } as any,
-          };
+          return { error: fetchError(error) };
         }
       },
       providesTags: ["News"],
@@ -315,9 +311,7 @@ export const gdeltApi = createApi({
           const deduplicated = deduplicateArticles(articles);
           return { data: deduplicated.slice(0, 100) };
         } catch (error) {
-          return {
-            error: { status: "FETCH_ERROR", error: String(error) } as any,
-          };
+          return { error: fetchError(error) };
         }
       },
       providesTags: ["News"],
@@ -345,9 +339,7 @@ export const gdeltApi = createApi({
           const deduplicated = deduplicateArticles(articles);
           return { data: diversifyArticlesByCountry(deduplicated, 15) };
         } catch (error) {
-          return {
-            error: { status: "FETCH_ERROR", error: String(error) } as any,
-          };
+          return { error: fetchError(error) };
         }
       },
       providesTags: ["News"],

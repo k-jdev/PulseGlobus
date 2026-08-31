@@ -2,7 +2,9 @@ import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
 
 const POLYMARKET_API_BASE_URL = "/api/polymarket";
 
-const BUILDER_API_KEY = "019be474-bdb7-7d8d-9267-2d7322159eb4";
+const BUILDER_API_KEY =
+  import.meta.env.VITE_POLYMARKET_BUILDER_API_KEY ??
+  "019be474-bdb7-7d8d-9267-2d7322159eb4";
 
 export interface ImageOptimized {
   id: string;

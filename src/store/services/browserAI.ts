@@ -1,5 +1,5 @@
-import { GdeltArticleWithCoords } from "./gdeltApi";
-import { PolymarketEvent, Market } from "./polymarketApi";
+import { type GdeltArticleWithCoords } from "./gdeltApi";
+import { type PolymarketEvent, type Market } from "./polymarketApi";
 
 declare global {
   interface Window {
@@ -494,10 +494,6 @@ export async function checkBrowserAI(): Promise<AIServiceStatus> {
       };
     }
 
-    if (capabilities.available === "after-download") {
-      console.log("AI модель требует загрузки...");
-    }
-
     aiAvailable = true;
     return {
       available: true,
@@ -505,7 +501,6 @@ export async function checkBrowserAI(): Promise<AIServiceStatus> {
       message: "Browser AI готов к использованию",
     };
   } catch (error) {
-    console.warn("Ошибка проверки Browser AI:", error);
     aiAvailable = false;
     return {
       available: false,
@@ -535,7 +530,6 @@ If multiple countries, pick the most relevant one.`,
     });
     return aiSession;
   } catch (error) {
-    console.error("Ошибка создания AI сессии:", error);
     return null;
   }
 }
@@ -604,8 +598,8 @@ async function classifyItem(
             confidence: parsed.confidence || 70,
           };
         }
-      } catch (error) {
-        console.warn("AI classification failed, using keywords:", error);
+      } catch {
+        // Fall through to the keyword classifier below.
       }
     }
   }
@@ -620,10 +614,6 @@ export async function classifyNews(
   const results: ClassifiedItem[] = [];
   const status = await checkBrowserAI();
   const useAI = status.available;
-
-  console.log(
-    `Классификация ${articles.length} новостей. Метод: ${status.method}`,
-  );
 
   for (let i = 0; i < articles.length; i += batchSize) {
     const batch = articles.slice(i, i + batchSize);
@@ -682,10 +672,6 @@ export async function classifyMarkets(
   const results: ClassifiedItem[] = [];
   const status = await checkBrowserAI();
   const useAI = status.available;
-
-  console.log(
-    `Классификация ${markets.length} маркетов. Метод: ${status.method}`,
-  );
 
   for (let i = 0; i < markets.length; i += batchSize) {
     const batch = markets.slice(i, i + batchSize);
