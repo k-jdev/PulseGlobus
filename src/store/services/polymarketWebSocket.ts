@@ -1,3 +1,7 @@
+const WS_URL = "wss://ws-live-data.polymarket.com";
+const MAX_RECONNECT_ATTEMPTS = 5;
+const RECONNECT_DELAY_MS = 3000;
+
 export interface LiveTradeMessage {
   asset: string;
   conditionId: string;
@@ -26,133 +30,107 @@ export interface WebSocketMessage {
 
 type TradeCallback = (trade: LiveTradeMessage) => void;
 type ConnectionCallback = (connected: boolean) => void;
+type Unsubscribe = () => void;
 
 class PolymarketWebSocketService {
-  private ws: WebSocket | null = null;
+  private socket: WebSocket | null = null;
   private reconnectAttempts = 0;
-  private maxReconnectAttempts = 5;
-  private reconnectDelay = 3000;
-  private tradeCallbacks: TradeCallback[] = [];
-  private connectionCallbacks: ConnectionCallback[] = [];
+  private reconnectTimer: ReturnType<typeof setTimeout> | null = null;
+  private tradeCallbacks = new Set<TradeCallback>();
+  private connectionCallbacks = new Set<ConnectionCallback>();
   private isConnecting = false;
-  private eligibleSlugs: string[] = [];
 
-  connect(slugs: string[] = []) {
-    if (this.ws?.readyState === WebSocket.OPEN || this.isConnecting) {
-      return;
-    }
+  connect(): void {
+    if (this.socket?.readyState === WebSocket.OPEN || this.isConnecting) return;
 
-    this.eligibleSlugs = slugs;
     this.isConnecting = true;
 
     try {
-      this.ws = new WebSocket("wss://ws-live-data.polymarket.com");
-
-      this.ws.onopen = () => {
-        console.log(
-          "[LIVE] WebSocket OPEN - wss://ws-live-data.polymarket.com",
-        );
-        this.isConnecting = false;
-        this.reconnectAttempts = 0;
-        this.notifyConnectionChange(true);
-        this.subscribe();
-      };
-
-      this.ws.onmessage = (event) => {
-        try {
-          const data: WebSocketMessage = JSON.parse(event.data);
-
-          if (data.payload) {
-            const trade = data.payload;
-
-            // Log received message
-            console.log(`[LIVE] Message:`, trade);
-
-            // Notify all callbacks
-            this.tradeCallbacks.forEach((callback) => callback(trade));
-          }
-        } catch (error) {
-          console.error("[LIVE] Error parsing message:", error);
-        }
-      };
-
-      this.ws.onclose = () => {
-        console.log("[LIVE] WebSocket closed");
-        this.isConnecting = false;
-        this.notifyConnectionChange(false);
-        this.attemptReconnect();
-      };
-
-      this.ws.onerror = (error) => {
-        console.error("[LIVE] WebSocket error:", error);
-        this.isConnecting = false;
-      };
-    } catch (error) {
-      console.error("[LIVE] Failed to create WebSocket:", error);
+      this.socket = new WebSocket(WS_URL);
+    } catch {
       this.isConnecting = false;
-    }
-  }
-
-  private subscribe() {
-    if (this.ws?.readyState !== WebSocket.OPEN) return;
-
-    // Subscribe to activity/trades topic
-    const subscriptionMessage = {
-      action: "subscribe",
-      subscriptions: [{ topic: "activity", type: "trades" }],
-    };
-
-    this.ws.send(JSON.stringify(subscriptionMessage));
-    console.log("[LIVE] Sending subscription:", subscriptionMessage);
-  }
-
-  private attemptReconnect() {
-    if (this.reconnectAttempts >= this.maxReconnectAttempts) {
-      console.log("[LIVE] Max reconnect attempts reached");
       return;
     }
 
-    this.reconnectAttempts++;
-    console.log(
-      `[LIVE] Reconnecting in ${this.reconnectDelay}ms (attempt ${this.reconnectAttempts})`,
-    );
+    this.socket.onopen = () => {
+      this.isConnecting = false;
+      this.reconnectAttempts = 0;
+      this.notifyConnectionChange(true);
+      this.subscribe();
+    };
 
-    setTimeout(() => {
-      this.connect(this.eligibleSlugs);
-    }, this.reconnectDelay);
+    this.socket.onmessage = (event) => {
+      try {
+        const message: WebSocketMessage = JSON.parse(event.data);
+        if (message.payload) {
+          this.tradeCallbacks.forEach((callback) => callback(message.payload!));
+        }
+      } catch {
+        // A malformed frame should not tear down the stream.
+      }
+    };
+
+    this.socket.onclose = () => {
+      this.isConnecting = false;
+      this.notifyConnectionChange(false);
+      this.scheduleReconnect();
+    };
+
+    this.socket.onerror = () => {
+      this.isConnecting = false;
+    };
   }
 
-  disconnect() {
-    if (this.ws) {
-      this.ws.close();
-      this.ws = null;
+  disconnect(): void {
+    if (this.reconnectTimer) {
+      clearTimeout(this.reconnectTimer);
+      this.reconnectTimer = null;
+    }
+    // Drop the close handler first so teardown does not trigger a reconnect.
+    if (this.socket) {
+      this.socket.onclose = null;
+      this.socket.close();
+      this.socket = null;
     }
   }
 
-  onTrade(callback: TradeCallback) {
-    this.tradeCallbacks.push(callback);
-    return () => {
-      this.tradeCallbacks = this.tradeCallbacks.filter((cb) => cb !== callback);
-    };
+  onTrade(callback: TradeCallback): Unsubscribe {
+    this.tradeCallbacks.add(callback);
+    return () => this.tradeCallbacks.delete(callback);
   }
 
-  onConnectionChange(callback: ConnectionCallback) {
-    this.connectionCallbacks.push(callback);
-    return () => {
-      this.connectionCallbacks = this.connectionCallbacks.filter(
-        (cb) => cb !== callback,
-      );
-    };
+  onConnectionChange(callback: ConnectionCallback): Unsubscribe {
+    this.connectionCallbacks.add(callback);
+    return () => this.connectionCallbacks.delete(callback);
   }
 
-  private notifyConnectionChange(connected: boolean) {
+  isConnected(): boolean {
+    return this.socket?.readyState === WebSocket.OPEN;
+  }
+
+  private subscribe(): void {
+    if (this.socket?.readyState !== WebSocket.OPEN) return;
+    this.socket.send(
+      JSON.stringify({
+        action: "subscribe",
+        subscriptions: [{ topic: "activity", type: "trades" }],
+      }),
+    );
+  }
+
+  private scheduleReconnect(): void {
+    if (this.reconnectAttempts >= MAX_RECONNECT_ATTEMPTS) return;
+
+    this.reconnectAttempts += 1;
+    this.reconnectTimer = setTimeout(() => {
+      this.reconnectTimer = null;
+      this.connect();
+    }, RECONNECT_DELAY_MS);
+  }
+
+  private notifyConnectionChange(connected: boolean): void {
     this.connectionCallbacks.forEach((callback) => callback(connected));
-  }
-
-  isConnected() {
-    return this.ws?.readyState === WebSocket.OPEN;
   }
 }
 
-// Singleton instance
 export const polymarketWS = new PolymarketWebSocketService();
